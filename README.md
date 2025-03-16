@@ -1,5 +1,3 @@
----
-
 ### **📌 `README.md` for DineSwift**  
 
 ```md
