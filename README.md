@@ -103,9 +103,9 @@ DineSwift/
 ## 👥 Meet the Team  
 
 🚀 **Nithika Perera** – Project Lead  
-💡 **Nadeema Jayasingha** – Backend Developer  
-🔧 **[Member 3 Name]** – Frontend Developer  
-📊 **[Member 4 Name]** – DevOps Engineer  
+💡 **Nadeema Jayasingha**   
+🔧 **[Member 3 Name]**  
+📊 **[Member 4 Name]** 
 
 ---
 
