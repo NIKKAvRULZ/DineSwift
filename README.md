@@ -60,7 +60,7 @@ DineSwift/
 
 ### 1️⃣ Clone the Repository  
 ```bash
- git clone https://github.com/your-username/DineSwift.git
+ git clone https://github.com/NIKKAvRULZ/DineSwift.git
  cd DineSwift
 ```
 
