@@ -104,8 +104,8 @@ DineSwift/
 
 🚀 **Nithika Perera** – Project Lead  
 💡 **Nadeema Jayasingha**   
-🔧 **[Member 3 Name]**  
-📊 **[Member 4 Name]** 
+🔧 **Shanuka Induran**  
+📊 **Karindra Gimhan** 
 
 ---
 
