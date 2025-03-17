@@ -37,21 +37,7 @@ DineSwift is a **next-gen, cloud-native food ordering and delivery platform** in
 ## 📂 Project Structure  
 
 ```
-DineSwift/
-│── backend/               # Backend Microservices  
-│   ├── restaurant-service/  
-│   ├── order-service/  
-│   ├── delivery-service/  
-│   ├── payment-service/  
-│── frontend/              # Frontend (React)  
-│   ├── customer-app/  
-│   ├── admin-dashboard/  
-│── deployment/            # Deployment Configurations  
-│   ├── docker-compose.yml  
-│   ├── kubernetes-configs/  
-│── docs/                  # Documentation (Reports, Diagrams)  
-│── README.md              # Project Overview  
-│── .gitignore             # Ignoring Unnecessary Files  
+
 ```
 
 ---
@@ -66,8 +52,7 @@ DineSwift/
 
 ### 2️⃣ Install Dependencies (Backend)  
 ```bash
- cd backend/restaurant-service
- npm install
+ 
 ```
 
 ### 3️⃣ Start the Backend Services  
@@ -77,14 +62,12 @@ DineSwift/
 
 ### 4️⃣ Run the Frontend (React)  
 ```bash
- cd frontend/customer-app
- npm start
+ 
 ```
 
 ### 5️⃣ Deploy Using Docker & Kubernetes  
 ```bash
- docker-compose up -d
- kubectl apply -f kubernetes-configs/
+ 
 ```
 
 ---
