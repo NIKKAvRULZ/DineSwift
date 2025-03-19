@@ -37,6 +37,97 @@ DineSwift is a **next-gen, cloud-native food ordering and delivery platform** in
 ## 📂 Project Structure  
 
 ```
+food-delivery-system/
+│── services/                    # All microservices
+│   │── user-service/             # User Authentication & Management Service
+│   │   │── models/               # Mongoose Models
+│   │   │── routes/               # Express Routes
+│   │   │── controllers/          # Business Logic
+│   │   │── config/               # Configurations (DB, JWT)
+│   │   │── index.js              # Main entry point
+│   │   │── Dockerfile            # Docker container setup
+│   │   │── .env                  # Environment variables
+│   │   └── package.json          # Node dependencies
+│   │── restaurant-service/       # Restaurant Management Service
+│   │   │── models/
+│   │   │── routes/
+│   │   │── controllers/
+│   │   │── config/
+│   │   │── index.js
+│   │   │── Dockerfile
+│   │   └── .env
+│   │── order-service/            # Order Placement & Management Service
+│   │   │── models/
+│   │   │── routes/
+│   │   │── controllers/
+│   │   │── config/
+│   │   │── index.js
+│   │   │── Dockerfile
+│   │   └── .env
+│   │── delivery-service/         # Delivery Tracking & Management Service
+│   │   │── models/
+│   │   │── routes/
+│   │   │── controllers/
+│   │   │── config/
+│   │   │── index.js
+│   │   │── Dockerfile
+│   │   └── .env
+│   │── payment-service/          # Payment Processing Service
+│   │   │── models/
+│   │   │── routes/
+│   │   │── controllers/
+│   │   │── config/
+│   │   │── index.js
+│   │   │── Dockerfile
+│   │   └── .env
+│   │── notification-service/     # Email/SMS Notifications Service
+│   │   │── models/
+│   │   │── routes/
+│   │   │── controllers/
+│   │   │── config/
+│   │   │── index.js
+│   │   │── Dockerfile
+│   │   └── .env
+│
+│── api-gateway/                  # API Gateway (Single Entry Point)
+│   │── index.js                   # Gateway Logic
+│   │── .env                        # Gateway Config
+│   │── Dockerfile                   # Gateway Docker Setup
+│   └── package.json                 # Dependencies
+│
+│── frontend/                      # React.js Frontend
+│   │── src/
+│   │   │── components/             # UI Components
+│   │   │── pages/                  # React Pages
+│   │   │── api/                    # API Calls to Gateway
+│   │   └── App.js                  # Main React App
+│   │── public/
+│   │── package.json
+│   │── Dockerfile
+│   └── .env
+│
+│── database/                      # Database Configurations (MongoDB)
+│   │── mongo-init.js               # DB Initialization Script
+│   └── docker-compose.yml          # MongoDB Service in Docker
+│
+│── docker/                        # Docker-Compose Configurations
+│   │── docker-compose.yml
+│   │── .env
+│
+│── kubernetes/                    # Kubernetes Deployment Configs
+│   │── user-service.yaml
+│   │── restaurant-service.yaml
+│   │── order-service.yaml
+│   │── delivery-service.yaml
+│   │── payment-service.yaml
+│   │── notification-service.yaml
+│   │── api-gateway.yaml
+│   └── mongo-deployment.yaml
+│
+│── README.md                      # Project Documentation
+│── .gitignore                      # Ignore files
+└── package.json                    # Root package file (if using monorepo)
+
 
 ```
 
