@@ -1,22 +1,32 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/NavBar";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import Menu from "./pages/Menu";
+import Orders from "./pages/Orders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Home from "./pages/Home";
-import Orders from "./pages/Orders";
-import Navbar from "./components/Navbar";
+import Restaurants from "./pages/Restaurants";
+import Delivery from "./pages/Delivery";
+import Payment from "./pages/Payment";
 
-function App() {
+const App = () => {
   return (
-    <Router>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<Menu />} />
+        <Route path="/orders" element={<Orders />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/orders" element={<Orders />} />
+        <Route path="/restaurants" element={<Restaurants />} />
+        <Route path="/delivery" element={<Delivery />} />
+        <Route path="/payment" element={<Payment />} />
       </Routes>
-    </Router>
+      <Footer />
+    </>
   );
-}
+};
 
 export default App;
