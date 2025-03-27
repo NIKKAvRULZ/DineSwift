@@ -1,19 +1,21 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // Added
 const connectDB = require('./config/db');
 const deliveryRoutes = require('./routes/deliveryRoutes');
-require('dotenv').config();
 
 const app = express();
 
-app.use(cors());
+// Middleware
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
-
-connectDB();
-
 app.use('/api/delivery', deliveryRoutes);
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Delivery Service running on port ${PORT}`);
-});
+
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => console.log(`Delivery Service running on port ${PORT}`));
+};
+
+startServer();

@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
+const axios = require('axios'); // Still included, though not used in assignDelivery for now
 const Delivery = require('../models/Delivery');
 
 const assignDelivery = async (req, res) => {
-  const { orderId, driverId, location } = req.body;
+  const { driverId, location } = req.body;
   try {
+    // Temporarily hardcode orderId instead of using axios
+    const orderId = "605c72ef1b4e4b2b3c8d9e10"; // Fake orderId
     const existingDelivery = await Delivery.findOne({ orderId });
     if (existingDelivery) {
       return res.status(409).json({ message: 'A delivery already exists for this order', existingDelivery });
@@ -37,7 +40,11 @@ const getDeliveryStatus = async (req, res) => {
 const updateDeliveryStatus = async (req, res) => {
   const { status } = req.body;
   try {
-    const delivery = await Delivery.findByIdAndUpdate(req.params.deliveryId, { status }, { new: true });
+    const delivery = await Delivery.findByIdAndUpdate(
+      req.params.deliveryId,
+      { status },
+      { new: true }
+    );
     if (!delivery) return res.status(404).json({ message: 'Delivery not found' });
     res.json({ message: 'Status updated', delivery });
   } catch (error) {
@@ -61,4 +68,15 @@ const trackDelivery = async (req, res) => {
   }
 };
 
-module.exports = { assignDelivery, getDeliveryStatus, updateDeliveryStatus, trackDelivery };
+const deleteDelivery = async (req, res) => {
+  try {
+    const delivery = await Delivery.findByIdAndDelete(req.params.deliveryId);
+    if (!delivery) return res.status(404).json({ message: 'Delivery not found' });
+    res.json({ message: 'Delivery deleted' });
+  } catch (error) {
+    console.error('Error in deleteDelivery:', error);
+    res.status(500).json({ message: 'Error deleting delivery', error: error.message });
+  }
+};
+
+module.exports = { assignDelivery, getDeliveryStatus, updateDeliveryStatus, trackDelivery, deleteDelivery };
