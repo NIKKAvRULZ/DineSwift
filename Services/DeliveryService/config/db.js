@@ -9,7 +9,6 @@ const connectDB = async () => {
     process.exit(1);
   }
 
-  // Event listeners for connection state
   mongoose.connection.on('connected', () => {
     console.log('Mongoose connected to DB');
   });
