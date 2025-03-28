@@ -1,12 +1,9 @@
 const mongoose = require('mongoose');
-const axios = require('axios'); // Still included, though not used in assignDelivery for now
 const Delivery = require('../models/Delivery');
 
 const assignDelivery = async (req, res) => {
-  const { driverId, location } = req.body;
+  const { orderId, driverId, location } = req.body;
   try {
-    // Temporarily hardcode orderId instead of using axios
-    const orderId = "605c72ef1b4e4b2b3c8d9e10"; // Fake orderId
     const existingDelivery = await Delivery.findOne({ orderId });
     if (existingDelivery) {
       return res.status(409).json({ message: 'A delivery already exists for this order', existingDelivery });
