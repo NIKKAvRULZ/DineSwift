@@ -9,7 +9,6 @@ import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
 import Delivery from "./pages/Delivery";
 import Payment from "./pages/Payment";
-import Payment from "./pages/Payment";
 import Admin from "./pages/Admin";
 
 const App = () => {
@@ -25,7 +24,6 @@ const App = () => {
         <Route path="/restaurants" element={<Restaurants />} />
         <Route path="/delivery" element={<Delivery />} />
         <Route path="/payment" element={<Payment />} />
-        <Route path="/paymnet" element={<Payment />} />
         <Route path="/Admin" element={<Admin/>} />
 
       </Routes>
