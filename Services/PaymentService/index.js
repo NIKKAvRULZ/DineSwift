@@ -45,7 +45,7 @@ connectDB();
 app.use("/api/payments", paymentRoutes);
 
 // Start server
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {
   console.log(`✅ Payment Service running on port ${PORT}`);
 });
