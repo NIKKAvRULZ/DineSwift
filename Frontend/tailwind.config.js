@@ -15,6 +15,12 @@ export default {
         }
       },
     },
+    server: {
+      hmr: {
+        overlay: false, // Disable error overlay if needed
+      },
+    },    
     plugins: [],
   };
+  
   

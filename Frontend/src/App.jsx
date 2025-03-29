@@ -1,5 +1,8 @@
-import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar/navbar";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import { OrderProvider } from "./context/OrderContext";
+import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
@@ -9,26 +12,42 @@ import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
 import Delivery from "./pages/Delivery";
 import Payment from "./pages/Payment";
-import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
+import OrderTracking from "./pages/OrderTracking";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
-    <>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/restaurants" element={<Restaurants />} />
-        <Route path="/delivery" element={<Delivery />} />
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/Admin" element={<Admin/>} />
-
-      </Routes>
-      <Footer />
-    </>
+    <AuthProvider>
+      <CartProvider>
+        <OrderProvider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-grow">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/restaurants" element={<Restaurants />} />
+                <Route path="/restaurants/:id/menu" element={<Menu />} />
+                
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/delivery" element={<Delivery />} />
+                  <Route path="/payment" element={<Payment />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/tracking" element={<OrderTracking />} />
+                </Route>
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </OrderProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 };
 
