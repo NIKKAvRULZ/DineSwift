@@ -15,7 +15,7 @@ exports.createOrder = async (req, res) => {
 // Get all orders
 exports.getOrders = async (req, res) => {
     try {
-        const orders = await Order.find();
+        const orders = await Order.find(); // Ensure this fetches data from the database
         res.json(orders);
     } catch (error) {
         res.status(500).json({ error: error.message });
