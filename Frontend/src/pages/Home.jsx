@@ -1,164 +1,189 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const cardHover = {
+    hover: {
+      scale: 1.05,
+      transition: {
+        type: "spring",
+        stiffness: 300
+      }
+    }
+  };
+
   const AuthenticatedHome = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-          Welcome back, {user?.name}!
-        </h1>
-        <p className="mt-3 text-xl text-gray-500">
-          Ready to order your favorite food?
-        </p>
+    <motion.div
+      initial="initial"
+      animate="animate"
+      className="relative min-h-screen bg-gradient-to-br from-orange-50 to-red-50"
+    >
+      {/* Hero Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836')] bg-cover bg-center opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/50 to-red-100/50" />
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Quick Actions Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">Quick Order</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Browse restaurants and place your order
-            </p>
-            <div className="mt-4">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div {...fadeIn} className="text-center mb-16">
+          <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-4">
+            Welcome back, {user?.name}!
+          </h1>
+          <p className="text-xl text-gray-600">
+            Ready to explore delicious food today?
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={staggerContainer}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12"
+        >
+          {/* Quick Order Card */}
+          <motion.div
+            variants={cardHover}
+            whileHover="hover"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100"
+          >
+            <div className="p-8">
+              <motion.div
+                whileHover={{ rotate: 15 }}
+                className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-6"
+              >
+                <span className="text-2xl">🍽️</span>
+              </motion.div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Quick Order</h3>
+              <p className="text-gray-600 mb-6">
+                Explore restaurants and place your order instantly
+              </p>
               <Link
                 to="/restaurants"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300"
               >
                 Order Now
               </Link>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        {/* Active Orders Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">Track Orders</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              View and track your active orders
-            </p>
-            <div className="mt-4">
+          {/* Active Orders Card */}
+          <motion.div
+            variants={cardHover}
+            whileHover="hover"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100"
+          >
+            <div className="p-8">
+              <motion.div
+                whileHover={{ rotate: 15 }}
+                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6"
+              >
+                <span className="text-2xl">📋</span>
+              </motion.div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Track Orders</h3>
+              <p className="text-gray-600 mb-6">
+                Real-time tracking of your current orders
+              </p>
               <Link
                 to="/orders"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-300"
               >
                 View Orders
               </Link>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        {/* Profile Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">Your Profile</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Manage your account settings
-            </p>
-            <div className="mt-4">
+          {/* Profile Card */}
+          <motion.div
+            variants={cardHover}
+            whileHover="hover"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100"
+          >
+            <div className="p-8">
+              <motion.div
+                whileHover={{ rotate: 15 }}
+                className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6"
+              >
+                <span className="text-2xl">👤</span>
+              </motion.div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Your Profile</h3>
+              <p className="text-gray-600 mb-6">
+                Customize your preferences and settings
+              </p>
               <Link
                 to="/profile"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
+                className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 transition-all duration-300"
               >
                 View Profile
               </Link>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-
-      {/* Featured Restaurants Section */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900">Popular Restaurants</h2>
-        <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Add your restaurant cards here */}
-        </div>
-      </div>
-    </div>
+    </motion.div>
   );
 
   const UnauthenticatedHome = () => (
-    <div className="bg-white">
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-              Delicious food delivered to your doorstep
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Order from your favorite restaurants and get quick delivery right to your location.
-              Join us today to explore amazing cuisines!
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                to="/signup"
-                className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-              >
-                Get started
-              </Link>
-              <Link
-                to="/login"
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Already have an account? <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
+    <motion.div
+      initial="initial"
+      animate="animate"
+      className="min-h-screen relative bg-gradient-to-br from-orange-50 to-red-50"
+    >
+      {/* Hero Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1543353071-087092ec393a')] bg-cover bg-center opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/50 to-red-100/50" />
       </div>
 
-      {/* Features Section */}
-      <div className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-blue-600">
-              Fast Delivery
-            </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need for a perfect meal
-            </p>
-          </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              <div className="flex flex-col">
-                <dt className="text-base font-semibold leading-7 text-gray-900">
-                  Wide Selection
-                </dt>
-                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
-                  <p className="flex-auto">
-                    Choose from hundreds of restaurants and cuisines in your area.
-                  </p>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="text-base font-semibold leading-7 text-gray-900">
-                  Quick Delivery
-                </dt>
-                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
-                  <p className="flex-auto">
-                    Get your food delivered hot and fresh within minutes.
-                  </p>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="text-base font-semibold leading-7 text-gray-900">
-                  Easy Tracking
-                </dt>
-                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
-                  <p className="flex-auto">
-                    Track your order in real-time from restaurant to delivery.
-                  </p>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
+      <div className="relative z-10 px-6 pt-14 lg:px-8">
+        <motion.div {...fadeIn} className="mx-auto max-w-3xl py-32 sm:py-48 lg:py-56 text-center">
+          <motion.h1
+            variants={fadeIn}
+            className="text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600"
+          >
+            Delicious food delivered to your doorstep
+          </motion.h1>
+          <motion.p
+            variants={fadeIn}
+            className="text-xl text-gray-600 mb-12"
+          >
+            Experience the finest restaurants in your area with our seamless delivery service.
+            Join thousands of satisfied customers today!
+          </motion.p>
+          <motion.div
+            variants={fadeIn}
+            className="flex flex-col sm:flex-row items-center justify-center gap-6"
+          >
+            <Link
+              to="/signup"
+              className="w-full sm:w-auto px-8 py-4 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
+            >
+              Get started
+            </Link>
+            <Link
+              to="/login"
+              className="w-full sm:w-auto px-8 py-4 rounded-full text-gray-700 bg-white hover:bg-gray-50 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
+            >
+              Sign in
+            </Link>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 
   return isAuthenticated ? <AuthenticatedHome /> : <UnauthenticatedHome />;
