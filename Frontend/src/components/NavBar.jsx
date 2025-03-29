@@ -1,31 +1,16 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
-
   return (
-    <nav className="bg-green-800 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">DineSwift</h1>
-      
-      <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-        ☰
-      </button>
-
-      <div className={`md:flex space-x-4 ${isOpen ? "block" : "hidden"} md:block`}>
-        <Link to="/">Home</Link>
-        <Link to="/orders">Orders</Link>
-        {localStorage.getItem("token") ? (
-          <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">Logout</button>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
+    <nav className="bg-green-800 p-4 shadow-md text-white">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold">DineSwift</Link>
+        <div className="flex gap-4">
+          <Link to="/" className="hover:underline">Home</Link>
+          <Link to="/menu" className="hover:underline">Menu</Link>
+          <Link to="/cart" className="hover:underline">Cart</Link>
+          <Link to="/orders" className="hover:underline">Orders</Link>
+        </div>
       </div>
     </nav>
   );
