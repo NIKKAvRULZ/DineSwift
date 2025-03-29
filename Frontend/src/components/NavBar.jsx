@@ -11,7 +11,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
+    <nav className="bg-green-800 text-white p-4 flex justify-between items-center">
       <h1 className="text-xl font-bold">DineSwift</h1>
       
       <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
