@@ -22,6 +22,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 
 const apiUrl = 'http://localhost:5002';
 
@@ -87,12 +88,24 @@ const RestaurantList = () => {
     };
 
     return (
-        <Container>
+        <Container maxWidth="xl" disableGutters sx={{ px: 2 }}>
             <Box sx={{ my: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <RestaurantIcon sx={{ mr: 1 }} />
-                    Restaurants
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center' }}>
+                        <RestaurantIcon sx={{ mr: 1 }} />
+                        Restaurants
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<AddCircleIcon />}
+                        component={Link}
+                        to="/add-restaurant"
+                        size="large"
+                    >
+                        Add New Restaurant
+                    </Button>
+                </Box>
                 
                 {loading && (
                     <Box display="flex" justifyContent="center" my={4}>
@@ -114,7 +127,7 @@ const RestaurantList = () => {
                 
                 <Grid container spacing={3}>
                     {restaurants.map((restaurant) => (
-                        <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
+                        <Grid item xs={12} sm={12} md={6} lg={4} key={restaurant._id}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <CardContent sx={{ flexGrow: 1 }}>
                                     <Typography variant="h5" component="h2">
@@ -127,17 +140,15 @@ const RestaurantList = () => {
                                         Menu Items: {restaurant.menuItems?.length || 0}
                                     </Typography>
                                 </CardContent>
-                                <CardActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, p: 2 }}>
-                                    <Box>
-                                        <Button 
-                                            size="small" 
-                                            component={Link} 
-                                            to={`/restaurant/${restaurant._id}`}
-                                            variant="outlined"
-                                        >
-                                            View Details
-                                        </Button>
-                                    </Box>
+                                <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
+                                    <Button 
+                                        size="small" 
+                                        component={Link} 
+                                        to={`/restaurant/${restaurant._id}`}
+                                        variant="outlined"
+                                    >
+                                        View Details
+                                    </Button>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <Button 
                                             size="small" 
@@ -147,7 +158,7 @@ const RestaurantList = () => {
                                             variant="contained"
                                             startIcon={<AddIcon />}
                                         >
-                                            Add Menu Item
+                                            Add Menu
                                         </Button>
                                         <Button 
                                             size="small"

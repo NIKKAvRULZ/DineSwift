@@ -48,8 +48,34 @@ const RestaurantDetail = () => {
             setError(null);
             
             const restaurantResponse = await axios.get(`${apiUrl}/api/restaurants/${id}`);
-            console.log('Restaurant data:', restaurantResponse.data);
-            setRestaurant(restaurantResponse.data);
+            console.log('Restaurant data received:', restaurantResponse.data);
+            
+            // Apply meaningful defaults to missing fields
+            const rawData = restaurantResponse.data;
+            const restaurant = {
+                ...rawData,
+                description: rawData.description && rawData.description !== '' 
+                    ? rawData.description 
+                    : `Welcome to ${rawData.name}!`,
+                openingHours: rawData.openingHours && rawData.openingHours !== 'Not specified' 
+                    ? rawData.openingHours 
+                    : '9:00 AM',
+                closingHours: rawData.closingHours && rawData.closingHours !== 'Not specified' 
+                    ? rawData.closingHours 
+                    : '10:00 PM',
+                phoneNumber: rawData.phoneNumber && rawData.phoneNumber !== 'Not specified' 
+                    ? rawData.phoneNumber 
+                    : '+94 11 234 5678',
+                email: rawData.email && rawData.email !== 'Not specified' 
+                    ? rawData.email 
+                    : `info@${rawData.name.toLowerCase().replace(/\s+/g, '')}.com`,
+                address: rawData.address && rawData.address !== 'Not specified' 
+                    ? rawData.address 
+                    : `123 Main Street, ${rawData.location}`
+            };
+            
+            console.log('Processed restaurant data with meaningful defaults:', restaurant);
+            setRestaurant(restaurant);
             
             const menuResponse = await axios.get(`${apiUrl}/api/restaurants/${id}/menu-items`);
             console.log('Menu items data:', menuResponse.data);
@@ -150,7 +176,7 @@ const RestaurantDetail = () => {
     }
 
     return (
-        <Container>
+        <Container maxWidth="xl" disableGutters sx={{ px: 2 }}>
             <Box sx={{ my: 4 }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
@@ -180,12 +206,48 @@ const RestaurantDetail = () => {
                             Edit Restaurant
                         </Button>
                     </Box>
+                    
+                    {restaurant.description ? (
+                        <Box sx={{ mt: 2, mb: 3 }}>
+                            <Typography variant="h6" gutterBottom>Description</Typography>
+                            <Typography variant="body1">{restaurant.description}</Typography>
+                        </Box>
+                    ) : null}
+                    
+                    <Grid container spacing={3} sx={{ mt: 1 }}>
+                        <Grid item xs={12} md={6}>
+                            <Box>
+                                <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                                <Typography variant="body1">
+                                    <strong>Open:</strong> {restaurant.openingHours}
+                                </Typography>
+                                <Typography variant="body1">
+                                    <strong>Close:</strong> {restaurant.closingHours}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                            <Box>
+                                <Typography variant="h6" gutterBottom>Contact Information</Typography>
+                                <Typography variant="body1">
+                                    <strong>Phone:</strong> {restaurant.phoneNumber}
+                                </Typography>
+                                <Typography variant="body1">
+                                    <strong>Email:</strong> {restaurant.email}
+                                </Typography>
+                                <Typography variant="body1" sx={{ mt: 1 }}>
+                                    <strong>Address:</strong> {restaurant.address}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </Paper>
 
                 <Card>
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h5" gutterBottom>
+                            <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
                                 Menu Items
                             </Typography>
                             <Button 
@@ -194,6 +256,7 @@ const RestaurantDetail = () => {
                                 startIcon={<AddIcon />}
                                 component={Link}
                                 to={`/add-menu-item/${restaurant._id}`}
+                                size="medium"
                             >
                                 Add Menu Item
                             </Button>
@@ -207,30 +270,32 @@ const RestaurantDetail = () => {
                             <List>
                                 {menuItems.map((item, index) => (
                                     <React.Fragment key={item._id}>
-                                        <ListItem>
+                                        <ListItem 
+                                            secondaryAction={
+                                                <Box sx={{ display: 'flex' }}>
+                                                    <IconButton 
+                                                        edge="end" 
+                                                        aria-label="edit"
+                                                        onClick={() => navigate(`/edit-menu-item/${item._id}`)}
+                                                        color="info"
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton 
+                                                        edge="end" 
+                                                        aria-label="delete"
+                                                        onClick={() => handleDeleteClick(item)}
+                                                        color="error"
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Box>
+                                            }
+                                        >
                                             <ListItemText
                                                 primary={item.name}
                                                 secondary={`$${item.price.toFixed(2)}`}
                                             />
-                                            <ListItemSecondaryAction>
-                                                <IconButton 
-                                                    edge="end" 
-                                                    aria-label="edit"
-                                                    onClick={() => navigate(`/edit-menu-item/${item._id}`)}
-                                                    color="info"
-                                                    sx={{ mr: 1 }}
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton 
-                                                    edge="end" 
-                                                    aria-label="delete"
-                                                    onClick={() => handleDeleteClick(item)}
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </ListItemSecondaryAction>
                                         </ListItem>
                                         {index < menuItems.length - 1 && <Divider />}
                                     </React.Fragment>

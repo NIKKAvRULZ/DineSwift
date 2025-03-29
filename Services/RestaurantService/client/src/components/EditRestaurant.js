@@ -9,7 +9,8 @@ import {
     Container,
     Alert,
     Snackbar,
-    CircularProgress
+    CircularProgress,
+    Grid
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -22,7 +23,13 @@ const EditRestaurant = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
-        location: ''
+        location: '',
+        description: '',
+        openingHours: '',
+        closingHours: '',
+        phoneNumber: '',
+        email: '',
+        address: ''
     });
     
     const [loading, setLoading] = useState(false);
@@ -35,8 +42,23 @@ const EditRestaurant = () => {
             try {
                 setFetchLoading(true);
                 const response = await axios.get(`${apiUrl}/api/restaurants/${id}`);
-                const { name, location } = response.data;
-                setFormData({ name, location });
+                console.log('Restaurant data received:', response.data);
+                
+                // Apply defaults to missing fields
+                const restaurantData = response.data;
+                
+                setFormData({ 
+                    name: restaurantData.name || '', 
+                    location: restaurantData.location || '', 
+                    description: restaurantData.description || '', 
+                    openingHours: restaurantData.openingHours || '', 
+                    closingHours: restaurantData.closingHours || '', 
+                    phoneNumber: restaurantData.phoneNumber || '', 
+                    email: restaurantData.email || '', 
+                    address: restaurantData.address || '' 
+                });
+                
+                console.log('Form data set:', formData);
                 setFetchLoading(false);
             } catch (error) {
                 console.error('Error fetching restaurant:', error);
@@ -95,7 +117,7 @@ const EditRestaurant = () => {
     }
     
     return (
-        <Container maxWidth="sm">
+        <Container maxWidth="md">
             <Box sx={{ my: 4 }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
@@ -113,27 +135,116 @@ const EditRestaurant = () => {
                 </Typography>
                 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                    <TextField
-                        fullWidth
-                        label="Restaurant Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        margin="normal"
-                        disabled={loading}
-                    />
-                    
-                    <TextField
-                        fullWidth
-                        label="Location"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        required
-                        margin="normal"
-                        disabled={loading}
-                    />
+                    <Grid container spacing={3}>
+                        {/* Basic Information */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Basic Information</Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Restaurant Name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Location"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                multiline
+                                rows={3}
+                                disabled={loading}
+                            />
+                        </Grid>
+
+                        {/* Operating Hours */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Opening Hours"
+                                name="openingHours"
+                                value={formData.openingHours}
+                                onChange={handleChange}
+                                disabled={loading}
+                                placeholder="e.g., 9:00 AM"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Closing Hours"
+                                name="closingHours"
+                                value={formData.closingHours}
+                                onChange={handleChange}
+                                disabled={loading}
+                                placeholder="e.g., 10:00 PM"
+                            />
+                        </Grid>
+
+                        {/* Contact Information */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Contact Information</Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Phone Number"
+                                name="phoneNumber"
+                                value={formData.phoneNumber}
+                                onChange={handleChange}
+                                disabled={loading}
+                                placeholder="e.g., +94 77 123 4567"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                disabled={loading}
+                                placeholder="e.g., info@restaurant.com"
+                            />
+                        </Grid>
+
+                        {/* Address */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Address</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Street Address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
+                        </Grid>
+                    </Grid>
                     
                     <Button 
                         type="submit" 

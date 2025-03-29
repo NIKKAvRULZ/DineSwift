@@ -13,28 +13,8 @@ const getAllRestaurants = async (req, res) => {
 
 const addRestaurant = async (req, res) => {
     try {
-        const { 
-            name, 
-            location, 
-            description, 
-            openingHours, 
-            closingHours, 
-            phoneNumber, 
-            email, 
-            address 
-        } = req.body;
-        
-        const restaurant = new Restaurant({ 
-            name, 
-            location, 
-            description, 
-            openingHours, 
-            closingHours, 
-            phoneNumber, 
-            email, 
-            address 
-        });
-        
+        const { name, location } = req.body;
+        const restaurant = new Restaurant({ name, location });
         await restaurant.save();
         res.status(201).json(restaurant);
     } catch (error) {
@@ -56,32 +36,12 @@ const getRestaurant = async (req, res) => {
 
 const updateRestaurant = async (req, res) => {
     try {
-        const { 
-            name, 
-            location, 
-            description, 
-            openingHours, 
-            closingHours, 
-            phoneNumber, 
-            email, 
-            address 
-        } = req.body;
-        
+        const { name, location } = req.body;
         const restaurant = await Restaurant.findByIdAndUpdate(
             req.params.id,
-            { 
-                name, 
-                location, 
-                description, 
-                openingHours, 
-                closingHours, 
-                phoneNumber, 
-                email, 
-                address 
-            },
+            { name, location },
             { new: true }
         ).populate('menuItems');
-        
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
