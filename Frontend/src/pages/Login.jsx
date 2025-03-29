@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -11,6 +11,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,14 +27,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password);
-      if (result.success) {
-        navigate('/restaurants');
-      } else {
-        setError(result.error || 'Failed to login');
-      }
+      await login(formData.email, formData.password);
+      // Redirect to the previous page or restaurants page
+      const from = location.state?.from || '/';
+      navigate(from);
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('Invalid email or password');
     } finally {
       setLoading(false);
     }

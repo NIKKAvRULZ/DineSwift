@@ -5,6 +5,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,20 +13,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const response = await axios.get('http://localhost:3000/api/users/me', {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await axios.get('http://localhost:3000/api/auth/verify', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(response.data);
+        setIsAuthenticated(true);
+      } catch (error) {
+        localStorage.removeItem('token');
+        setUser(null);
+        setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const login = async (email, password) => {
@@ -37,9 +39,10 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       setUser(user);
-      return { success: true };
+      setIsAuthenticated(true);
+      return user;
     } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Login failed' };
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
 
@@ -58,19 +61,16 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setIsAuthenticated(false);
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };

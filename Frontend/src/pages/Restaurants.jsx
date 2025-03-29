@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const Restaurants = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,16 +14,31 @@ const Restaurants = () => {
   const [sortBy, setSortBy] = useState('rating');
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/restaurants' } });
+      return;
+    }
+
     fetchRestaurants();
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const fetchRestaurants = async () => {
     try {
-      const response = await axios.get('http://localhost:5002/api/restaurants');
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5002/api/restaurants', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setRestaurants(response.data);
     } catch (err) {
-      setError('Failed to fetch restaurants');
-      console.error('Error fetching restaurants:', err);
+      if (err.response?.status === 401) {
+        navigate('/login', { state: { from: '/restaurants' } });
+      } else {
+        setError('Failed to fetch restaurants');
+        console.error('Error fetching restaurants:', err);
+      }
     } finally {
       setLoading(false);
     }

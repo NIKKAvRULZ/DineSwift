@@ -1,8 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { OrderProvider } from "./context/OrderContext";
-import Navbar from "./components/Navbar/Navbar";
+import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
@@ -29,8 +29,22 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/restaurants" element={<Restaurants />} />
-                <Route path="/restaurants/:id/menu" element={<Menu />} />
+                <Route
+                  path="/restaurants"
+                  element={
+                    <ProtectedRoute>
+                      <Restaurants />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/restaurants/:id/menu"
+                  element={
+                    <ProtectedRoute>
+                      <Menu />
+                    </ProtectedRoute>
+                  }
+                />
                 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>

@@ -2,134 +2,166 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  return (
-    <div className="bg-white">
-      {/* Hero section */}
-      <div className="relative bg-blue-600">
-        <div className="absolute inset-0">
-          <img
-            className="w-full h-full object-cover"
-            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80"
-            alt="Food background"
-          />
-          <div className="absolute inset-0 bg-blue-600 mix-blend-multiply"></div>
-        </div>
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Delicious Food Delivered To Your Door
-          </h1>
-          <p className="mt-6 text-xl text-blue-100 max-w-3xl">
-            Order from your favorite restaurants and get your food delivered quickly and safely.
-          </p>
-          <div className="mt-10">
-            <Link
-              to="/restaurants"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
-            >
-              Browse Restaurants
-            </Link>
-          </div>
-        </div>
+  const AuthenticatedHome = () => (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+          Welcome back, {user?.name}!
+        </h1>
+        <p className="mt-3 text-xl text-gray-500">
+          Ready to order your favorite food?
+        </p>
       </div>
 
-      {/* Features section */}
-      <div className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:text-center">
-            <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
-            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Why Choose DineSwift?
+      <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Quick Actions Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg font-medium text-gray-900">Quick Order</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Browse restaurants and place your order
             </p>
+            <div className="mt-4">
+              <Link
+                to="/restaurants"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Order Now
+              </Link>
+            </div>
           </div>
+        </div>
 
-          <div className="mt-10">
-            <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-              {/* Feature 1 */}
-              <div className="relative">
-                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-16">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Fast Delivery</h3>
-                  <p className="mt-2 text-base text-gray-500">
-                    Get your food delivered quickly by our professional delivery partners.
-                  </p>
-                </div>
-              </div>
+        {/* Active Orders Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg font-medium text-gray-900">Track Orders</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              View and track your active orders
+            </p>
+            <div className="mt-4">
+              <Link
+                to="/orders"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+              >
+                View Orders
+              </Link>
+            </div>
+          </div>
+        </div>
 
-              {/* Feature 2 */}
-              <div className="relative">
-                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <div className="ml-16">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Safe Delivery</h3>
-                  <p className="mt-2 text-base text-gray-500">
-                    Contactless delivery and strict safety measures for your peace of mind.
-                  </p>
-                </div>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="relative">
-                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                  </svg>
-                </div>
-                <div className="ml-16">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Best Prices</h3>
-                  <p className="mt-2 text-base text-gray-500">
-                    Competitive prices and regular discounts on your favorite food.
-                  </p>
-                </div>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="relative">
-                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </div>
-                <div className="ml-16">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Real-time Tracking</h3>
-                  <p className="mt-2 text-base text-gray-500">
-                    Track your order in real-time and know exactly when it will arrive.
-                  </p>
-                </div>
-              </div>
+        {/* Profile Card */}
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg font-medium text-gray-900">Your Profile</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Manage your account settings
+            </p>
+            <div className="mt-4">
+              <Link
+                to="/profile"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
+              >
+                View Profile
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CTA section */}
-      <div className="bg-blue-700">
-        <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-            <span className="block">Ready to get started?</span>
-            <span className="block">Start ordering today.</span>
-          </h2>
-          <p className="mt-6 text-lg leading-6 text-blue-200">
-            Join thousands of satisfied customers who trust DineSwift for their food delivery needs.
-          </p>
-          <Link
-            to={user ? "/restaurants" : "/signup"}
-            className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 sm:w-auto"
-          >
-            {user ? "Browse Restaurants" : "Get Started"}
-          </Link>
+      {/* Featured Restaurants Section */}
+      <div className="mt-16">
+        <h2 className="text-2xl font-bold text-gray-900">Popular Restaurants</h2>
+        <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Add your restaurant cards here */}
         </div>
       </div>
     </div>
   );
+
+  const UnauthenticatedHome = () => (
+    <div className="bg-white">
+      <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              Delicious food delivered to your doorstep
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Order from your favorite restaurants and get quick delivery right to your location.
+              Join us today to explore amazing cuisines!
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Link
+                to="/signup"
+                className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Get started
+              </Link>
+              <Link
+                to="/login"
+                className="text-sm font-semibold leading-6 text-gray-900"
+              >
+                Already have an account? <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-blue-600">
+              Fast Delivery
+            </h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Everything you need for a perfect meal
+            </p>
+          </div>
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+              <div className="flex flex-col">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  Wide Selection
+                </dt>
+                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <p className="flex-auto">
+                    Choose from hundreds of restaurants and cuisines in your area.
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  Quick Delivery
+                </dt>
+                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <p className="flex-auto">
+                    Get your food delivered hot and fresh within minutes.
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  Easy Tracking
+                </dt>
+                <dd className="mt-1 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <p className="flex-auto">
+                    Track your order in real-time from restaurant to delivery.
+                  </p>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return isAuthenticated ? <AuthenticatedHome /> : <UnauthenticatedHome />;
 };
 
 export default Home;
