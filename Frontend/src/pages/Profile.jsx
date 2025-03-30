@@ -5,51 +5,32 @@ import userService from '../services/userService';
 
 const Profile = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || ''
-  });
 
+  // Animation variants
   const pageAnimation = {
     initial: { opacity: 0 },
-    animate: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    animate: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
-  const itemAnimation = {
+  const cardAnimation = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  // Mock data - replace with actual API calls
+  const mockOrders = [
+    { id: 1, date: '2024-03-30', total: 45.99, status: 'Delivered' },
+    { id: 2, date: '2024-03-25', total: 32.50, status: 'Processing' }
+  ];
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      await userService.updateProfile(formData);
-      setSuccess('Profile updated successfully!');
-    } catch (err) {
-      setError(err.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
+  const deliverySummary = {
+    totalOrders: 15,
+    successfulDeliveries: 14,
+    averageDeliveryTime: '25 mins',
+    favoriteRestaurant: 'Pizza Palace'
   };
 
   return (
@@ -57,143 +38,109 @@ const Profile = () => {
       initial="initial"
       animate="animate"
       variants={pageAnimation}
-      className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12"
+      className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4"
     >
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          variants={itemAnimation}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden mb-8"
-        >
-          <div className="relative h-48 bg-gradient-to-r from-orange-400 to-red-500">
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/50 to-transparent">
-              <h1 className="text-4xl font-bold text-white">Your Profile</h1>
-              <p className="text-white/80 mt-2">Manage your account settings and preferences</p>
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <motion.div variants={cardAnimation} className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <div className="flex items-center space-x-6">
+            <div className="w-24 h-24 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+              <span className="text-4xl text-white font-bold">
+                {user?.name?.charAt(0) || 'U'}
+              </span>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{user?.name}</h1>
+              <p className="text-gray-600">{user?.email}</p>
+              <div className="mt-2 flex items-center space-x-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  Active Member
+                </span>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Profile Information */}
-          <motion.div
-            variants={itemAnimation}
-            className="md:col-span-2 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8"
-          >
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Personal Information</h2>
-            
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            {success && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-green-50 border border-green-200 text-green-600 rounded-lg"
-              >
-                {success}
-              </motion.div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <motion.div variants={itemAnimation}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                />
-              </motion.div>
-
-              <motion.div variants={itemAnimation}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                />
-              </motion.div>
-
-              <motion.div variants={itemAnimation}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                />
-              </motion.div>
-
-              <motion.div variants={itemAnimation}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Delivery Address
-                </label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                />
-              </motion.div>
-
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Personal Information Card */}
+          <motion.div variants={cardAnimation} className="bg-white rounded-2xl shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-500">Phone Number</label>
+                <p className="text-gray-900">{user?.phone || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Address</label>
+                <p className="text-gray-900">{user?.address || 'Not provided'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Member Since</label>
+                <p className="text-gray-900">March 2024</p>
+              </div>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className={`w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-md hover:shadow-lg ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className="mt-4 w-full py-2 px-4 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-all"
               >
-                {loading ? 'Updating...' : 'Update Profile'}
+                Edit Profile
               </motion.button>
-            </form>
+            </div>
           </motion.div>
 
-          {/* Sidebar */}
-          <motion.div variants={itemAnimation} className="space-y-6">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Status</h3>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-green-600">Active</span>
-              </div>
+          {/* Order History Card */}
+          <motion.div variants={cardAnimation} className="bg-white rounded-2xl shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
+            <div className="space-y-4">
+              {mockOrders.map(order => (
+                <motion.div
+                  key={order.id}
+                  className="p-4 border border-gray-100 rounded-lg hover:shadow-md transition-all"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">Order #{order.id}</p>
+                      <p className="text-sm text-gray-500">{order.date}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-gray-900">${order.total}</p>
+                </motion.div>
+              ))}
             </div>
+          </motion.div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-2 px-4 rounded-lg text-gray-700 border border-gray-300 hover:bg-gray-50 transition-all duration-300"
-                >
-                  Change Password
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-2 px-4 rounded-lg text-red-600 border border-red-200 hover:bg-red-50 transition-all duration-300"
-                >
-                  Delete Account
-                </motion.button>
+          {/* Delivery Summary Card */}
+          <motion.div variants={cardAnimation} className="bg-white rounded-2xl shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4">Delivery Summary</h2>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <p className="text-2xl font-bold text-orange-600">
+                    {deliverySummary.totalOrders}
+                  </p>
+                  <p className="text-sm text-gray-600">Total Orders</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    {deliverySummary.successfulDeliveries}
+                  </p>
+                  <p className="text-sm text-gray-600">Successful Deliveries</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Average Delivery Time</p>
+                <p className="text-lg font-medium">{deliverySummary.averageDeliveryTime}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Favorite Restaurant</p>
+                <p className="text-lg font-medium">{deliverySummary.favoriteRestaurant}</p>
               </div>
             </div>
           </motion.div>
@@ -203,4 +150,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;
