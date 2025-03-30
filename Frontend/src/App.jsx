@@ -15,6 +15,7 @@ import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
+import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
@@ -29,6 +30,8 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                
+                {/* Protected Routes */}
                 <Route
                   path="/restaurants"
                   element={
@@ -45,8 +48,16 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/cart"
+                  element={
+                    <ProtectedRoute>
+                      <Cart />
+                    </ProtectedRoute>
+                  }
+                />
                 
-                {/* Protected Routes */}
+                {/* Additional Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/delivery" element={<Delivery />} />
