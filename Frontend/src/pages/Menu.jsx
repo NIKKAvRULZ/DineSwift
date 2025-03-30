@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const Menu = () => {
-  const { restaurantId } = useParams();
+  const { id } = useParams();
   const { user } = useAuth();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
@@ -32,21 +32,21 @@ const Menu = () => {
     const fetchRestaurantAndMenu = async () => {
       try {
         const token = localStorage.getItem('token');
-        const [restaurantRes, menuRes] = await Promise.all([
-          axios.get(`http://localhost:5002/api/restaurants/${restaurantId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:5002/api/restaurants/${restaurantId}/menu`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+        const restaurantMenu =  await axios.get(`http://localhost:5002/api/restaurants/${id}/menu-items`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const restaurant =  await axios.get(`http://localhost:5002/api/restaurants/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        console.log(restaurant.data)
+        console.log(restaurantMenu.data)
 
-        setRestaurant(restaurantRes.data);
-        setMenuItems(menuRes.data);
+        setRestaurant(restaurant.data);
+        setMenuItems(restaurantMenu.data);
         
         // Extract unique categories
-        const uniqueCategories = [...new Set(menuRes.data.map(item => item.category))];
-        setCategories(['all', ...uniqueCategories]);
+        // const uniqueCategories = [...new Set(res.data.map(item => item.category))];
+        // setCategories(['all', ...uniqueCategories]);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch menu data');
       } finally {
@@ -55,7 +55,7 @@ const Menu = () => {
     };
 
     fetchRestaurantAndMenu();
-  }, [restaurantId]);
+  }, []);
 
   const filteredItems = selectedCategory === 'all'
     ? menuItems

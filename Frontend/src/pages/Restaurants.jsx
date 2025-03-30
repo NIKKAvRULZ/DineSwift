@@ -55,7 +55,6 @@ const Restaurants = () => {
       if (sortBy === 'price') return a.minOrder - b.minOrder;
       return 0;
     });
-
   const cuisines = ['all', ...new Set(restaurants.map(r => r.cuisine))];
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
@@ -90,7 +89,7 @@ const Restaurants = () => {
 
         {/* Restaurants Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredRestaurants.map(restaurant => <RestaurantCard key={restaurant.id} restaurant={restaurant} />)}
+          {filteredRestaurants.map(restaurant => <RestaurantCard key={restaurant._id} restaurant={restaurant} />)}
         </div>
 
         {filteredRestaurants.length === 0 && (

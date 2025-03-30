@@ -14,7 +14,7 @@ const RestaurantCard = ({ restaurant }) => (
     whileHover={{ y: -5, scale: 1.02 }}
     className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100 transition-all duration-300"
   >
-    <Link to={`/restaurants/${restaurant.id}/menu`}>
+    <Link to={`/restaurants/${restaurant._id}/menu`}>
       <div className="relative h-48 overflow-hidden">
         <motion.img
           whileHover={{ scale: 1.1 }}

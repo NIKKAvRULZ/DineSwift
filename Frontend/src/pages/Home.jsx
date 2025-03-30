@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
+  console.log("User Data:", user);
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -43,9 +44,10 @@ const Home = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <motion.div {...fadeIn} className="text-center mb-16">
-          <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-4">
-            Welcome back, {user?.name}!
-          </h1>
+        <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-4">
+            Welcome back, {user?.name || "Guest"}!
+        </h1>
+
           <p className="text-xl text-gray-600">
             Ready to explore delicious food today?
           </p>
