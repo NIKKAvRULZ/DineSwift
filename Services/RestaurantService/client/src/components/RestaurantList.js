@@ -3,7 +3,8 @@ import {
     Container, 
     Grid, 
     Card, 
-    CardContent, 
+    CardContent,
+    CardMedia, 
     Typography, 
     CardActions, 
     Button,
@@ -14,7 +15,8 @@ import {
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle
+    DialogTitle,
+    Chip
 } from '@mui/material';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -23,8 +25,18 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const apiUrl = 'http://localhost:5002';
+
+const formatAddress = (address) => {
+    if (!address) return '';
+    const parts = [];
+    if (address.street) parts.push(address.street);
+    if (address.city) parts.push(address.city);
+    return parts.join(', ');
+};
 
 const RestaurantList = () => {
     const [restaurants, setRestaurants] = useState([]);
@@ -127,18 +139,49 @@ const RestaurantList = () => {
                 
                 <Grid container spacing={3}>
                     {restaurants.map((restaurant) => (
-                        <Grid item xs={12} sm={12} md={6} lg={4} key={restaurant._id}>
+                        <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                {restaurant.image && (
+                                    <CardMedia
+                                        component="img"
+                                        height="200"
+                                        image={restaurant.image}
+                                        alt={restaurant.name}
+                                        sx={{ objectFit: 'cover' }}
+                                    />
+                                )}
                                 <CardContent sx={{ flexGrow: 1 }}>
-                                    <Typography variant="h5" component="h2">
+                                    <Typography variant="h5" component="h2" gutterBottom>
                                         {restaurant.name}
                                     </Typography>
-                                    <Typography color="textSecondary">
-                                        {restaurant.location}
+                                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                                        {restaurant.cuisine}
                                     </Typography>
-                                    <Typography variant="body2" component="p">
-                                        Menu Items: {restaurant.menuItems?.length || 0}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <LocationOnIcon sx={{ mr: 1, fontSize: 'small' }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                            {formatAddress(restaurant.address)}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                                        <Chip 
+                                            size="small"
+                                            label={`$${restaurant.minOrder} min`}
+                                            color="primary" 
+                                            variant="outlined"
+                                        />
+                                        <Chip
+                                            size="small"
+                                            icon={<AccessTimeIcon />}
+                                            label={`${restaurant.deliveryTime} min`}
+                                            variant="outlined"
+                                        />
+                                        <Chip
+                                            size="small"
+                                            label={restaurant.isOpen ? 'Open' : 'Closed'}
+                                            color={restaurant.isOpen ? 'success' : 'error'}
+                                        />
+                                    </Box>
                                 </CardContent>
                                 <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
                                     <Button 
@@ -214,4 +257,4 @@ const RestaurantList = () => {
     );
 };
 
-export default RestaurantList; 
+export default RestaurantList;

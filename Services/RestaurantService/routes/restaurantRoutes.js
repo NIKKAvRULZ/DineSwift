@@ -6,6 +6,7 @@ const {
     getRestaurant,
     updateRestaurant,
     deleteRestaurant,
+    findNearbyRestaurants
 } = require('../controllers/restaurantController');
 
 const {
@@ -20,6 +21,7 @@ const {
 // Restaurant routes
 router.get('/restaurants', getAllRestaurants);
 router.post('/restaurants', addRestaurant);
+router.get('/restaurants/nearby', findNearbyRestaurants);
 router.get('/restaurants/:id', getRestaurant);
 router.put('/restaurants/:id', updateRestaurant);
 router.delete('/restaurants/:id', deleteRestaurant);

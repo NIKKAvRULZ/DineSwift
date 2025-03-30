@@ -37,7 +37,15 @@ const getMenuItem = async (req, res) => {
 // Add a new menu item
 const addMenuItem = async (req, res) => {
     try {
-        const { name, price } = req.body;
+        const { 
+            name, 
+            description,
+            image,
+            category,
+            price,
+            isSpicy
+        } = req.body;
+
         const restaurant = await Restaurant.findById(req.params.restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
@@ -45,9 +53,14 @@ const addMenuItem = async (req, res) => {
         
         const menuItem = new MenuItem({
             name,
+            description,
+            image,
+            category,
             price,
+            isSpicy,
             restaurantId: restaurant._id
         });
+        
         await menuItem.save();
         
         restaurant.menuItems.push(menuItem._id);
@@ -62,10 +75,25 @@ const addMenuItem = async (req, res) => {
 // Update a menu item
 const updateMenuItem = async (req, res) => {
     try {
-        const { name, price } = req.body;
+        const { 
+            name, 
+            description,
+            image,
+            category,
+            price,
+            isSpicy
+        } = req.body;
+
         const menuItem = await MenuItem.findByIdAndUpdate(
             req.params.id,
-            { name, price },
+            { 
+                name, 
+                description,
+                image,
+                category,
+                price,
+                isSpicy
+            },
             { new: true }
         ).populate('restaurantId');
         
@@ -109,4 +137,4 @@ module.exports = {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
-}; 
+};

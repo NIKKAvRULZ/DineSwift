@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -11,24 +11,47 @@ import {
     Snackbar,
     CircularProgress,
     Grid,
-    InputAdornment
+    InputAdornment,
+    FormControlLabel,
+    Switch
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
 
+const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
 const AddRestaurant = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
-        location: '',
-        description: '',
-        openingHours: '',
-        closingHours: '',
-        phoneNumber: '',
-        email: '',
-        address: ''
+        cuisine: '',
+        image: '',
+        deliveryTime: 30,
+        minOrder: 0,
+        isOpen: true,
+        address: {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: ''
+        },
+        operatingHours: {
+            monday: { open: '09:00', close: '22:00' },
+            tuesday: { open: '09:00', close: '22:00' },
+            wednesday: { open: '09:00', close: '22:00' },
+            thursday: { open: '09:00', close: '22:00' },
+            friday: { open: '09:00', close: '22:00' },
+            saturday: { open: '09:00', close: '22:00' },
+            sunday: { open: '09:00', close: '22:00' }
+        }
+    });
+
+    // Separate state for coordinates
+    const [coordinates, setCoordinates] = useState({
+        longitude: 0,
+        latitude: 0
     });
     
     const [successMessage, setSuccessMessage] = useState('');
@@ -36,10 +59,43 @@ const AddRestaurant = () => {
     const [loading, setLoading] = useState(false);
     
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.');
+            setFormData(prev => ({
+                ...prev,
+                [parent]: {
+                    ...prev[parent],
+                    [child]: value
+                }
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+
+    const handleOperatingHoursChange = (day, type, value) => {
+        setFormData(prev => ({
+            ...prev,
+            operatingHours: {
+                ...prev.operatingHours,
+                [day]: {
+                    ...prev.operatingHours[day],
+                    [type]: value
+                }
+            }
+        }));
+    };
+
+    const handleCoordinatesChange = (type, value) => {
+        const numValue = parseFloat(value) || 0;
+        setCoordinates(prev => ({
+            ...prev,
+            [type]: numValue
+        }));
     };
     
     const handleSubmit = async (e) => {
@@ -47,20 +103,20 @@ const AddRestaurant = () => {
         try {
             setLoading(true);
             setErrorMessage('');
-            console.log('Submitting restaurant data:', formData);
-            const response = await axios.post(`${apiUrl}/api/restaurants`, formData);
+
+            // Combine formData with location data
+            const submitData = {
+                ...formData,
+                location: {
+                    type: 'Point',
+                    coordinates: [coordinates.longitude, coordinates.latitude]
+                }
+            };
+
+            console.log('Submitting restaurant data:', submitData);
+            const response = await axios.post(`${apiUrl}/api/restaurants`, submitData);
             console.log('Restaurant added:', response.data);
             setSuccessMessage('Restaurant added successfully!');
-            setFormData({
-                name: '',
-                location: '',
-                description: '',
-                openingHours: '',
-                closingHours: '',
-                phoneNumber: '',
-                email: '',
-                address: ''
-            });
             setLoading(false);
             
             // Navigate back to restaurant list after 2 seconds
@@ -94,7 +150,7 @@ const AddRestaurant = () => {
             </Box>
             
             <Paper elevation={3} sx={{ p: 3, my: 4 }}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h5" component="h2" gutterBottom>
                     Add New Restaurant
                 </Typography>
                 
@@ -118,79 +174,76 @@ const AddRestaurant = () => {
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
-                                label="Location"
-                                name="location"
-                                value={formData.location}
+                                label="Cuisine Type"
+                                name="cuisine"
+                                value={formData.cuisine}
                                 onChange={handleChange}
                                 required
                                 disabled={loading}
+                                placeholder="e.g., Italian, Chinese, Indian"
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                label="Description"
-                                name="description"
-                                value={formData.description}
+                                label="Image URL"
+                                name="image"
+                                value={formData.image}
                                 onChange={handleChange}
-                                multiline
-                                rows={3}
+                                required
                                 disabled={loading}
+                                placeholder="https://example.com/restaurant-image.jpg"
                             />
                         </Grid>
-
-                        {/* Operating Hours */}
+                        
+                        {/* Business Details */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                            <Typography variant="h6" gutterBottom>Business Details</Typography>
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
-                                label="Opening Hours"
-                                name="openingHours"
-                                value={formData.openingHours}
+                                label="Delivery Time (minutes)"
+                                name="deliveryTime"
+                                type="number"
+                                value={formData.deliveryTime}
                                 onChange={handleChange}
+                                required
                                 disabled={loading}
-                                placeholder="e.g., 9:00 AM"
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">min</InputAdornment>
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
-                                label="Closing Hours"
-                                name="closingHours"
-                                value={formData.closingHours}
+                                label="Minimum Order Amount"
+                                name="minOrder"
+                                type="number"
+                                value={formData.minOrder}
                                 onChange={handleChange}
+                                required
                                 disabled={loading}
-                                placeholder="e.g., 10:00 PM"
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">$</InputAdornment>
+                                }}
                             />
                         </Grid>
-
-                        {/* Contact Information */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" gutterBottom>Contact Information</Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Phone Number"
-                                name="phoneNumber"
-                                value={formData.phoneNumber}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="e.g., +94 77 123 4567"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="e.g., info@restaurant.com"
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.isOpen}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            isOpen: e.target.checked
+                                        }))}
+                                        name="isOpen"
+                                        disabled={loading}
+                                    />
+                                }
+                                label="Restaurant is Open"
                             />
                         </Grid>
 
@@ -202,12 +255,113 @@ const AddRestaurant = () => {
                             <TextField
                                 fullWidth
                                 label="Street Address"
-                                name="address"
-                                value={formData.address}
+                                name="address.street"
+                                value={formData.address.street}
                                 onChange={handleChange}
+                                required
                                 disabled={loading}
                             />
                         </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="City"
+                                name="address.city"
+                                value={formData.address.city}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="State"
+                                name="address.state"
+                                value={formData.address.state}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="ZIP Code"
+                                name="address.zipCode"
+                                value={formData.address.zipCode}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+
+                        {/* Location Coordinates */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Location Coordinates</Typography>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Longitude"
+                                type="number"
+                                value={coordinates.longitude}
+                                onChange={(e) => handleCoordinatesChange('longitude', e.target.value)}
+                                required
+                                disabled={loading}
+                                inputProps={{
+                                    step: 'any'
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Latitude"
+                                type="number"
+                                value={coordinates.latitude}
+                                onChange={(e) => handleCoordinatesChange('latitude', e.target.value)}
+                                required
+                                disabled={loading}
+                                inputProps={{
+                                    step: 'any'
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Operating Hours */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                        </Grid>
+                        {DAYS_OF_WEEK.map((day) => (
+                            <Grid item xs={12} key={day}>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <Typography sx={{ minWidth: 100, textTransform: 'capitalize' }}>
+                                        {day}
+                                    </Typography>
+                                    <TextField
+                                        label="Opening Time"
+                                        type="time"
+                                        value={formData.operatingHours[day].open}
+                                        onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
+                                        disabled={loading}
+                                        InputLabelProps={{ shrink: true }}
+                                        inputProps={{ step: 300 }}
+                                        sx={{ flex: 1 }}
+                                    />
+                                    <TextField
+                                        label="Closing Time"
+                                        type="time"
+                                        value={formData.operatingHours[day].close}
+                                        onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
+                                        disabled={loading}
+                                        InputLabelProps={{ shrink: true }}
+                                        inputProps={{ step: 300 }}
+                                        sx={{ flex: 1 }}
+                                    />
+                                </Box>
+                            </Grid>
+                        ))}
                     </Grid>
                     
                     <Button 
@@ -246,4 +400,4 @@ const AddRestaurant = () => {
     );
 };
 
-export default AddRestaurant; 
+export default AddRestaurant;
