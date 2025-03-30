@@ -5,12 +5,15 @@ import {
     Typography,
     Card,
     CardContent,
+    CardMedia,
     Grid,
     Box,
     List,
     ListItem,
     ListItemText,
     ListItemSecondaryAction,
+    ListItemAvatar,
+    Avatar,
     IconButton,
     Divider,
     Paper,
@@ -21,15 +24,29 @@ import {
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle
+    DialogTitle,
+    Chip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import FastfoodIcon from '@mui/icons-material/Fastfood';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
+
+const formatAddress = (address) => {
+    if (!address) return '';
+    const parts = [];
+    if (address.street) parts.push(address.street);
+    if (address.city) parts.push(address.city);
+    if (address.state) parts.push(address.state);
+    if (address.zipCode) parts.push(address.zipCode);
+    return parts.join(', ');
+};
 
 const RestaurantDetail = () => {
     const { id } = useParams();
@@ -43,16 +60,13 @@ const RestaurantDetail = () => {
 
     const fetchData = async () => {
         try {
-            console.log(`Fetching restaurant details for ID: ${id}`);
             setLoading(true);
             setError(null);
             
             const restaurantResponse = await axios.get(`${apiUrl}/api/restaurants/${id}`);
-            console.log('Restaurant data:', restaurantResponse.data);
             setRestaurant(restaurantResponse.data);
             
             const menuResponse = await axios.get(`${apiUrl}/api/restaurants/${id}/menu-items`);
-            console.log('Menu items data:', menuResponse.data);
             setMenuItems(menuResponse.data);
             
             setLoading(false);
@@ -87,7 +101,6 @@ const RestaurantDetail = () => {
             await axios.delete(`${apiUrl}/api/menu-items/${menuItemToDelete._id}`);
             setDeleteDialogOpen(false);
             setMenuItemToDelete(null);
-            // Refresh the data
             fetchData();
         } catch (error) {
             console.error('Error deleting menu item:', error);
@@ -150,7 +163,7 @@ const RestaurantDetail = () => {
     }
 
     return (
-        <Container>
+        <Container maxWidth="xl" disableGutters sx={{ px: 2 }}>
             <Box sx={{ my: 4 }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
@@ -161,14 +174,53 @@ const RestaurantDetail = () => {
                 </Button>
                 
                 <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                    {/* Restaurant Image */}
+                    {restaurant.image && (
+                        <Box 
+                            sx={{ 
+                                width: '100%', 
+                                height: 300, 
+                                mb: 3,
+                                borderRadius: 2,
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <img 
+                                src={restaurant.image} 
+                                alt={restaurant.name}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                            />
+                        </Box>
+                    )}
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box>
                             <Typography variant="h4" component="h1" gutterBottom>
                                 {restaurant.name}
                             </Typography>
                             <Typography variant="h6" color="textSecondary" gutterBottom>
-                                {restaurant.location}
+                                {restaurant.cuisine}
                             </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                <Chip 
+                                    label={`Min. Order: $${restaurant.minOrder}`} 
+                                    color="primary" 
+                                    variant="outlined" 
+                                />
+                                <Chip 
+                                    label={`${restaurant.deliveryTime} mins delivery`} 
+                                    color="primary" 
+                                    variant="outlined" 
+                                />
+                                <Chip 
+                                    label={restaurant.isOpen ? 'Open' : 'Closed'} 
+                                    color={restaurant.isOpen ? 'success' : 'error'} 
+                                />
+                            </Box>
                         </Box>
                         <Button 
                             variant="contained" 
@@ -180,12 +232,38 @@ const RestaurantDetail = () => {
                             Edit Restaurant
                         </Button>
                     </Box>
+
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                            <Box>
+                                <Typography variant="h6" gutterBottom>
+                                    <LocationOnIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                    Address
+                                </Typography>
+                                <Typography variant="body1" paragraph>
+                                    {formatAddress(restaurant.address)}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                            <Box>
+                                <Typography variant="h6" gutterBottom>Operating Hours</Typography>
+                                {Object.entries(restaurant.operatingHours || {}).map(([day, hours]) => (
+                                    <Typography key={day} variant="body2" sx={{ mb: 0.5 }}>
+                                        <strong style={{ textTransform: 'capitalize' }}>{day}:</strong>
+                                        {' '}{hours.open} - {hours.close}
+                                    </Typography>
+                                ))}
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </Paper>
 
                 <Card>
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h5" gutterBottom>
+                            <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
                                 Menu Items
                             </Typography>
                             <Button 
@@ -194,6 +272,7 @@ const RestaurantDetail = () => {
                                 startIcon={<AddIcon />}
                                 component={Link}
                                 to={`/add-menu-item/${restaurant._id}`}
+                                size="medium"
                             >
                                 Add Menu Item
                             </Button>
@@ -204,38 +283,72 @@ const RestaurantDetail = () => {
                                 No menu items available. Add some menu items to get started!
                             </Typography>
                         ) : (
-                            <List>
-                                {menuItems.map((item, index) => (
-                                    <React.Fragment key={item._id}>
-                                        <ListItem>
-                                            <ListItemText
-                                                primary={item.name}
-                                                secondary={`$${item.price.toFixed(2)}`}
-                                            />
-                                            <ListItemSecondaryAction>
-                                                <IconButton 
-                                                    edge="end" 
-                                                    aria-label="edit"
-                                                    onClick={() => navigate(`/edit-menu-item/${item._id}`)}
-                                                    color="info"
-                                                    sx={{ mr: 1 }}
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton 
-                                                    edge="end" 
-                                                    aria-label="delete"
-                                                    onClick={() => handleDeleteClick(item)}
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
-                                        {index < menuItems.length - 1 && <Divider />}
-                                    </React.Fragment>
+                            <Grid container spacing={2}>
+                                {menuItems.map((item) => (
+                                    <Grid item xs={12} sm={6} md={4} key={item._id}>
+                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                            {item.image && (
+                                                <CardMedia
+                                                    component="img"
+                                                    height="140"
+                                                    image={item.image}
+                                                    alt={item.name}
+                                                />
+                                            )}
+                                            <CardContent>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <Typography variant="h6" component="h3">
+                                                        {item.name}
+                                                    </Typography>
+                                                    {item.isSpicy && (
+                                                        <LocalFireDepartmentIcon color="error" />
+                                                    )}
+                                                </Box>
+                                                <Typography variant="subtitle1" color="primary" gutterBottom>
+                                                    ${item.price.toFixed(2)}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    {item.description}
+                                                </Typography>
+                                                <Chip 
+                                                    icon={<FastfoodIcon />}
+                                                    label={item.category}
+                                                    size="small"
+                                                    sx={{ mt: 1 }}
+                                                />
+                                            </CardContent>
+                                            <Box sx={{ p: 2, mt: 'auto' }}>
+                                                <Grid container spacing={1}>
+                                                    <Grid item xs={6}>
+                                                        <Button
+                                                            fullWidth
+                                                            size="small"
+                                                            onClick={() => navigate(`/edit-menu-item/${item._id}`)}
+                                                            startIcon={<EditIcon />}
+                                                            variant="outlined"
+                                                            color="info"
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid item xs={6}>
+                                                        <Button
+                                                            fullWidth
+                                                            size="small"
+                                                            onClick={() => handleDeleteClick(item)}
+                                                            startIcon={<DeleteIcon />}
+                                                            variant="outlined"
+                                                            color="error"
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    </Grid>
+                                                </Grid>
+                                            </Box>
+                                        </Card>
+                                    </Grid>
                                 ))}
-                            </List>
+                            </Grid>
                         )}
                     </CardContent>
                 </Card>
@@ -268,4 +381,4 @@ const RestaurantDetail = () => {
     );
 };
 
-export default RestaurantDetail; 
+export default RestaurantDetail;
