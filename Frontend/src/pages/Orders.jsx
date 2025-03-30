@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 
 const Orders = () => {
   const { isAuthenticated } = useAuth();
-  console.log('Orders component rendered...');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -14,41 +13,26 @@ const Orders = () => {
 
   const pageAnimation = {
     initial: { opacity: 0 },
-    animate: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    animate: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemAnimation = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 }
+    animate: { opacity: 1, y: 0 },
   };
 
   useEffect(() => {
-    console.log('useEffect hook executed...');
     fetchOrders();
   }, []);
-  
-  useEffect(() => {
-    console.log('Orders state updated:', orders);
-  }, [orders]);
 
   const fetchOrders = async () => {
     try {
-      console.log('Fetching orders from API...');
-      const token = localStorage.getItem('token'); // Add this
-      console.log('Auth token:', token); // Add this
-      
       const data = await orderService.getAllOrders();
-      console.log('Fetched orders:', data);
       setOrders(data);
     } catch (err) {
-      console.error('Error details:', err.response || err); // Enhanced error logging
       setError(err.message);
     } finally {
       setLoading(false);
-      console.log('Loading state:', loading);
     }
   };
 
@@ -60,12 +44,12 @@ const Orders = () => {
       ready: 'bg-indigo-100 text-indigo-800',
       delivering: 'bg-orange-100 text-orange-800',
       delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      cancelled: 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order) => {
     if (filter === 'active') {
       return ['pending', 'confirmed', 'preparing', 'ready', 'delivering'].includes(order.status);
     }
@@ -80,7 +64,7 @@ const Orders = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full"
         />
       </div>
@@ -95,7 +79,7 @@ const Orders = () => {
       className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           variants={itemAnimation}
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden mb-8"
         >
@@ -116,7 +100,7 @@ const Orders = () => {
           </motion.div>
         )}
 
-        <motion.div 
+        <motion.div
           variants={itemAnimation}
           className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8"
         >
@@ -144,16 +128,23 @@ const Orders = () => {
             <motion.div
               key={order._id}
               variants={itemAnimation}
-              className="bg-white p-6 rounded-lg shadow-md"
+              className="bg-white p-6 rounded-lg shadow-md transform hover:scale-105 transition-all duration-300 ease-in-out"
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Order #{order._id}</h3>
-                <Link 
+                <Link
                   to={`/tracking/${order._id}`}
                   className="text-orange-500 hover:text-orange-600"
                 >
                   Track Order →
                 </Link>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(order.status)}`}
+                >
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
               </div>
             </motion.div>
           ))}
