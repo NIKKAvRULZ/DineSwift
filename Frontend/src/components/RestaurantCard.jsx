@@ -1,21 +1,57 @@
-export default function RestaurantCard({ restaurant }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <img
-        className="h-48 w-full object-cover"
-        src={restaurant.image}
-        alt={restaurant.name}
-      />
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900">{restaurant.name}</h3>
-        <p className="text-sm text-gray-500">{restaurant.cuisine}</p>
-        <div className="mt-2 flex items-center">
-          <span className="text-yellow-400">★</span>
-          <span className="ml-1 text-sm text-gray-600">{restaurant.rating}</span>
-          <span className="mx-2 text-gray-300">•</span>
-          <span className="text-sm text-gray-600">{restaurant.deliveryTime} mins</span>
+// RestaurantCard.jsx
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import defaultImage from '../assets/placeholder-restaurant.png'
+
+const cardAnimation = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 }
+};
+
+const RestaurantCard = ({ restaurant }) => (
+  <motion.div
+    variants={cardAnimation}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100 transition-all duration-300"
+  >
+    <Link to={`/restaurants/${restaurant.id}/menu`}>
+      <div className="relative h-48 overflow-hidden">
+        <motion.img
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+          src={restaurant.image ?? defaultImage}
+          alt={restaurant.name}
+          className="w-full h-full object-cover"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium ${
+            restaurant.isOpen ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}
+        >
+          {restaurant.isOpen ? 'Open' : 'Closed'}
+        </motion.div>
+      </div>
+
+      <div className="p-6">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">{restaurant.name}</h3>
+        <p className="text-gray-600 mb-4">{restaurant.cuisine}</p>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-yellow-400 mr-1">⭐</span>
+            <span className="text-gray-700">{restaurant.rating}</span>
+          </div>
+          <div className="text-gray-600">{restaurant.deliveryTime} min</div>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <span className="text-sm text-gray-500">Min. order: ${restaurant.minOrder}</span>
         </div>
       </div>
-    </div>
-  );
-} 
+    </Link>
+  </motion.div>
+);
+
+export default RestaurantCard;
