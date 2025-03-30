@@ -58,14 +58,27 @@ const App = () => {
                 />
                 
                 {/* Additional Protected Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/delivery" element={<Delivery />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/tracking" element={<OrderTracking />} />
-                </Route>
+                <Route
+                  path="/orders"
+                  element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/delivery" element={<Delivery />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route
+                  path="/tracking/:orderId"
+                  element={
+                    <ProtectedRoute>
+                      <OrderTracking />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/tracking" element={<OrderTracking />} />
               </Routes>
             </main>
             <Footer />

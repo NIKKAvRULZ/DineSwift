@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import orderService from '../services/orderService';
+import { useAuth } from '../context/AuthContext';
 
 const Orders = () => {
+  const { isAuthenticated } = useAuth();
+  console.log('Orders component rendered...');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -23,17 +26,29 @@ const Orders = () => {
   };
 
   useEffect(() => {
+    console.log('useEffect hook executed...');
     fetchOrders();
   }, []);
+  
+  useEffect(() => {
+    console.log('Orders state updated:', orders);
+  }, [orders]);
 
   const fetchOrders = async () => {
     try {
+      console.log('Fetching orders from API...');
+      const token = localStorage.getItem('token'); // Add this
+      console.log('Auth token:', token); // Add this
+      
       const data = await orderService.getAllOrders();
+      console.log('Fetched orders:', data);
       setOrders(data);
     } catch (err) {
+      console.error('Error details:', err.response || err); // Enhanced error logging
       setError(err.message);
     } finally {
       setLoading(false);
+      console.log('Loading state:', loading);
     }
   };
 
@@ -127,49 +142,19 @@ const Orders = () => {
         <motion.div variants={itemAnimation} className="space-y-6">
           {filteredOrders.map((order) => (
             <motion.div
-              key={order.id}
-              whileHover={{ y: -5 }}
-              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-orange-100"
+              key={order._id}
+              variants={itemAnimation}
+              className="bg-white p-6 rounded-lg shadow-md"
             >
-              <Link to={`/tracking/${order.id}`}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <motion.img
-                        whileHover={{ scale: 1.1 }}
-                        src={order.restaurantImage}
-                        alt={order.restaurantName}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {order.restaurantName}
-                        </h3>
-                        <p className="text-gray-600">
-                          Order #{order.id} • {order.items?.length} items
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </span>
-                      <span className="text-lg font-semibold text-gray-900">
-                        ${order.total?.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-100 pt-4 mt-4">
-                    <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Order #{order._id}</h3>
+                <Link 
+                  to={`/tracking/${order._id}`}
+                  className="text-orange-500 hover:text-orange-600"
+                >
+                  Track Order →
+                </Link>
+              </div>
             </motion.div>
           ))}
 

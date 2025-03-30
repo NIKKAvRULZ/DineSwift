@@ -1,122 +1,164 @@
 import { useState, useEffect } from 'react';
-import { useOrder } from '../context/OrderContext';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import orderService from '../services/orderService';
 
 const OrderTracking = () => {
-  const { activeOrder } = useOrder();
+  const { orderId } = useParams();
   const navigate = useNavigate();
-  const [estimatedTime, setEstimatedTime] = useState(30);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const stages = [
+    { key: 'pending', label: 'Order Placed', icon: '📝' },
+    { key: 'confirmed', label: 'Confirmed', icon: '✅' },
+    { key: 'preparing', label: 'Preparing', icon: '👨‍🍳' },
+    { key: 'ready', label: 'Ready', icon: '🍽️' },
+    { key: 'delivering', label: 'On the Way', icon: '🚗' },
+    { key: 'delivered', label: 'Delivered', icon: '🎉' }
+  ];
 
   useEffect(() => {
-    if (!activeOrder) {
+    if (!orderId) {
       navigate('/orders');
       return;
     }
 
-    // Simulate countdown
-    const timer = setInterval(() => {
-      setEstimatedTime((prev) => Math.max(0, prev - 1));
-    }, 60000); // Update every minute
+    const fetchOrder = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching order with ID:', orderId); // Debug log
+        const data = await orderService.getOrderById(orderId);
+        console.log('Fetched order data:', data); // Debug log
+        setOrder(data);
+      } catch (err) {
+        console.error('Error fetching order:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOrder();
+    // Set up real-time updates here if available
+  }, [orderId, navigate]);
 
-    return () => clearInterval(timer);
-  }, [activeOrder, navigate]);
-
-  if (!activeOrder) {
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
   }
 
-  const getStatusSteps = () => {
-    const steps = [
-      { id: 'confirmed', title: 'Order Confirmed', description: 'Your order has been received' },
-      { id: 'preparing', title: 'Preparing', description: 'Restaurant is preparing your food' },
-      { id: 'ready', title: 'Ready for Pickup', description: 'Your order is ready for pickup' },
-      { id: 'picked_up', title: 'Picked Up', description: 'Driver has picked up your order' },
-      { id: 'delivering', title: 'On the Way', description: 'Your order is on the way' },
-      { id: 'delivered', title: 'Delivered', description: 'Enjoy your meal!' }
-    ];
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-red-600 text-xl font-bold mb-2">Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
-    const currentStepIndex = steps.findIndex(step => step.id === activeOrder.status);
-    return steps.map((step, index) => ({
-      ...step,
-      status: index < currentStepIndex ? 'complete' : index === currentStepIndex ? 'current' : 'upcoming'
-    }));
-  };
+  const currentStageIndex = stages.findIndex(stage => stage.key === order?.status);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        {/* Header */}
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Order #{activeOrder.id}
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Estimated delivery in {estimatedTime} minutes
-          </p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="px-4 py-5 sm:p-6">
-          <nav aria-label="Progress">
-            <ol role="list" className="overflow-hidden">
-              {getStatusSteps().map((step, stepIdx) => (
-                <li key={step.id} className={stepIdx !== getStatusSteps().length - 1 ? 'pb-10' : ''}>
-                  <div className="relative flex items-start group">
-                    {step.status === 'complete' ? (
-                      <div className="flex items-center justify-center w-9 h-9 rounded-full bg-green-500">
-                        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    ) : step.status === 'current' ? (
-                      <div className="flex items-center justify-center w-9 h-9 rounded-full border-2 border-blue-600">
-                        <span className="h-2.5 w-2.5 bg-blue-600 rounded-full"></span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center w-9 h-9 rounded-full border-2 border-gray-300">
-                        <span className="h-2.5 w-2.5 bg-transparent rounded-full"></span>
-                      </div>
-                    )}
-                    <div className="ml-4 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">
-                        {step.title}
-                      </div>
-                      <p className="text-sm text-gray-500">{step.description}</p>
-                    </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+        >
+          <div className="p-6">
+            <h1 className="text-2xl font-bold mb-6">Order #{orderId}</h1>
+            
+            {/* Progress Timeline */}
+            <div className="relative">
+              <div className="absolute left-0 top-[2.4rem] w-full h-1 bg-gray-200">
+                <div 
+                  className="h-full bg-orange-500 transition-all duration-500"
+                  style={{ width: `${(currentStageIndex / (stages.length - 1)) * 100}%` }}
+                />
+              </div>
+              
+              <div className="relative flex justify-between mb-8">
+                {stages.map((stage, index) => (
+                  <div 
+                    key={stage.key}
+                    className={`flex flex-col items-center ${
+                      index <= currentStageIndex ? 'text-orange-500' : 'text-gray-400'
+                    }`}
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl
+                        ${index <= currentStageIndex ? 'bg-orange-100' : 'bg-gray-100'}`}
+                    >
+                      {stage.icon}
+                    </motion.div>
+                    <span className="mt-2 text-sm font-medium">{stage.label}</span>
                   </div>
-                  {stepIdx !== getStatusSteps().length - 1 && (
-                    <div className="absolute top-4 left-4 -ml-px mt-0.5 h-full w-0.5 bg-gray-300"></div>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </nav>
-        </div>
+                ))}
+              </div>
+            </div>
 
-        {/* Order Details */}
-        <div className="px-4 py-5 sm:px-6 border-t border-gray-200">
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Delivery Address</dt>
-              <dd className="mt-1 text-sm text-gray-900">{activeOrder.deliveryAddress}</dd>
+            {/* Order Details */}
+            <div className="mt-8 space-y-6">
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-600">Restaurant</p>
+                    <p className="font-medium">{order?.restaurantName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Order Date</p>
+                    <p className="font-medium">
+                      {new Date(order?.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Total Amount</p>
+                    <p className="font-medium">${order?.total?.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Items</p>
+                    <p className="font-medium">{order?.items?.length} items</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-semibold mb-4">Order Items</h2>
+                <div className="space-y-4">
+                  {order?.items?.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      </div>
+                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Restaurant</dt>
-              <dd className="mt-1 text-sm text-gray-900">{activeOrder.restaurantName}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Order Total</dt>
-              <dd className="mt-1 text-sm text-gray-900">${activeOrder.total?.toFixed(2)}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Payment Method</dt>
-              <dd className="mt-1 text-sm text-gray-900">Credit Card (...{activeOrder.paymentLast4})</dd>
-            </div>
-          </dl>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
 };
 
-export default OrderTracking; 
+export default OrderTracking;
