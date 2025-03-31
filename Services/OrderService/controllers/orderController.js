@@ -3,17 +3,21 @@ const Order = require("../models/Order");
 // Create a new order
 exports.createOrder = async (req, res) => {
     try {
-        const { customerId, restaurantId, items, totalAmount, status } = req.body;
+        console.log("Request body:", req.body);
+        const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
         const newOrder = new Order({
             customerId,
             restaurantId,
             items,
             totalAmount,
-            status: status || "Pending"
+            status: status || "Pending",
+            paymentMethod,
+            deliveryAddress
         });
         await newOrder.save();
         res.status(201).json(newOrder);
     } catch (error) {
+        console.error("Error creating order:", error);
         res.status(500).json({ error: error.message });
     }
 };
