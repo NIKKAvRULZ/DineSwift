@@ -5,7 +5,7 @@ const OrderSchema = new mongoose.Schema({
     restaurantId: { type: String, required: true },
     items: [{ name: String, price: Number, quantity: Number }],
     totalAmount: { type: Number, required: true },
-    status: { type: String, enum: ["Pending", "Accepted", "Preparing", "On the Way", "Delivered"], default: "Pending" },
+    status: { type: String, enum: ["Pending", "confirmed", "preparing", "ready", "delivering","delivered"], default: "Pending" },
     createdAt: { type: Date, default: Date.now }
 });
 

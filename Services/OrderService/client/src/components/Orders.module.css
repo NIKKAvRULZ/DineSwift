@@ -1,0 +1,124 @@
+.container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.createButton {
+  background-color: #4CAF50;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.createButton:hover {
+  background-color: #45a049;
+}
+
+.ordersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.orderCard {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.orderCard:hover {
+  transform: translateY(-2px);
+}
+
+.orderCard h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.orderCard p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.editButton, .deleteButton {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.editButton {
+  background-color: #2196F3;
+  color: white;
+  text-decoration: none;
+}
+
+.editButton:hover {
+  background-color: #1976D2;
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+}
+
+.deleteButton:hover {
+  background-color: #d32f2f;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: #f44336;
+  background-color: #ffebee;
+  border-radius: 4px;
+  margin: 1rem;
+}
+
+.pending {
+  color: #ff9800;
+}
+
+.accepted {
+  color: #2196F3;
+}
+
+.preparing {
+  color: #9c27b0;
+}
+
+.on-the-way {
+  color: #4CAF50;
+}
+
+.delivered {
+  color: #607d8b;
+} 
