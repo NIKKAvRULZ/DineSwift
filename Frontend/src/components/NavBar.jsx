@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { FaShoppingCart } from 'react-icons/fa';
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -56,7 +57,7 @@ const Navbar = () => {
 
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <>
+              <><div className="flex items-center space-x-4">
                 <motion.div variants={linkHover} whileHover="hover">
                   <Link
                     to="/restaurants"
@@ -89,7 +90,15 @@ const Navbar = () => {
                 >
                   Logout
                 </motion.button>
-              </>
+              </div><motion.div variants={linkHover} whileHover="hover">
+                  <Link
+                    to="/cart"
+                    className="px-4 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300 flex items-center"
+                  >
+                    <FaShoppingCart className="mr-2" />
+                    Cart
+                  </Link>
+                </motion.div></>
             ) : (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

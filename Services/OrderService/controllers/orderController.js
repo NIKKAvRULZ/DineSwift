@@ -3,18 +3,39 @@ const Order = require("../models/Order");
 // Create a new order
 exports.createOrder = async (req, res) => {
     try {
-        const { customerId, restaurantId, items, totalAmount, status } = req.body;
+        const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
+        
+        // Validate required fields
+        if (!customerId || !restaurantId || !items || !totalAmount || !paymentMethod || !deliveryAddress) {
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                required: ['customerId', 'restaurantId', 'items', 'totalAmount', 'paymentMethod', 'deliveryAddress']
+            });
+        }
+
+        // Validate items array
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Items must be a non-empty array' });
+        }
+
         const newOrder = new Order({
             customerId,
             restaurantId,
             items,
             totalAmount,
-            status: status || "Pending"
+            status: status || "pending",
+            paymentMethod,
+            deliveryAddress
         });
-        await newOrder.save();
-        res.status(201).json(newOrder);
+
+        const savedOrder = await newOrder.save();
+        res.status(201).json(savedOrder);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error creating order:", error);
+        res.status(500).json({ 
+            error: 'Failed to create order',
+            details: error.message 
+        });
     }
 };
 

@@ -18,8 +18,9 @@ import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
 import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
+import Checkout from "./pages/Checkout"; // Import Checkout page
 
-const App = () => {
+function App() {
   return (
     <AuthProvider>
       <CartProvider>
@@ -88,6 +89,14 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/checkout"
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </main>
             <Footer />
@@ -96,6 +105,6 @@ const App = () => {
       </CartProvider>
     </AuthProvider>
   );
-};
+}
 
 export default App;

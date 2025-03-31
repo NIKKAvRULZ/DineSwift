@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { useCart } from '../context/CartContext'; // Import useCart
 import { useNavigate } from 'react-router-dom';
 import defaultItemImage from '../assets/placeholder-menu.png' 
 import defaultResImage from '../assets/placeholder-restaurant.png' 
@@ -16,8 +17,9 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cart, setCart] = useState([]);
+  const { cartItems, getTotal } = useCart(); // Destructure cartItems and getTotal from useCart
   const navigate = useNavigate();
+  const { addToCart } = useCart(); // Destructure addToCart from useCart
 
 
   const pageAnimation = {
@@ -69,16 +71,7 @@ const Menu = () => {
   
   // Add item to the cart
   const handleAddToCart = (item) => {
-    setCart((prevCart) => {
-      const itemIndex = prevCart.findIndex((i) => i.id === item.id);
-      if (itemIndex === -1) {
-        return [...prevCart, { ...item, quantity: 1 }];
-      } else {
-        const updatedCart = [...prevCart];
-        updatedCart[itemIndex].quantity += 1;
-        return updatedCart;
-      }
-    });
+    addToCart(item, id); // Use addToCart from CartContext
   };
 
 
@@ -234,7 +227,7 @@ const Menu = () => {
       </div>
 
       {/* Cart Preview */}
-      {cart.length > 0 && (
+      {cartItems.length > 0 && (
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
@@ -243,11 +236,11 @@ const Menu = () => {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div>
               <span className="text-gray-600">
-                {cart.reduce((acc, item) => acc + item.quantity, 0)} items
+                {cartItems.reduce((acc, item) => acc + item.quantity, 0)} items
               </span>
               <span className="mx-2">•</span>
               <span className="font-semibold">
-                ${cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2)}
+                ${getTotal().toFixed(2)}
               </span>
             </div>
             <motion.button
