@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import orderService from '../api/orderService';
 
 const Checkout = () => {
   const location = useLocation();
@@ -10,6 +11,7 @@ const Checkout = () => {
   const { clearCart } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [address, setAddress] = useState(user?.address || '');
 
@@ -21,36 +23,36 @@ const Checkout = () => {
   }
 
   const handlePlaceOrder = async () => {
+    if (!address) {
+      setError('Please provide a delivery address');
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
       
       const orderData = {
-        userId: user.id,
-        items,
+        customerId: user.id,
+        restaurantId: items[0].restaurantId, // Assuming all items are from same restaurant
+        items: items.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
         totalAmount: total,
-        deliveryAddress: address,
+        status: "Pending",
         paymentMethod,
-        status: 'pending'
+        deliveryAddress: address
       };
 
-      const response = await fetch('http://localhost:5003/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify(orderData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to place order');
-      }
-
-      const order = await response.json();
+      const response = await orderService.createOrder(orderData, user.token);
+      
       clearCart();
-      navigate(`/order-confirmation/${order.id}`);
+      navigate(`/order-confirmation/${response._id}`);
     } catch (error) {
       console.error('Error placing order:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -77,6 +79,7 @@ const Checkout = () => {
                 placeholder="Enter your delivery address"
                 required
               />
+              {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
 
             <div>
