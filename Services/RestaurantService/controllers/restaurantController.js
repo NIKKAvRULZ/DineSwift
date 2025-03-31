@@ -11,48 +11,7 @@ const getAllRestaurants = async (req, res) => {
     }
 };
 
-const addRestaurant = async (req, res) => {
-    try {
-        const { 
-            name,
-            cuisine,
-            image,
-            deliveryTime,
-            minOrder,
-            isOpen,
-            address,
-            location,
-            operatingHours
-        } = req.body;
-        
-        // Validate location data
-        if (!location || !location.type || !location.coordinates || 
-            location.coordinates.length !== 2) {
-            return res.status(400).json({ 
-                message: 'Invalid location data. Must provide type "Point" and [longitude, latitude] coordinates'
-            });
-        }
-
-        // Create new restaurant
-        const restaurant = new Restaurant({ 
-            name,
-            cuisine,
-            image,
-            deliveryTime,
-            minOrder,
-            isOpen,
-            address,
-            location,
-            operatingHours
-        });
-        
-        await restaurant.save();
-        res.status(201).json(restaurant);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
+// Get a single restaurant
 const getRestaurant = async (req, res) => {
     try {
         const restaurant = await Restaurant.findById(req.params.id).populate('menuItems');
@@ -65,62 +24,64 @@ const getRestaurant = async (req, res) => {
     }
 };
 
-const updateRestaurant = async (req, res) => {
+// Add a new restaurant
+const addRestaurant = async (req, res) => {
     try {
-        const { 
-            name,
-            cuisine,
-            image,
-            deliveryTime,
-            minOrder,
-            isOpen,
-            address,
-            location,
-            operatingHours
-        } = req.body;
+        const restaurantData = {
+            ...req.body,
+            rating: req.body.rating || 0 // Ensure rating has a default value
+        };
         
-        // Validate location data if provided
-        if (location && (!location.type || !location.coordinates || 
-            location.coordinates.length !== 2)) {
-            return res.status(400).json({ 
-                message: 'Invalid location data. Must provide type "Point" and [longitude, latitude] coordinates'
-            });
-        }
-
-        const restaurant = await Restaurant.findByIdAndUpdate(
-            req.params.id,
-            { 
-                name,
-                cuisine,
-                image,
-                deliveryTime,
-                minOrder,
-                isOpen,
-                address,
-                location,
-                operatingHours
-            },
-            { new: true }
-        ).populate('menuItems');
-        
-        if (!restaurant) {
-            return res.status(404).json({ message: 'Restaurant not found' });
-        }
-        res.json(restaurant);
+        const restaurant = new Restaurant(restaurantData);
+        await restaurant.save();
+        res.status(201).json(restaurant);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-const deleteRestaurant = async (req, res) => {
+// Update a restaurant
+const updateRestaurant = async (req, res) => {
     try {
-        const restaurant = await Restaurant.findByIdAndDelete(req.params.id);
+        console.log('Updating restaurant with data:', req.body);
+
+        const updateData = {
+            ...req.body,
+            rating: req.body.rating !== undefined ? req.body.rating : 0 // Ensure rating is included
+        };
+
+        const restaurant = await Restaurant.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        ).populate('menuItems');
+        
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
+
+        console.log('Updated restaurant:', restaurant);
+        res.json(restaurant);
+    } catch (error) {
+        console.error('Error updating restaurant:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Delete a restaurant
+const deleteRestaurant = async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findById(req.params.id);
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
         // Delete all menu items associated with this restaurant
         await MenuItem.deleteMany({ restaurantId: req.params.id });
-        res.json({ message: 'Restaurant deleted successfully' });
+
+        // Delete the restaurant
+        await Restaurant.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Restaurant and associated menu items deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -157,8 +118,8 @@ const findNearbyRestaurants = async (req, res) => {
 
 module.exports = {
     getAllRestaurants,
-    addRestaurant,
     getRestaurant,
+    addRestaurant,
     updateRestaurant,
     deleteRestaurant,
     findNearbyRestaurants

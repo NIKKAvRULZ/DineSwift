@@ -7,7 +7,9 @@ const MenuItemSchema = new mongoose.Schema({
     image: { type: String, default: '' },
     category: { type: String, required: true },
     price: { type: Number, required: true },
-    isSpicy: { type: Boolean, default: false }
+    isSpicy: { type: Boolean, default: false },
+    discount: { type: Number, min: 0, max: 100, default: 0 }, // Percentage discount
+    rating: { type: Number, min: 0, max: 5, default: 0 }
 });
 
 const MenuItem = mongoose.model('MenuItem', MenuItemSchema);
