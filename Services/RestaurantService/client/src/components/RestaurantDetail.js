@@ -9,6 +9,7 @@ import {
     Typography,
     useTheme
 } from '@mui/material';
+import SearchBar from './common/SearchBar';
 import axios from 'axios';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -58,6 +59,8 @@ const RestaurantDetail = () => {
     const [error, setError] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuItemToDelete, setMenuItemToDelete] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [ratingFilter, setRatingFilter] = useState(0);
     const [notification, setNotification] = useState({
         open: false,
         message: '',
@@ -177,22 +180,24 @@ const RestaurantDetail = () => {
 
             {/* Restaurant Image */}
             {restaurant.image && (
-                <Box 
-                    sx={{ 
-                        width: '100%', 
-                        height: 300, 
+                <Box
+                    sx={{
+                        width: '100%',
                         mb: 3,
                         borderRadius: 2,
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
                     }}
                 >
-                    <img 
-                        src={restaurant.image} 
+                    <img
+                        src={restaurant.image}
                         alt={restaurant.name}
                         style={{
                             width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
+                            maxHeight: '500px',
+                            objectFit: 'contain'
                         }}
                     />
                 </Box>
@@ -263,6 +268,53 @@ const RestaurantDetail = () => {
                 Menu Items
             </Typography>
 
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                <Box sx={{ flex: 1 }}>
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search menu items..."
+                    />
+                </Box>
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: 'background.paper',
+                    py: 1,
+                    px: 2,
+                    borderRadius: 2,
+                    border: 1,
+                    borderColor: 'divider',
+                    height: '56px' // Standard Material-UI input height
+                }}>
+                    <Typography variant="body2" sx={{ mr: 1 }} noWrap>
+                        Filter by rating:
+                    </Typography>
+                    <Rating
+                        value={ratingFilter}
+                        onChange={(event, newValue) => {
+                            setRatingFilter(newValue || 0);
+                        }}
+                        precision={0.5}
+                        size="small"
+                    />
+                    {ratingFilter > 0 && (
+                        <Typography
+                            variant="body2"
+                            color="primary"
+                            sx={{
+                                ml: 1,
+                                cursor: 'pointer',
+                                '&:hover': { textDecoration: 'underline' }
+                            }}
+                            onClick={() => setRatingFilter(0)}
+                        >
+                            Clear
+                        </Typography>
+                    )}
+                </Box>
+            </Box>
+
             {menuItems.length === 0 ? (
                 <EmptyState
                     title="No Menu Items"
@@ -272,8 +324,26 @@ const RestaurantDetail = () => {
                 />
             ) : (
                 <Box>
+                    {/* Check if any items match the search query */}
+                    {searchQuery.trim() !== '' &&
+                        !menuItems.some(item =>
+                            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                        ) && (
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                 get           No menu items match your search.
+                        </Typography>
+                    )}
+
                     {['Appetizers', 'Main Course', 'Desserts', 'Beverages', 'Sides', 'Specials'].map((category) => {
-                        const categoryItems = menuItems.filter(item => item.category === category);
+                        const categoryItems = menuItems.filter(item => {
+                            const matchesCategory = item.category === category;
+                            const matchesSearch = searchQuery.trim() === '' ||
+                                item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                            const matchesRating = ratingFilter === 0 || (item.rating && item.rating >= ratingFilter);
+                            return matchesCategory && matchesSearch && matchesRating;
+                        });
                         if (categoryItems.length === 0) return null;
                         
                         return (

@@ -1,11 +1,37 @@
 const Restaurant = require('../models/Restaurant');
 const MenuItem = require('../models/MenuItem');
 
-// Get all restaurants
+// Get all restaurants with optional search and cuisine filter
 const getAllRestaurants = async (req, res) => {
     try {
-        const restaurants = await Restaurant.find().populate('menuItems');
+        const { search, cuisine, minRating } = req.query;
+        let query = {};
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+
+        if (cuisine) {
+            query.cuisine = cuisine;
+        }
+
+        // Handle rating filter
+        if (minRating) {
+            query.rating = { $gte: parseFloat(minRating) };
+        }
+
+        const restaurants = await Restaurant.find(query).populate('menuItems');
         res.json(restaurants);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get unique cuisine types
+const getCuisineTypes = async (req, res) => {
+    try {
+        const cuisines = await Restaurant.distinct('cuisine');
+        res.json(cuisines);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -122,5 +148,6 @@ module.exports = {
     addRestaurant,
     updateRestaurant,
     deleteRestaurant,
-    findNearbyRestaurants
+    findNearbyRestaurants,
+    getCuisineTypes
 };
