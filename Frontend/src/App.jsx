@@ -19,6 +19,9 @@ import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
 import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
 import Checkout from "./pages/Checkout"; // Import Checkout page
+import AboutUs from "./pages/AboutUs";
+import FAQ from "./pages/FAQ";
+import Contact from "./pages/Contact";
 
 function App() {
   return (
@@ -32,6 +35,9 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/contact" element={<Contact />} />
                 
                 {/* Protected Routes */}
                 <Route
