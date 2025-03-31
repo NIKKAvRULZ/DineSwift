@@ -2,24 +2,43 @@ const mongoose = require('mongoose');
 const Delivery = require('../models/Delivery');
 
 const assignDelivery = async (req, res) => {
-  const { orderId, driverId, location } = req.body;
+  const { orderId, location } = req.body;
   try {
-    const existingDelivery = await Delivery.findOne({ orderId });
-    if (existingDelivery) {
-      return res.status(409).json({ message: 'A delivery already exists for this order', existingDelivery });
-    }
+    // Logic to assign delivery without using Driver model
     const delivery = new Delivery({
       orderId,
-      driverId,
+      driverId: null, // Set to null or handle differently
       location: { type: 'Point', coordinates: location },
       estimatedDeliveryTime: new Date(Date.now() + 30 * 60 * 1000),
     });
     await delivery.save();
-    console.log(`Driver ${driverId} assigned to order ${orderId}`);
+
+    console.log(`Delivery assigned to order ${orderId}`);
     res.status(201).json({ message: 'Delivery assigned', delivery });
   } catch (error) {
     console.error('Error in assignDelivery:', error);
     res.status(500).json({ message: 'Error assigning delivery', error: error.message });
+  }
+};
+
+const updateDriverLocation = async (req, res) => {
+  const { driverId, location } = req.body;
+  try {
+    const delivery = await Delivery.findOneAndUpdate(
+      { driverId, status: 'in_progress' },
+      { location: { type: 'Point', coordinates: location } },
+      { new: true }
+    );
+    if (!delivery) return res.status(404).json({ message: 'Active delivery not found for this driver' });
+
+    // Emit location update to WebSocket
+    const io = req.app.get('socketio');
+    io.emit('locationUpdate', { driverId, location });
+
+    res.json({ message: 'Location updated', delivery });
+  } catch (error) {
+    console.error('Error in updateDriverLocation:', error);
+    res.status(500).json({ message: 'Error updating location', error: error.message });
   }
 };
 
@@ -76,4 +95,4 @@ const deleteDelivery = async (req, res) => {
   }
 };
 
-module.exports = { assignDelivery, getDeliveryStatus, updateDeliveryStatus, trackDelivery, deleteDelivery };
+module.exports = { assignDelivery, getDeliveryStatus, updateDeliveryStatus, trackDelivery, deleteDelivery, updateDriverLocation };

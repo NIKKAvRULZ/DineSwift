@@ -10,11 +10,12 @@ const deliverySchema = new mongoose.Schema({
   },
   location: {
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], required: true }, // [longitude, latitude]
+    coordinates: { type: [Number], required: true } // [longitude, latitude]
   },
   estimatedDeliveryTime: { type: Date },
 });
 
+// Explicitly define the 2dsphere index
 deliverySchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Delivery', deliverySchema);
