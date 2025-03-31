@@ -14,7 +14,7 @@ const RestaurantCard = ({ restaurant }) => (
     whileHover={{ y: -5, scale: 1.02 }}
     className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-orange-100 transition-all duration-300"
   >
-    <Link to={`/restaurants/${restaurant.id}/menu`}>
+    <Link to={`/restaurants/${restaurant._id}/menu`}>
       <div className="relative h-48 overflow-hidden">
         <motion.img
           whileHover={{ scale: 1.1 }}
@@ -23,19 +23,20 @@ const RestaurantCard = ({ restaurant }) => (
           alt={restaurant.name}
           className="w-full h-full object-cover"
         />
+        
+      </div>
+
+      <div className="p-6">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">{restaurant.name}</h3>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium ${
+          className={`absolute top-54 right-5 px-3 py-1 rounded-full text-sm font-medium ${
             restaurant.isOpen ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
           }`}
         >
           {restaurant.isOpen ? 'Open' : 'Closed'}
         </motion.div>
-      </div>
-
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{restaurant.name}</h3>
         <p className="text-gray-600 mb-4">{restaurant.cuisine}</p>
         
         <div className="flex items-center justify-between">

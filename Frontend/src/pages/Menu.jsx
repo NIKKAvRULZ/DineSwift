@@ -3,9 +3,12 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import defaultItemImage from '../assets/placeholder-menu.png' 
+import defaultResImage from '../assets/placeholder-restaurant.png' 
 
 const Menu = () => {
-  const { restaurantId } = useParams();
+  const { id } = useParams();
   const { user } = useAuth();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
@@ -14,6 +17,8 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
+  const navigate = useNavigate();
+
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -32,21 +37,21 @@ const Menu = () => {
     const fetchRestaurantAndMenu = async () => {
       try {
         const token = localStorage.getItem('token');
-        const [restaurantRes, menuRes] = await Promise.all([
-          axios.get(`http://localhost:5002/api/restaurants/${restaurantId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:5002/api/restaurants/${restaurantId}/menu`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+        const restaurantMenu =  await axios.get(`http://localhost:5002/api/restaurants/${id}/menu-items`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const restaurant =  await axios.get(`http://localhost:5002/api/restaurants/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        console.log(restaurant.data)
+        console.log(restaurantMenu.data)
 
-        setRestaurant(restaurantRes.data);
-        setMenuItems(menuRes.data);
+        setRestaurant(restaurant.data);
+        setMenuItems(restaurantMenu.data);
         
         // Extract unique categories
-        const uniqueCategories = [...new Set(menuRes.data.map(item => item.category))];
-        setCategories(['all', ...uniqueCategories]);
+        // const uniqueCategories = [...new Set(res.data.map(item => item.category))];
+        // setCategories(['all', ...uniqueCategories]);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch menu data');
       } finally {
@@ -55,23 +60,27 @@ const Menu = () => {
     };
 
     fetchRestaurantAndMenu();
-  }, [restaurantId]);
+  }, []);
 
   const filteredItems = selectedCategory === 'all'
     ? menuItems
     : menuItems.filter(item => item.category === selectedCategory);
 
-  const addToCart = (item) => {
-    setCart(prev => {
-      const existingItem = prev.find(i => i.id === item.id);
-      if (existingItem) {
-        return prev.map(i => 
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
+  
+  // Add item to the cart
+  const handleAddToCart = (item) => {
+    setCart((prevCart) => {
+      const itemIndex = prevCart.findIndex((i) => i.id === item.id);
+      if (itemIndex === -1) {
+        return [...prevCart, { ...item, quantity: 1 }];
+      } else {
+        const updatedCart = [...prevCart];
+        updatedCart[itemIndex].quantity += 1;
+        return updatedCart;
       }
-      return [...prev, { ...item, quantity: 1 }];
     });
   };
+
 
   if (loading) {
     return (
@@ -115,7 +124,7 @@ const Menu = () => {
         >
           <div className="flex items-center gap-6">
             <img
-              src={restaurant?.image}
+              src={restaurant?.image ?? defaultResImage}
               alt={restaurant?.name}
               className="w-24 h-24 rounded-xl object-cover"
             />
@@ -174,7 +183,7 @@ const Menu = () => {
             >
               <div className="relative h-48">
                 <img
-                  src={item.image}
+                  src={item.image ?? defaultItemImage}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
@@ -198,7 +207,7 @@ const Menu = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => addToCart(item)}
+                    onClick={() => handleAddToCart(item)}
                     className="px-4 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
                   >
                     Add to Cart
@@ -244,6 +253,7 @@ const Menu = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/cart')} // Navigate to cart page 
               className="px-6 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
             >
               View Cart

@@ -1,32 +1,51 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { Typewriter } from 'react-simple-typewriter';  // Import typewriter effect
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
+  console.log("User Data:", user);
 
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.3
+      }
+    }
+  };
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.6 }
   };
 
-  const staggerContainer = {
+  const floatingVariants = {
     animate: {
+      y: [0, -10, 0],
       transition: {
-        staggerChildren: 0.2
+        duration: 2,
+        repeat: Infinity,
+        ease: 'easeInOut'
       }
     }
   };
 
   const cardHover = {
     hover: {
-      scale: 1.05,
+      scale: 1.1,
       transition: {
         type: "spring",
         stiffness: 300
       }
     }
+  };
+
+  const slideIn = {
+    initial: { x: '-100%' },
+    animate: { x: 0 },
+    transition: { duration: 1, ease: "easeOut" }
   };
 
   const AuthenticatedHome = () => (
@@ -43,12 +62,19 @@ const Home = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <motion.div {...fadeIn} className="text-center mb-16">
-          <h1 className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-4">
-            Welcome back, {user?.name}!
-          </h1>
-          <p className="text-xl text-gray-600">
+          <motion.h1
+            variants={fadeIn}
+            className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 mb-4"
+          >
+            Welcome back, {user?.name || "Guest"}!
+          </motion.h1>
+
+          <motion.p
+            variants={fadeIn}
+            className="text-xl text-gray-600"
+          >
             Ready to explore delicious food today?
-          </p>
+          </motion.p>
         </motion.div>
 
         <motion.div
@@ -143,11 +169,33 @@ const Home = () => {
       animate="animate"
       className="min-h-screen relative bg-gradient-to-br from-orange-50 to-red-50"
     >
-      {/* Hero Background */}
+      {/* Background Images */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1543353071-087092ec393a')] bg-cover bg-center opacity-10" />
         <div className="absolute inset-0 bg-gradient-to-br from-orange-100/50 to-red-100/50" />
       </div>
+
+      {/* Floating Food Icons */}
+      <motion.div
+        variants={floatingVariants}
+        animate="animate"
+        className="absolute top-20 left-10 text-6xl"
+      >🍕</motion.div>
+      <motion.div
+        variants={floatingVariants}
+        animate="animate"
+        className="absolute top-40 right-16 text-5xl"
+      >🍔</motion.div>
+      <motion.div
+        variants={floatingVariants}
+        animate="animate"
+        className="absolute bottom-24 left-24 text-6xl"
+      >🍣</motion.div>
+      <motion.div
+        variants={floatingVariants}
+        animate="animate"
+        className="absolute bottom-10 right-32 text-5xl"
+      >🥗</motion.div>
 
       <div className="relative z-10 px-6 pt-14 lg:px-8">
         <motion.div {...fadeIn} className="mx-auto max-w-3xl py-32 sm:py-48 lg:py-56 text-center">
@@ -155,30 +203,37 @@ const Home = () => {
             variants={fadeIn}
             className="text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600"
           >
-            Delicious food delivered to your doorstep
+            <Typewriter words={["Delicious food at your doorstep!", "Order now, taste the best!", "Satisfy your cravings today!"]} loop cursor/>
           </motion.h1>
+          
           <motion.p
             variants={fadeIn}
             className="text-xl text-gray-600 mb-12"
           >
-            Experience the finest restaurants in your area with our seamless delivery service.
-            Join thousands of satisfied customers today!
+            Join thousands of happy customers and enjoy the best meals from top restaurants!
           </motion.p>
+
           <motion.div
             variants={fadeIn}
             className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
             <Link
+              to="/explore"
+              className="w-full sm:w-auto px-8 py-4 rounded-full text-white bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
+            >
+              Explore Menu
+            </Link>
+            <Link
               to="/signup"
               className="w-full sm:w-auto px-8 py-4 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
             >
-              Get started
+              Get Started
             </Link>
             <Link
               to="/login"
               className="w-full sm:w-auto px-8 py-4 rounded-full text-gray-700 bg-white hover:bg-gray-50 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
             >
-              Sign in
+              Sign In
             </Link>
           </motion.div>
         </motion.div>
@@ -188,5 +243,6 @@ const Home = () => {
 
   return isAuthenticated ? <AuthenticatedHome /> : <UnauthenticatedHome />;
 };
+
 
 export default Home;

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { Typewriter } from 'react-simple-typewriter';  // Import typewriter effect
+
 
 const Login = () => {
   const [formData, setFormData] = useState({

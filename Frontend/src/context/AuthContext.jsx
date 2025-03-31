@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
 
 const AuthContext = createContext(null);
 
@@ -16,10 +18,8 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const response = await axios.get('http://localhost:3000/api/auth/verify', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data);
+        const decodedUser = jwtDecode(token); // Decode the JWT token
+        setUser(decodedUser); // Set the user data from the token
         setIsAuthenticated(true);
       } catch (error) {
         localStorage.removeItem('token');
@@ -36,15 +36,17 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       });
-      const { token, user } = response.data;
+      const { token } = response.data;
       localStorage.setItem('token', token);
-      setUser(user);
+      const decodedUser = jwtDecode(token);
+      setUser(decodedUser);
       setIsAuthenticated(true);
-      return user;
+      return decodedUser;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
+  
 
   const register = async (userData) => {
     try {
