@@ -43,7 +43,8 @@ const EditMenuItem = () => {
         image: '',
         category: '',
         price: '',
-        isSpicy: false
+        isSpicy: false,
+        discount: 0
     });
     
     const [loading, setLoading] = useState(false);
@@ -57,18 +58,30 @@ const EditMenuItem = () => {
             try {
                 setFetchLoading(true);
                 const response = await axios.get(`${apiUrl}/api/menu-items/${id}`);
+                console.log('Fetched menu item:', response.data);
                 const menuItem = response.data;
                 
+                // Handle restaurantId properly whether it's populated or not
+                let restId;
+                if (typeof menuItem.restaurantId === 'object' && menuItem.restaurantId !== null) {
+                    restId = menuItem.restaurantId._id;
+                } else {
+                    restId = menuItem.restaurantId;
+                }
+                setRestaurantId(restId);
+                console.log('Restaurant ID set to:', restId);
+
+                // Set form data with proper handling of null/undefined values
                 setFormData({
                     name: menuItem.name || '',
                     description: menuItem.description || '',
                     image: menuItem.image || '',
                     category: menuItem.category || '',
-                    price: menuItem.price || '',
-                    isSpicy: menuItem.isSpicy || false
+                    price: menuItem.price?.toString() || '',
+                    isSpicy: Boolean(menuItem.isSpicy),
+                    discount: menuItem.discount || 0
                 });
                 
-                setRestaurantId(menuItem.restaurantId);
                 setFetchLoading(false);
             } catch (error) {
                 console.error('Error fetching menu item:', error);
@@ -104,10 +117,17 @@ const EditMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
-            // Ensure price is a number
+            // Validate required fields
+            if (!formData.name || !formData.category || !formData.price) {
+                setErrorMessage('Name, category, and price are required');
+                setLoading(false);
+                return;
+            }
+
             const submitData = {
                 ...formData,
-                price: parseFloat(formData.price)
+                price: parseFloat(formData.price),
+                isSpicy: Boolean(formData.isSpicy)
             };
 
             console.log('Updating menu item:', submitData);
@@ -118,7 +138,11 @@ const EditMenuItem = () => {
             
             // Navigate back to restaurant details after 2 seconds
             setTimeout(() => {
-                navigate(`/restaurant/${restaurantId}`);
+                if (restaurantId) {
+                    navigate(`/restaurant/${restaurantId}`);
+                } else {
+                    navigate('/');
+                }
             }, 2000);
         } catch (error) {
             setLoading(false);
@@ -131,7 +155,13 @@ const EditMenuItem = () => {
     };
     
     const handleBack = () => {
-        navigate(`/restaurant/${restaurantId}`);
+        if (restaurantId) {
+            console.log('Navigating back to restaurant:', restaurantId);
+            navigate(`/restaurant/${restaurantId}`);
+        } else {
+            console.log('No restaurant ID found, navigating to home');
+            navigate('/');
+        }
     };
 
     if (fetchLoading) {
@@ -217,7 +247,7 @@ const EditMenuItem = () => {
                                 placeholder="https://example.com/image.jpg"
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} md={3}>
                             <TextField
                                 fullWidth
                                 label="Price"
@@ -229,23 +259,43 @@ const EditMenuItem = () => {
                                 disabled={loading}
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                    step: "0.01"
+                                    inputProps: { step: "0.01", min: "0" }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                label="Discount"
+                                name="discount"
+                                type="number"
+                                value={formData.discount}
+                                onChange={handleChange}
+                                disabled={loading}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                    inputProps: {
+                                        min: 0,
+                                        max: 100
+                                    }
                                 }}
                             />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={formData.isSpicy}
-                                        onChange={handleSwitchChange}
-                                        name="isSpicy"
-                                        disabled={loading}
-                                        color="error"
-                                    />
-                                }
-                                label="Spicy Item"
-                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formData.isSpicy}
+                                            onChange={handleSwitchChange}
+                                            name="isSpicy"
+                                            disabled={loading}
+                                            color="error"
+                                        />
+                                    }
+                                    label="Spicy Item"
+                                />
+                            </Box>
                         </Grid>
                     </Grid>
                     

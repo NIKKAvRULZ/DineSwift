@@ -38,12 +38,13 @@ const getMenuItem = async (req, res) => {
 const addMenuItem = async (req, res) => {
     try {
         const { 
-            name, 
+            name,
             description,
             image,
             category,
             price,
-            isSpicy
+            isSpicy,
+            discount
         } = req.body;
 
         const restaurant = await Restaurant.findById(req.params.restaurantId);
@@ -57,7 +58,9 @@ const addMenuItem = async (req, res) => {
             image,
             category,
             price,
-            isSpicy,
+            isSpicy: isSpicy || false,
+            discount: discount || 0,
+            rating: 0,  // Initialize with 0 rating
             restaurantId: restaurant._id
         });
         
@@ -68,6 +71,7 @@ const addMenuItem = async (req, res) => {
         
         res.status(201).json(menuItem);
     } catch (error) {
+        console.error('Error adding menu item:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -76,32 +80,52 @@ const addMenuItem = async (req, res) => {
 const updateMenuItem = async (req, res) => {
     try {
         const { 
-            name, 
+            name,
             description,
             image,
             category,
             price,
-            isSpicy
+            isSpicy,
+            discount
         } = req.body;
 
-        const menuItem = await MenuItem.findByIdAndUpdate(
-            req.params.id,
-            { 
-                name, 
-                description,
-                image,
-                category,
-                price,
-                isSpicy
-            },
-            { new: true }
-        ).populate('restaurantId');
-        
+        // Validate required fields
+        if (!name || !category || price === undefined) {
+            return res.status(400).json({ 
+                message: 'Name, category, and price are required fields' 
+            });
+        }
+
+        const updatedData = {
+            name,
+            description,
+            image,
+            category,
+            price,
+            isSpicy: isSpicy || false,
+            discount: discount || 0,
+            rating: menuItem.rating // Preserve the existing rating
+        };
+
+        const menuItem = await MenuItem.findById(req.params.id);
         if (!menuItem) {
             return res.status(404).json({ message: 'Menu item not found' });
         }
-        res.json(menuItem);
+
+        // Update the menu item
+        const updatedMenuItem = await MenuItem.findByIdAndUpdate(
+            req.params.id,
+            updatedData,
+            { new: true, runValidators: true }
+        ).populate('restaurantId');
+        
+        if (!updatedMenuItem) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+
+        res.json(updatedMenuItem);
     } catch (error) {
+        console.error('Error updating menu item:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -126,6 +150,7 @@ const deleteMenuItem = async (req, res) => {
         await MenuItem.findByIdAndDelete(req.params.id);
         res.json({ message: 'Menu item deleted successfully' });
     } catch (error) {
+        console.error('Error deleting menu item:', error);
         res.status(500).json({ error: error.message });
     }
 };

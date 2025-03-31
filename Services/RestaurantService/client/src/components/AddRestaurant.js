@@ -12,10 +12,15 @@ import {
     CircularProgress,
     Grid,
     InputAdornment,
+    FormControl,
+    Select,
+    MenuItem as MUIMenuItem,
+    Switch,
     FormControlLabel,
-    Switch
+    Rating
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import StarIcon from '@mui/icons-material/Star';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
@@ -28,6 +33,7 @@ const AddRestaurant = () => {
         name: '',
         cuisine: '',
         image: '',
+        rating: 0,
         deliveryTime: 30,
         minOrder: 0,
         isOpen: true,
@@ -36,6 +42,10 @@ const AddRestaurant = () => {
             city: '',
             state: '',
             zipCode: ''
+        },
+        location: {
+            type: 'Point',
+            coordinates: [0, 0] // [longitude, latitude]
         },
         operatingHours: {
             monday: { open: '09:00', close: '22:00' },
@@ -47,16 +57,13 @@ const AddRestaurant = () => {
             sunday: { open: '09:00', close: '22:00' }
         }
     });
-
-    // Separate state for coordinates
-    const [coordinates, setCoordinates] = useState({
-        longitude: 0,
-        latitude: 0
-    });
     
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // For hover effect on rating
+    const [ratingHover, setRatingHover] = useState(-1);
     
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -77,6 +84,13 @@ const AddRestaurant = () => {
         }
     };
 
+    const handleRatingChange = (event, newValue) => {
+        setFormData(prev => ({
+            ...prev,
+            rating: newValue
+        }));
+    };
+
     const handleOperatingHoursChange = (day, type, value) => {
         setFormData(prev => ({
             ...prev,
@@ -90,11 +104,16 @@ const AddRestaurant = () => {
         }));
     };
 
-    const handleCoordinatesChange = (type, value) => {
+    const handleLocationChange = (type, value) => {
         const numValue = parseFloat(value) || 0;
-        setCoordinates(prev => ({
+        setFormData(prev => ({
             ...prev,
-            [type]: numValue
+            location: {
+                ...prev.location,
+                coordinates: type === 'longitude' 
+                    ? [numValue, prev.location.coordinates[1]]
+                    : [prev.location.coordinates[0], numValue]
+            }
         }));
     };
     
@@ -103,18 +122,8 @@ const AddRestaurant = () => {
         try {
             setLoading(true);
             setErrorMessage('');
-
-            // Combine formData with location data
-            const submitData = {
-                ...formData,
-                location: {
-                    type: 'Point',
-                    coordinates: [coordinates.longitude, coordinates.latitude]
-                }
-            };
-
-            console.log('Submitting restaurant data:', submitData);
-            const response = await axios.post(`${apiUrl}/api/restaurants`, submitData);
+            console.log('Submitting restaurant data:', formData);
+            const response = await axios.post(`${apiUrl}/api/restaurants`, formData);
             console.log('Restaurant added:', response.data);
             setSuccessMessage('Restaurant added successfully!');
             setLoading(false);
@@ -135,6 +144,20 @@ const AddRestaurant = () => {
 
     const handleBack = () => {
         navigate('/');
+    };
+
+    const labels = {
+        0: 'Unrated',
+        0.5: 'Poor',
+        1: 'Poor+',
+        1.5: 'Fair',
+        2: 'Fair+',
+        2.5: 'Good',
+        3: 'Good+',
+        3.5: 'Very Good',
+        4: 'Very Good+',
+        4.5: 'Excellent',
+        5: 'Excellent+'
     };
     
     return (
@@ -194,6 +217,24 @@ const AddRestaurant = () => {
                                 disabled={loading}
                                 placeholder="https://example.com/restaurant-image.jpg"
                             />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography component="legend">Initial Rating</Typography>
+                                <Rating
+                                    name="rating"
+                                    value={formData.rating}
+                                    precision={0.5}
+                                    onChange={handleRatingChange}
+                                    onChangeActive={(event, newHover) => {
+                                        setRatingHover(newHover);
+                                    }}
+                                    emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+                                />
+                                {formData.rating !== null && (
+                                    <Box sx={{ ml: 2 }}>{labels[ratingHover !== -1 ? ratingHover : formData.rating]}</Box>
+                                )}
+                            </Box>
                         </Grid>
                         
                         {/* Business Details */}
@@ -305,8 +346,8 @@ const AddRestaurant = () => {
                                 fullWidth
                                 label="Longitude"
                                 type="number"
-                                value={coordinates.longitude}
-                                onChange={(e) => handleCoordinatesChange('longitude', e.target.value)}
+                                value={formData.location.coordinates[0]}
+                                onChange={(e) => handleLocationChange('longitude', e.target.value)}
                                 required
                                 disabled={loading}
                                 inputProps={{
@@ -319,8 +360,8 @@ const AddRestaurant = () => {
                                 fullWidth
                                 label="Latitude"
                                 type="number"
-                                value={coordinates.latitude}
-                                onChange={(e) => handleCoordinatesChange('latitude', e.target.value)}
+                                value={formData.location.coordinates[1]}
+                                onChange={(e) => handleLocationChange('latitude', e.target.value)}
                                 required
                                 disabled={loading}
                                 inputProps={{

@@ -42,7 +42,8 @@ const AddMenuItem = () => {
         image: '',
         category: '',
         price: '',
-        isSpicy: false
+        isSpicy: false,
+        discount: 0
     });
     
     const [loading, setLoading] = useState(false);
@@ -188,7 +189,25 @@ const AddMenuItem = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                label="Discount"
+                                name="discount"
+                                type="number"
+                                value={formData.discount}
+                                onChange={handleChange}
+                                disabled={loading}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                    inputProps: {
+                                        min: 0,
+                                        max: 100
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
                             <FormControlLabel
                                 control={
                                     <Switch

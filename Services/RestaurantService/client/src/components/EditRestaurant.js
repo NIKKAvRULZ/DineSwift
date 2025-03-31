@@ -13,15 +13,31 @@ import {
     Grid,
     InputAdornment,
     FormControlLabel,
-    Switch
+    Switch,
+    Rating
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
+import StarIcon from '@mui/icons-material/Star';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+const labels = {
+    0: 'Unrated',
+    0.5: 'Poor',
+    1: 'Poor+',
+    1.5: 'Fair',
+    2: 'Fair+',
+    2.5: 'Good',
+    3: 'Good+',
+    3.5: 'Very Good',
+    4: 'Very Good+',
+    4.5: 'Excellent',
+    5: 'Excellent+'
+};
 
 const EditRestaurant = () => {
     const { id } = useParams();
@@ -30,6 +46,7 @@ const EditRestaurant = () => {
         name: '',
         cuisine: '',
         image: '',
+        rating: 0,
         deliveryTime: 30,
         minOrder: 0,
         isOpen: true,
@@ -38,6 +55,10 @@ const EditRestaurant = () => {
             city: '',
             state: '',
             zipCode: ''
+        },
+        location: {
+            type: 'Point',
+            coordinates: [0, 0]
         },
         operatingHours: {
             monday: { open: '09:00', close: '22:00' },
@@ -59,6 +80,7 @@ const EditRestaurant = () => {
     const [fetchLoading, setFetchLoading] = useState(true);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [ratingHover, setRatingHover] = useState(-1);
     
     useEffect(() => {
         const fetchRestaurant = async () => {
@@ -75,12 +97,13 @@ const EditRestaurant = () => {
                         latitude: restaurantData.location.coordinates[1] || 0
                     });
                 }
-
-                // Set form data with proper default values
+                
+                // Set form data with proper handling of null/undefined values
                 setFormData({
                     name: restaurantData.name || '',
                     cuisine: restaurantData.cuisine || '',
                     image: restaurantData.image || '',
+                    rating: restaurantData.rating || 0,
                     deliveryTime: restaurantData.deliveryTime || 30,
                     minOrder: restaurantData.minOrder || 0,
                     isOpen: restaurantData.isOpen ?? true,
@@ -90,14 +113,18 @@ const EditRestaurant = () => {
                         state: restaurantData.address?.state || '',
                         zipCode: restaurantData.address?.zipCode || ''
                     },
-                    operatingHours: {
-                        monday: restaurantData.operatingHours?.monday || { open: '09:00', close: '22:00' },
-                        tuesday: restaurantData.operatingHours?.tuesday || { open: '09:00', close: '22:00' },
-                        wednesday: restaurantData.operatingHours?.wednesday || { open: '09:00', close: '22:00' },
-                        thursday: restaurantData.operatingHours?.thursday || { open: '09:00', close: '22:00' },
-                        friday: restaurantData.operatingHours?.friday || { open: '09:00', close: '22:00' },
-                        saturday: restaurantData.operatingHours?.saturday || { open: '09:00', close: '22:00' },
-                        sunday: restaurantData.operatingHours?.sunday || { open: '09:00', close: '22:00' }
+                    location: restaurantData.location || {
+                        type: 'Point',
+                        coordinates: [0, 0]
+                    },
+                    operatingHours: restaurantData.operatingHours || {
+                        monday: { open: '09:00', close: '22:00' },
+                        tuesday: { open: '09:00', close: '22:00' },
+                        wednesday: { open: '09:00', close: '22:00' },
+                        thursday: { open: '09:00', close: '22:00' },
+                        friday: { open: '09:00', close: '22:00' },
+                        saturday: { open: '09:00', close: '22:00' },
+                        sunday: { open: '09:00', close: '22:00' }
                     }
                 });
                 
@@ -131,6 +158,14 @@ const EditRestaurant = () => {
         }
     };
 
+    const handleRatingChange = (event, newValue) => {
+        console.log('Rating changed to:', newValue);
+        setFormData(prev => ({
+            ...prev,
+            rating: newValue
+        }));
+    };
+
     const handleOperatingHoursChange = (day, type, value) => {
         setFormData(prev => ({
             ...prev,
@@ -158,9 +193,9 @@ const EditRestaurant = () => {
             setLoading(true);
             setErrorMessage('');
 
-            // Combine formData with location data
             const submitData = {
                 ...formData,
+                rating: Number(formData.rating), // Ensure rating is a number
                 location: {
                     type: 'Point',
                     coordinates: [coordinates.longitude, coordinates.latitude]
@@ -190,7 +225,7 @@ const EditRestaurant = () => {
     const handleBack = () => {
         navigate('/');
     };
-    
+
     if (fetchLoading) {
         return (
             <Container>
@@ -259,6 +294,24 @@ const EditRestaurant = () => {
                                 disabled={loading}
                                 placeholder="https://example.com/restaurant-image.jpg"
                             />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography component="legend">Rating</Typography>
+                                <Rating
+                                    name="rating"
+                                    value={formData.rating}
+                                    precision={0.5}
+                                    onChange={handleRatingChange}
+                                    onChangeActive={(event, newHover) => {
+                                        setRatingHover(newHover);
+                                    }}
+                                    emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+                                />
+                                {formData.rating !== null && (
+                                    <Box sx={{ ml: 2 }}>{labels[ratingHover !== -1 ? ratingHover : formData.rating]}</Box>
+                                )}
+                            </Box>
                         </Grid>
 
                         {/* Business Details */}
