@@ -96,6 +96,11 @@ const updateMenuItem = async (req, res) => {
             });
         }
 
+        const menuItem = await MenuItem.findById(req.params.id);
+        if (!menuItem) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+
         const updatedData = {
             name,
             description,
@@ -104,13 +109,8 @@ const updateMenuItem = async (req, res) => {
             price,
             isSpicy: isSpicy || false,
             discount: discount || 0,
-            rating: menuItem.rating // Preserve the existing rating
+            rating: menuItem.rating // ✅ Now menuItem is already fetched
         };
-
-        const menuItem = await MenuItem.findById(req.params.id);
-        if (!menuItem) {
-            return res.status(404).json({ message: 'Menu item not found' });
-        }
 
         // Update the menu item
         const updatedMenuItem = await MenuItem.findByIdAndUpdate(
@@ -119,16 +119,13 @@ const updateMenuItem = async (req, res) => {
             { new: true, runValidators: true }
         ).populate('restaurantId');
         
-        if (!updatedMenuItem) {
-            return res.status(404).json({ message: 'Menu item not found' });
-        }
-
         res.json(updatedMenuItem);
     } catch (error) {
         console.error('Error updating menu item:', error);
         res.status(500).json({ error: error.message });
     }
 };
+
 
 // Delete a menu item
 const deleteMenuItem = async (req, res) => {
