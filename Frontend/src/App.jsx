@@ -17,7 +17,6 @@ import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
-import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
 import Checkout from "./pages/Checkout"; // Import Checkout page
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
