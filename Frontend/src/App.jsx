@@ -89,14 +89,6 @@ function App() {
                 />
                 <Route path="/tracking" element={<OrderTracking />} />
                 <Route
-                  path="/order-confirmation/:orderId"
-                  element={
-                    <ProtectedRoute>
-                      <OrderConfirmation />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/checkout"
                   element={
                     <ProtectedRoute>
