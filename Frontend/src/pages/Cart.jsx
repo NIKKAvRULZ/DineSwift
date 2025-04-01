@@ -78,7 +78,7 @@ const Cart = () => {
               >
                 <div>
                   <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-gray-600">${item.price.toFixed(2)} each</p>
+                  <p className="text-gray-600">Rs {item.price.toFixed(2)} each</p>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
@@ -110,7 +110,7 @@ const Cart = () => {
           <div className="mt-8 pt-4 border-t">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total:</span>
-              <span className="text-2xl font-bold">${getTotal().toFixed(2)}</span>
+              <span className="text-2xl font-bold">Rs {getTotal().toFixed(2)}</span>
             </div>
 
             <div className="flex space-x-4">

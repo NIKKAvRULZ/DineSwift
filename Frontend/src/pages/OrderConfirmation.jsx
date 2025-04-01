@@ -50,14 +50,14 @@ const OrderConfirmation = () => {
               {orderDetails.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span>{item.name} x {item.quantity}</span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>Rs {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
 
             <div className="flex justify-between font-bold">
               <span>Total Amount:</span>
-              <span>${orderDetails.totalAmount.toFixed(2)}</span>
+              <span>Rs {orderDetails.totalAmount.toFixed(2)}</span>
             </div>
 
             <div className="mt-8 space-x-4 flex justify-center">

@@ -112,12 +112,12 @@ const Checkout = () => {
                 {items.map((item) => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.name} x {item.quantity}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>Rs {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="border-t pt-2 mt-2 font-bold flex justify-between">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>Rs {total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
