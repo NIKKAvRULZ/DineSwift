@@ -54,11 +54,11 @@ const AssignDelivery = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign New Delivery</h3>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <h3 className="text-xl font-bold text-gray-900 mb-6 tracking-tight">Assign New Delivery</h3>
+      {error && <p className="text-[#eb1900] font-medium bg-[#eb1900]/10 p-3 rounded-lg mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label htmlFor="orderId" className="block text-sm font-medium text-gray-700 transition-colors duration-200 hover:text-gray-900">
+          <label htmlFor="orderId" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
             Order ID
           </label>
           <input
@@ -68,13 +68,13 @@ const AssignDelivery = () => {
             onChange={(e) => setOrderId(e.target.value)}
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
             placeholder="Enter Order ID"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="driverId" className="block text-sm font-medium text-gray-700 transition-colors duration-200 hover:text-gray-900">
+          <label htmlFor="driverId" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
             Select Driver
           </label>
           <select
@@ -83,7 +83,7 @@ const AssignDelivery = () => {
             onChange={(e) => setDriverId(e.target.value)}
             required
             disabled={isSubmitting || availableDrivers.length === 0}
-            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed appearance-none"
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 appearance-none"
           >
             {availableDrivers.length === 0 ? (
               <option value="">No drivers available</option>
@@ -98,7 +98,7 @@ const AssignDelivery = () => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 transition-colors duration-200 hover:text-gray-900">
+          <label htmlFor="longitude" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
             Longitude
           </label>
           <input
@@ -109,13 +109,13 @@ const AssignDelivery = () => {
             onChange={(e) => setLongitude(e.target.value)}
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
             placeholder="Enter Longitude"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 transition-colors duration-200 hover:text-gray-900">
+          <label htmlFor="latitude" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
             Latitude
           </label>
           <input
@@ -126,7 +126,7 @@ const AssignDelivery = () => {
             onChange={(e) => setLatitude(e.target.value)}
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
             placeholder="Enter Latitude"
           />
         </div>
@@ -135,7 +135,7 @@ const AssignDelivery = () => {
           <button
             type="submit"
             disabled={isSubmitting || availableDrivers.length === 0}
-            className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center"
+            className="w-full px-6 py-3 bg-[#eb1900] text-white rounded-lg shadow-md hover:bg-[#c71500] focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-medium"
           >
             {isSubmitting ? (
               <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
