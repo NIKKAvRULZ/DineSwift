@@ -18,6 +18,9 @@ import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
 import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
+import AssignDelivery from "./pages/AssignDelivery"; // Import AssignDelivery page
+import DeliveryMap from "./pages/DeliveryMap"; // Import DeliveryMap page
+import UpdateDeliveryStatus from "./pages/UpdateDeliveryStatus"; // Import UpdateDeliveryStatus page
 
 const App = () => {
   return (
@@ -36,25 +39,19 @@ const App = () => {
                 <Route
                   path="/restaurants"
                   element={
-                    <ProtectedRoute>
-                      <Restaurants />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Restaurants />} />
                   }
                 />
                 <Route
                   path="/restaurants/:id/menu"
                   element={
-                    <ProtectedRoute>
-                      <Menu />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Menu />} />
                   }
                 />
                 <Route
                   path="/cart"
                   element={
-                    <ProtectedRoute>
-                      <Cart />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Cart />} />
                   }
                 />
                 
@@ -62,9 +59,7 @@ const App = () => {
                 <Route
                   path="/orders"
                   element={
-                    <ProtectedRoute>
-                      <Orders />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Orders />} />
                   }
                 />
                 <Route path="/delivery" element={<Delivery />} />
@@ -74,20 +69,19 @@ const App = () => {
                 <Route
                   path="/tracking/:orderId"
                   element={
-                    <ProtectedRoute>
-                      <OrderTracking />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<OrderTracking />} />
                   }
                 />
                 <Route path="/tracking" element={<OrderTracking />} />
                 <Route
                   path="/order-confirmation/:orderId"
                   element={
-                    <ProtectedRoute>
-                      <OrderConfirmation />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<OrderConfirmation />} />
                   }
                 />
+                <Route path="/assign-delivery" element={<AssignDelivery />} />
+                <Route path="/delivery-map" element={<DeliveryMap />} />
+                <Route path="/update-delivery-status" element={<UpdateDeliveryStatus />} />
               </Routes>
             </main>
             <Footer />
