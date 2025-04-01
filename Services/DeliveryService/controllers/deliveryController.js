@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 const Delivery = require('../models/Delivery');
+const Driver = require('../models/Driver');
 
 const assignDelivery = async (req, res) => {
-  const { orderId, location } = req.body;
+  const { orderId, driverId, location } = req.body;
   try {
-    // Logic to assign delivery without using Driver model
     const delivery = new Delivery({
       orderId,
-      driverId: null, // Set to null or handle differently
+      driverId: driverId || null,
       location: { type: 'Point', coordinates: location },
       estimatedDeliveryTime: new Date(Date.now() + 30 * 60 * 1000),
     });
@@ -31,7 +31,6 @@ const updateDriverLocation = async (req, res) => {
     );
     if (!delivery) return res.status(404).json({ message: 'Active delivery not found for this driver' });
 
-    // Emit location update to WebSocket
     const io = req.app.get('socketio');
     io.emit('locationUpdate', { driverId, location });
 
@@ -95,4 +94,47 @@ const deleteDelivery = async (req, res) => {
   }
 };
 
-module.exports = { assignDelivery, getDeliveryStatus, updateDeliveryStatus, trackDelivery, deleteDelivery, updateDriverLocation };
+const getAvailableDrivers = async (req, res) => {
+  try {
+    const { longitude, latitude } = req.query;
+    let query = { status: 'available' };
+
+    if (longitude && latitude) {
+      query.location = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+          $maxDistance: 10000, // 10km radius
+        },
+      };
+    }
+
+    const drivers = await Driver.find(query).limit(10);
+    res.json({ message: 'Available drivers fetched', drivers });
+  } catch (error) {
+    console.error('Error in getAvailableDrivers:', error);
+    res.status(500).json({ message: 'Error fetching drivers', error: error.message });
+  }
+};
+
+const getAllDeliveries = async (req, res) => {
+  try {
+    const { orderId } = req.query; // Optional filter by orderId
+    const query = orderId ? { orderId } : {};
+    const deliveries = await Delivery.find(query).populate('driverId', 'name'); // Populate driver name
+    res.json({ message: 'Deliveries fetched', deliveries });
+  } catch (error) {
+    console.error('Error in getAllDeliveries:', error);
+    res.status(500).json({ message: 'Error fetching deliveries', error: error.message });
+  }
+};
+
+module.exports = {
+  assignDelivery,
+  getDeliveryStatus,
+  updateDeliveryStatus,
+  trackDelivery,
+  deleteDelivery,
+  updateDriverLocation,
+  getAvailableDrivers,
+  getAllDeliveries,
+};

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const deliverySchema = new mongoose.Schema({
   orderId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  driverId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  driverId: { type: mongoose.Schema.Types.ObjectId, required: false }, // Make driverId optional
   status: {
     type: String,
     enum: ['pending', 'assigned', 'in_progress', 'delivered', 'cancelled'],
