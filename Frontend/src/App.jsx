@@ -38,6 +38,7 @@ function App() {
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/contact" element={<Contact />} />
+             
                 
                 {/* Protected Routes */}
                 <Route
