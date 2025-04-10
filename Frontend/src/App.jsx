@@ -17,7 +17,6 @@ import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart"; // Make sure to import your Cart page
 import ProtectedRoute from "./components/ProtectedRoute";
-import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
 import Checkout from "./pages/Checkout"; // Import Checkout page
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
@@ -38,6 +37,7 @@ function App() {
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/contact" element={<Contact />} />
+             
                 
                 {/* Protected Routes */}
                 <Route
@@ -87,14 +87,6 @@ function App() {
                   }
                 />
                 <Route path="/tracking" element={<OrderTracking />} />
-                <Route
-                  path="/order-confirmation/:orderId"
-                  element={
-                    <ProtectedRoute>
-                      <OrderConfirmation />
-                    </ProtectedRoute>
-                  }
-                />
                 <Route
                   path="/checkout"
                   element={
