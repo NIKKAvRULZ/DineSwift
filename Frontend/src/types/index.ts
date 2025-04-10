@@ -48,4 +48,17 @@ export interface Notification {
   type: 'order' | 'delivery' | 'promotion';
   createdAt: string;
   read: boolean;
-} 
+}
+
+export interface DeliveryPerson {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  isAvailable: boolean;
+  currentOrder?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}

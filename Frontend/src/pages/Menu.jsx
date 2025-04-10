@@ -75,7 +75,11 @@ const Menu = () => {
   
   // Add item to the cart
   const handleAddToCart = (item) => {
-    addToCart(item, id); // Use addToCart from CartContext
+    addToCart(item,{
+      restaurantId: restaurant._id,
+      restaurantName: restaurant.name,
+      deliveryTime: restaurant.deliveryTime || '35-45',
+    });
   };
 
   const openRatingModal = (item) => {

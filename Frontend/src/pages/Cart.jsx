@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, getTotal, clearCart } = useCart();
@@ -10,10 +11,15 @@ const Cart = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Debug useEffect
-  useEffect(() => {
-    console.log('Cart Items:', cartItems);
-  }, [cartItems]);
+  // Group items by restaurant
+  const groupedItems = cartItems.reduce((acc, item) => {
+    const restaurantId = item.restaurantId;
+    if (!acc[restaurantId]) {
+      acc[restaurantId] = [];
+    }
+    acc[restaurantId].push(item);
+    return acc;
+  }, {});
 
   const handleCheckout = async () => {
     if (!user) {
@@ -27,6 +33,10 @@ const Cart = () => {
         state: { 
           items: cartItems,
           total: getTotal(),
+          restaurantDetails: {
+            deliveryTime: groupedItems[Object.keys(groupedItems)[0]][0].deliveryTime || '35-45',
+            restaurantName: groupedItems[Object.keys(groupedItems)[0]][0].restaurantName
+          }
         }
       });
     } catch (error) {
@@ -40,7 +50,12 @@ const Cart = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="text-center py-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -50,7 +65,7 @@ const Cart = () => {
             >
               Browse Restaurants
             </motion.button>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -58,7 +73,7 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12">
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -66,8 +81,8 @@ const Cart = () => {
         >
           <h1 className="text-2xl font-bold mb-6">Your Cart ({cartItems.length} items)</h1>
           
-          <div className="space-y-4">
-            {cartItems.map((item) => (
+          <AnimatePresence>
+            {Object.entries(groupedItems).map(([restaurantId, items]) => (
               <motion.div
                 key={item.id}
                 layout
@@ -105,9 +120,18 @@ const Cart = () => {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </AnimatePresence>
 
+          {/* Cart Summary */}
           <div className="mt-8 pt-4 border-t">
+            <div className="space-y-2 mb-4">
+              {Object.entries(groupedItems).map(([restaurantId, items]) => (
+                <div key={restaurantId} className="flex justify-between text-sm text-gray-600">
+                  <span>{items[0].restaurantName} Subtotal:</span>
+                  <span>${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total:</span>
               <span className="text-2xl font-bold">Rs {getTotal().toFixed(2)}</span>
@@ -127,8 +151,9 @@ const Cart = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={clearCart}
-                className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center"
               >
+                <Trash2 className="w-5 h-5 mr-2" />
                 Clear Cart
               </motion.button>
             </div>
