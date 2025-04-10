@@ -105,18 +105,30 @@ const Checkout = () => {
             </div>
           </div>
 
-            <div className="border-t pt-4">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-              <div className="space-y-2">
-                {items.map((item) => (
-                  <div key={item.id} className="flex justify-between">
-                    <span>{item.name} x {item.quantity}</span>
-                    <span>Rs {(item.price * item.quantity).toFixed(2)}</span>
+          {/* Order Items */}
+          <div className="space-y-4 mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+              <ShoppingCart className="mr-3 text-gray-500" />
+              Your Order
+            </h2>
+            {items.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center justify-between bg-gray-50 p-4 rounded-xl"
+              >
+                <div className="flex items-center space-x-4">
+                  <img 
+                    src={item.image || "https://via.placeholder.com/100"}
+                    alt={item.name}
+                    className="w-20 h-20 rounded-lg object-cover"
+                  />
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
+                    <p className="text-gray-500 text-sm">Quantity: {item.quantity}</p>
                   </div>
-                ))}
-                <div className="border-t pt-2 mt-2 font-bold flex justify-between">
-                  <span>Total:</span>
-                  <span>Rs {total.toFixed(2)}</span>
                 </div>
                 <span className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
               </motion.div>
