@@ -250,8 +250,16 @@ const RestaurantDetail = () => {
                 <Grid container spacing={2}>
                     {Object.entries(restaurant.operatingHours || {}).map(([day, hours]) => (
                         <Grid item xs={12} sm={6} md={4} key={day}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography sx={{ textTransform: 'capitalize' }}>
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                minWidth: '200px'
+                            }}>
+                                <Typography sx={{
+                                    textTransform: 'capitalize',
+                                    minWidth: '100px'
+                                }}>
                                     {day}
                                 </Typography>
                                 <Typography color="textSecondary">

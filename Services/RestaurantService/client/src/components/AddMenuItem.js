@@ -184,8 +184,8 @@ const AddMenuItem = () => {
                                 required
                                 disabled={loading}
                                 InputProps={{
-                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                    step: "0.01"
+                                    startAdornment: <InputAdornment position="start">Rs.</InputAdornment>,
+                                    step: "1" // Changing to whole numbers since LKR doesn't typically use cents
                                 }}
                             />
                         </Grid>

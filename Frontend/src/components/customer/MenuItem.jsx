@@ -16,7 +16,7 @@ const MenuItem = ({ item }) => {
         <p className="mt-1 text-gray-500">{item.description}</p>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-lg font-bold text-gray-900">
-            ${item.price.toFixed(2)}
+            Rs. {Math.round(item.price)}
           </span>
           <button
             onClick={() => addToCart(item)}
