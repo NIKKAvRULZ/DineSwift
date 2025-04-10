@@ -4,12 +4,12 @@
   "description": "Microservice for managing food delivery",
   "main": "index.js",
   "scripts": {
-  "start": "cross-env NODE_OPTIONS=--no-deprecation node index.js",
-  "dev": "cross-env NODE_OPTIONS=--no-deprecation nodemon index.js"
+    "start": "cross-env NODE_OPTIONS=--no-deprecation node index.js",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation nodemon index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "joi": "^17.12.2",
     "mongoose": "^7.6.0",

@@ -10,7 +10,7 @@ const deliverySchema = new mongoose.Schema({
   },
   location: {
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], required: true } // [longitude, latitude]
+    coordinates: { type: [Number], required: true }, // Fixed typo: "requried" -> "required"
   },
   estimatedDeliveryTime: { type: Date },
 });

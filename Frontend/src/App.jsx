@@ -11,16 +11,14 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
 import Delivery from "./pages/Delivery";
+import AssignDelivery from "./pages/AssignDelivery";
 import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
-import Cart from "./pages/Cart"; // Make sure to import your Cart page
+import Cart from "./pages/Cart";
 import ProtectedRoute from "./components/ProtectedRoute";
-import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
-import AssignDelivery from "./pages/AssignDelivery"; // Import AssignDelivery page
-import DeliveryMap from "./pages/DeliveryMap"; // Import DeliveryMap page
-import UpdateDeliveryStatus from "./pages/UpdateDeliveryStatus"; // Import UpdateDeliveryStatus page
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 const App = () => {
   return (
@@ -62,26 +60,24 @@ const App = () => {
                     <ProtectedRoute element={<Orders />} />
                   }
                 />
-                <Route path="/delivery" element={<Delivery />} />
-                <Route path="/payment" element={<Payment />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/delivery" element={<Delivery />} /> {/* Unprotected */}
+                <Route path="/assign-delivery" element={<AssignDelivery />} /> {/* Unprotected */}
+                <Route path="/payment" element={<Payment />} /> {/* Unprotected */}
+                <Route path="/profile" element={<Profile />} /> {/* Unprotected */}
+                <Route path="/notifications" element={<Notifications />} /> {/* Unprotected */}
                 <Route
                   path="/tracking/:orderId"
                   element={
                     <ProtectedRoute element={<OrderTracking />} />
                   }
                 />
-                <Route path="/tracking" element={<OrderTracking />} />
+                <Route path="/tracking" element={<OrderTracking />} /> {/* Unprotected */}
                 <Route
                   path="/order-confirmation/:orderId"
                   element={
                     <ProtectedRoute element={<OrderConfirmation />} />
                   }
                 />
-                <Route path="/assign-delivery" element={<AssignDelivery />} />
-                <Route path="/delivery-map" element={<DeliveryMap />} />
-                <Route path="/update-delivery-status" element={<UpdateDeliveryStatus />} />
               </Routes>
             </main>
             <Footer />
