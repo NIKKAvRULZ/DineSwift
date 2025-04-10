@@ -44,7 +44,7 @@ const Checkout = () => {
           quantity: item.quantity
         })),
         totalAmount: total,
-        status: "pending",
+        enum: 'pending',
         paymentMethod,
         deliveryAddress: address
       };
