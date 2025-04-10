@@ -19,6 +19,9 @@ import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
+import AboutUs from "./pages/AboutUs"; // Import AboutUs page
+import FAQ from "./pages/FAQ"; // Import FAQ page
+import Contact from "./pages/Contact"; // Import Contact page
 
 function App() {
   return (
