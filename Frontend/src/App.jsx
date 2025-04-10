@@ -11,16 +11,14 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
 import Delivery from "./pages/Delivery";
+import AssignDelivery from "./pages/AssignDelivery";
 import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
-import Cart from "./pages/Cart"; // Make sure to import your Cart page
+import Cart from "./pages/Cart";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Checkout from "./pages/Checkout"; // Import Checkout page
-import AboutUs from "./pages/AboutUs";
-import FAQ from "./pages/FAQ";
-import Contact from "./pages/Contact";
+import OrderConfirmation from "./pages/OrderConfirmation"; // Import OrderConfirmation page
 
 function App() {
   return (
@@ -43,25 +41,19 @@ function App() {
                 <Route
                   path="/restaurants"
                   element={
-                    <ProtectedRoute>
-                      <Restaurants />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Restaurants />} />
                   }
                 />
                 <Route
                   path="/restaurants/:id/menu"
                   element={
-                    <ProtectedRoute>
-                      <Menu />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Menu />} />
                   }
                 />
                 <Route
                   path="/cart"
                   element={
-                    <ProtectedRoute>
-                      <Cart />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Cart />} />
                   }
                 />
                 
@@ -69,29 +61,26 @@ function App() {
                 <Route
                   path="/orders"
                   element={
-                    <ProtectedRoute>
-                      <Orders />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<Orders />} />
                   }
                 />
-                <Route path="/delivery" element={<Delivery />} />
-                <Route path="/payment" element={<Payment />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/delivery" element={<Delivery />} /> {/* Unprotected */}
+                <Route path="/assign-delivery" element={<AssignDelivery />} /> {/* Unprotected */}
+                <Route path="/payment" element={<Payment />} /> {/* Unprotected */}
+                <Route path="/profile" element={<Profile />} /> {/* Unprotected */}
+                <Route path="/notifications" element={<Notifications />} /> {/* Unprotected */}
                 <Route
                   path="/tracking/:orderId"
                   element={
-                    <ProtectedRoute>
-                      <OrderTracking />
-                    </ProtectedRoute>
+                    <ProtectedRoute element={<OrderTracking />} />
                   }
                 />
-                <Route path="/tracking" element={<OrderTracking />} />
+                <Route path="/tracking" element={<OrderTracking />} /> {/* Unprotected */}
                 <Route
                   path="/checkout"
                   element={
                     <ProtectedRoute>
-                      <Checkout />
+                      <OrderConfirmation />
                     </ProtectedRoute>
                   }
                 />
