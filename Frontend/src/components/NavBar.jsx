@@ -32,6 +32,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
+    navigate('/login');
     navigate('/');
   };
 
@@ -68,10 +69,9 @@ const Navbar = () => {
                 </motion.div>
                 <motion.div variants={linkHover} whileHover="hover">
                   <Link
-                    to="/restaurant-menu"
+                    to="/orders"
                     className="px-4 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
                   >
-                  
                     Orders
                   </Link>
                 </motion.div>
