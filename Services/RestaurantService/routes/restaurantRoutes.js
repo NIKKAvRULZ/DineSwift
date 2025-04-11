@@ -20,6 +20,37 @@ const {
     rateMenuItem
 } = require('../controllers/menuItemController');
 
+const mongoose = require('mongoose');
+
+// Enhanced health check endpoint for connectivity testing
+router.get('/health', (req, res) => {
+    try {
+        // Check database connection through mongoose
+        const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+        
+        // Return detailed health status
+        res.status(200).json({ 
+            status: 'ok', 
+            message: 'Server is running',
+            timestamp: new Date().toISOString(),
+            database: dbStatus,
+            version: '1.0.0'
+        });
+    } catch (error) {
+        // Still return 200 to show the server is up, even if some components have issues
+        res.status(200).json({ 
+            status: 'degraded',
+            message: 'Server is running with issues',
+            error: error.message
+        });
+    }
+});
+
+// Simple ping endpoint (very lightweight) - no database check
+router.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
 // Restaurant routes
 router.get('/restaurants/cuisines', getCuisineTypes);
 router.get('/restaurants', getAllRestaurants);

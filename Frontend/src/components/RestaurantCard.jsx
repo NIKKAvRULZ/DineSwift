@@ -124,6 +124,19 @@ const RestaurantCard = ({ restaurant, isClientView = false }) => {
           </motion.div>
           <p className="text-gray-600 mb-4">{restaurant.cuisine}</p>
           
+          {/* Add location display */}
+          <div className="flex items-center mb-4 text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-sm">
+              {restaurant.address?.street && `${restaurant.address.street}, `}
+              {restaurant.address?.city && `${restaurant.address.city}, `}
+              {restaurant.address?.state && `${restaurant.address.state}`}
+            </span>
+          </div>
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <span className="text-yellow-400 mr-1">⭐</span>

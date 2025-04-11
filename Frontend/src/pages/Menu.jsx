@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,8 @@ import { useCart } from '../context/CartContext'; // Import useCart
 import { useNavigate } from 'react-router-dom';
 import defaultItemImage from '../assets/placeholder-menu.png' 
 import defaultResImage from '../assets/placeholder-restaurant.png' 
+import ImageCarousel from '../components/ImageCarousel';
+import API from '../api/apiHandler'; // Import the new API handler
 
 // Toast component
 const Toast = ({ message, type, onClose }) => {
@@ -91,6 +93,7 @@ const Menu = () => {
   const [searchQuery, setSearchQuery] = useState('');
   // Add state to track favorite restaurants
   const [favoriteRestaurants, setFavoriteRestaurants] = useState({});
+  const [isOffline, setIsOffline] = useState(false); // Track online/offline status
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -123,85 +126,144 @@ const Menu = () => {
     }
   }, []);
   
-  // Try to sync any pending ratings with the server on component mount
+  // Track online/offline status
   useEffect(() => {
-    const syncPendingRatings = async () => {
-      try {
-        if (!id) return; // Need restaurant ID
-        
-        const pendingRatings = JSON.parse(localStorage.getItem('pendingRatings') || '{}');
-        if (Object.keys(pendingRatings).length === 0) return; // No pending ratings
-        
-        console.log('Found pending ratings to sync:', pendingRatings);
-        
-        const token = localStorage.getItem('token');
-        if (!token) return; // Need auth token
-        
-        // Process each pending rating
-        const updatedPendingRatings = {...pendingRatings};
-        
-        for (const [itemId, ratingData] of Object.entries(pendingRatings)) {
+    // Add network status events
+    const handleOnline = () => {
+      console.log('🟢 Device is now online');
+      setIsOffline(false);
+      setToast({
+        visible: true,
+        message: 'Back online! Syncing your ratings...',
+        type: 'success'
+      });
+      // Try to sync pending ratings when we get back online
+      syncPendingRatings();
+    };
+    
+    const handleOffline = () => {
+      console.log('🔴 Device is now offline');
+      setIsOffline(true);
+      setToast({
+        visible: true,
+        message: 'You are offline. Ratings will be saved locally.',
+        type: 'warning'
+      });
+    };
+    
+    // Check initial state
+    setIsOffline(!navigator.onLine);
+    
+    // Add event listeners
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Make syncPendingRatings accessible via useCallback
+  const syncPendingRatings = useCallback(async () => {
+    try {
+      // Skip syncing if we're offline
+      if (isOffline) {
+        console.log('Device is offline, skipping sync');
+        return;
+      }
+      
+      // Get pending ratings
+      const pendingRatings = API.getPendingRatings();
+      if (Object.keys(pendingRatings).length === 0) return;
+      
+      console.log('Found pending ratings to sync:', pendingRatings);
+      
+      // Get token for API requests
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No auth token found, skipping sync of pending ratings');
+        return;
+      }
+      
+      // Check if server is reachable first
+      const isServerReachable = await API.checkServerConnectivity();
+      if (!isServerReachable) {
+        console.log('Server not reachable, skipping sync of pending ratings');
+        return;
+      }
+      
+      // Try to sync each rating
+      let syncedCount = 0;
+      
+      for (const [itemId, ratingData] of Object.entries(pendingRatings)) {
+        try {
           // Only process ratings for the current restaurant
           if (ratingData.restaurantId !== id) continue;
           
-          try {
-            const baseUrl = 'http://localhost:5002/api';
-            const ratingUrl = `${baseUrl}/restaurants/${id}/menu-items/${itemId}/rate`;
-            
-            console.log(`Attempting to sync pending rating for item ${itemId}`);
-            
-            // Send rating to API
-            const response = await axios.post(
-              ratingUrl,
-              { 
-                rating: ratingData.rating,
-                userId: user?.id || 'anonymous',
-                timestamp: ratingData.timestamp
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
+          // Submit the rating
+          const response = await API.submitRating({
+            restaurantId: ratingData.restaurantId,
+            menuItemId: itemId,
+            rating: ratingData.rating,
+            userId: ratingData.userId,
+            token
+          });
+          
+          console.log(`Successfully synced rating for item ${itemId}:`, response);
+          
+          // Remove from pending ratings
+          API.removePendingRating(itemId);
+          
+          // Update menu items
+          if (response && response.menuItem) {
+            setMenuItems(prevItems => 
+              prevItems.map(item => {
+                if ((item._id || item.id) === itemId) {
+                  return { 
+                    ...item, 
+                    rating: response.menuItem.rating,
+                    ratingCount: response.menuItem.ratingCount,
+                    userRating: ratingData.rating
+                  };
                 }
-              }
+                return item;
+              })
             );
-            
-            console.log(`Successfully synced rating for item ${itemId}:`, response.data);
-            
-            // Remove from pending ratings on success
-            delete updatedPendingRatings[itemId];
-            
-            // Update menu items with server response if available
-            if (response.data && response.data.menuItem) {
-              setMenuItems(prevItems => 
-                prevItems.map(item => {
-                  if ((item._id || item.id) === itemId) {
-                    return { 
-                      ...item, 
-                      rating: response.data.menuItem.rating,
-                      ratingCount: response.data.menuItem.ratingCount
-                    };
-                  }
-                  return item;
-                })
-              );
-            }
-          } catch (error) {
-            console.error(`Failed to sync rating for item ${itemId}:`, error);
-            // Keep in pending ratings for future retry
           }
+          
+          syncedCount++;
+        } catch (error) {
+          console.error(`Failed to sync rating for item ${itemId}:`, error);
+          // Keep in pending ratings for future retry
         }
-        
-        // Update localStorage with any remaining pending ratings
-        localStorage.setItem('pendingRatings', JSON.stringify(updatedPendingRatings));
-        console.log('Updated pending ratings after sync attempt:', updatedPendingRatings);
-      } catch (error) {
-        console.error('Error syncing pending ratings:', error);
       }
-    };
-    
+      
+      // Show success notification if any ratings were synced
+      if (syncedCount > 0) {
+        setToast({
+          visible: true,
+          message: `${syncedCount} pending ${syncedCount === 1 ? 'rating' : 'ratings'} synced successfully`,
+          type: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Error syncing pending ratings:', error);
+    }
+  }, [id, isOffline]); // Add dependencies for useCallback
+
+  // Sync pending ratings when component mounts or when we come back online
+  useEffect(() => {
+    // Run the sync function
     syncPendingRatings();
-  }, [id, user?.id]);
+    
+    // Set up interval to retry every minute
+    const intervalId = setInterval(syncPendingRatings, 60000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [syncPendingRatings]); // Use the callback version
 
   useEffect(() => {
     const fetchRestaurantAndMenu = async () => {
@@ -219,9 +281,14 @@ const Menu = () => {
         setRestaurant(restaurant.data);
         
         // Filter out menu items without valid images
-        const menuItemsWithImages = restaurantMenu.data.filter(item => 
-          item.image && item.image.trim() !== ''
-        );
+        const menuItemsWithImages = restaurantMenu.data.filter(item => {
+          // Check if there are multiple images
+          if (item.images && item.images.length > 0) {
+            return item.images.some(img => img && img.trim() !== '');
+          }
+          // Check for single image
+          return item.image && item.image.trim() !== '';
+        });
         
         // Apply any user ratings from localStorage to the fetched menu items
         const savedRatings = JSON.parse(localStorage.getItem('userRatings') || '{}');
@@ -323,7 +390,7 @@ const Menu = () => {
     addToCart(item, id); // Use addToCart from CartContext
   };
 
-  // Handle rating an item
+  // Handle rating an item - modify to handle offline mode gracefully
   const handleRateItem = async (itemId, rating) => {
     try {
       // Always set temporary rating for immediate UI feedback
@@ -365,97 +432,115 @@ const Menu = () => {
         type: 'success'
       });
       
-      // IMPORTANT: Send to backend first with proper error handling
-      const token = localStorage.getItem('token');
-      const baseUrl = 'http://localhost:5002/api';
-      const ratingUrl = `${baseUrl}/restaurants/${id}/menu-items/${itemId}/rate`;
-      
-      // New approach: Use axios for better consistency with the rest of the app
-      try {
-        console.log('Sending rating to API:', {
+      // If we're offline, save for later and don't attempt API call
+      if (isOffline || !navigator.onLine) {
+        console.log('Device is offline, saving rating locally only');
+        // Save the rating as pending for later sync
+        API.savePendingRating({
           menuItemId: itemId,
-          rating: Number(rating)
+          rating,
+          userId: API.getUserId(user),
+          restaurantId: id
         });
         
-        const response = await axios.post(
-          ratingUrl,
-          { 
-            rating: Number(rating),
-            userId: user?.id || 'anonymous', // Include user ID if available
-            timestamp: new Date().toISOString() // Add timestamp for tracking
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            }
-          }
-        );
+        // Show appropriate offline message
+        setToast({
+          visible: true,
+          message: 'You are offline. Rating saved and will sync when online.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      // If we're online, try to submit to server
+      // Get token
+      const token = localStorage.getItem('token');
+      // Get user ID
+      const userId = API.getUserId(user);
+      
+      // Submit rating to server using the API handler
+      try {
+        const response = await API.submitRating({
+          restaurantId: id,
+          menuItemId: itemId,
+          rating,
+          userId,
+          token
+        });
         
-        console.log('API response for rating:', response.data);
+        console.log('Rating submitted successfully:', response);
         
-        // If API call succeeded, we can use the returned data to update our UI
-        if (response.data && response.data.menuItem) {
-          // Update with the server's calculated rating
+        // Update with accurate server data if available
+        if (response && response.menuItem) {
           setMenuItems(prevItems => 
             prevItems.map(item => {
               if ((item._id || item.id) === itemId) {
                 return { 
                   ...item, 
-                  rating: response.data.menuItem.rating,
-                  ratingCount: response.data.menuItem.ratingCount,
-                  userRating: rating // Keep the user's rating for display purposes
+                  rating: response.menuItem.rating,
+                  ratingCount: response.menuItem.ratingCount,
+                  userRating: rating
                 };
               }
               return item;
             })
           );
-        }
-      } catch (apiError) {
-        console.error('Failed to submit rating to API:', apiError);
-        
-        // Fallback approach: Create a backup of ratings if API fails
-        try {
-          // Store failed ratings for potential future retry
-          const pendingRatings = JSON.parse(localStorage.getItem('pendingRatings') || '{}');
-          pendingRatings[itemId] = { 
-            rating: Number(rating),
-            restaurantId: id,
-            timestamp: new Date().toISOString()
-          };
-          localStorage.setItem('pendingRatings', JSON.stringify(pendingRatings));
           
-          console.log('Saved rating to pendingRatings for future retry:', pendingRatings);
-        } catch (storageError) {
-          console.error('Error storing pending rating:', storageError);
+          // Remove from pending ratings if it was there
+          API.removePendingRating(itemId);
         }
-      }
-      
-      // Clear temporary rating after a delay
-      setTimeout(() => {
-        setTempRatings(prev => {
-          const newTempRatings = {...prev};
-          delete newTempRatings[itemId];
-          return newTempRatings;
+      } catch (error) {
+        console.error('Error submitting rating:', error);
+        
+        // Generate appropriate error message based on error type
+        let errorMessage = 'Network issue - your rating will be saved when connection is restored';
+        
+        if (error.type === 'AUTH_ERROR') {
+          errorMessage = 'Authentication error - please log in again';
+        } else if (error.type === 'NOT_FOUND') {
+          errorMessage = 'Menu item not found on server';
+        } else if (error.type === 'SERVER_ERROR') {
+          errorMessage = 'Server error - please try again later';
+        } else if (error.message === 'SERVER_UNREACHABLE') {
+          errorMessage = 'Server is currently unreachable - your rating will be saved for later';
+        }
+        
+        // Save the rating as pending for later sync
+        API.savePendingRating({
+          menuItemId: itemId,
+          rating,
+          userId,
+          restaurantId: id
         });
-      }, 1000);
-      
+        
+        // Show toast with appropriate error message
+        setToast({
+          visible: true,
+          message: errorMessage,
+          type: 'warning'
+        });
+        
+        // Try to sync again after a delay
+        setTimeout(() => {
+          syncPendingRatings();
+        }, 15000); // Try again after 15 seconds
+      }
     } catch (error) {
       console.error('Error in rating flow:', error);
-      
-      // Clear temporary rating on error
-      setTempRatings(prev => {
-        const newTempRatings = {...prev};
-        delete newTempRatings[itemId];
-        return newTempRatings;
-      });
-      
-      // Show error notification
       setToast({
         visible: true,
-        message: `Error saving rating: ${error.message}`,
+        message: 'Something went wrong while saving your rating',
         type: 'error'
       });
+    } finally {
+      // Clear temporary rating status after 1 second
+      setTimeout(() => {
+        setTempRatings(prev => {
+          const newTemp = { ...prev };
+          delete newTemp[itemId];
+          return newTemp;
+        });
+      }, 1000);
     }
   };
 
@@ -504,6 +589,13 @@ const Menu = () => {
         )}
       </AnimatePresence>
 
+      {/* Offline Indicator */}
+      {isOffline && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50">
+          You are currently offline. Your ratings will be saved locally and synced when you're back online.
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Restaurant Header */}
         <motion.div 
@@ -543,6 +635,17 @@ const Menu = () => {
                 {restaurant?.name}
               </h1>
               <p className="text-gray-600">{restaurant?.description}</p>
+              <div className="flex items-center mb-4 text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-sm">
+                  {restaurant?.address?.street && `${restaurant.address.street}, `}
+                  {restaurant?.address?.city && `${restaurant.address.city}, `}
+                  {restaurant?.address?.state && `${restaurant.address.state}`}
+                </span>
+              </div>
               <div className="flex items-center gap-4 mt-2">
                 <span className="flex items-center">
                   <span className="text-yellow-400 mr-1">⭐</span>
@@ -624,10 +727,9 @@ const Menu = () => {
               className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-orange-100"
             >
               <div className="relative h-60">
-                <img
-                  src={item.image ?? defaultItemImage}
-                  alt={item.name}
-                  className="w-full h-full object-contain bg-gray-50 p-2"
+                <ImageCarousel 
+                  images={item.images || [item.image]} 
+                  defaultImage={defaultItemImage}
                 />
                 {item.discount > 0 && (
                   <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-tr-lg rounded-bl-lg text-sm font-bold shadow-md">
@@ -734,9 +836,22 @@ const Menu = () => {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">
-                    Rs {item.price.toFixed(2)}
-                  </span>
+                  <div className="flex flex-col">
+                    {item.discount > 0 ? (
+                      <>
+                        <span className="text-lg font-semibold text-gray-900">
+                          Rs {(item.price * (1 - item.discount / 100)).toFixed(2)}
+                        </span>
+                        <span className="text-sm text-gray-500 line-through">
+                          Rs {item.price.toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-semibold text-gray-900">
+                        Rs {item.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

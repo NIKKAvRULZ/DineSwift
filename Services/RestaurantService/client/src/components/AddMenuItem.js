@@ -17,9 +17,16 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Select
+    Select,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
@@ -39,13 +46,14 @@ const AddMenuItem = () => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        image: '',
+        images: [],
         category: '',
         price: '',
         isSpicy: false,
         discount: 0
     });
     
+    const [newImageUrl, setNewImageUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -64,6 +72,23 @@ const AddMenuItem = () => {
             [e.target.name]: e.target.checked
         }));
     };
+
+    const handleAddImage = () => {
+        if (newImageUrl.trim()) {
+            setFormData(prev => ({
+                ...prev,
+                images: [...prev.images, newImageUrl.trim()]
+            }));
+            setNewImageUrl('');
+        }
+    };
+
+    const handleRemoveImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
     
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -71,10 +96,10 @@ const AddMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
-            // Ensure price is a number
             const submitData = {
                 ...formData,
-                price: parseFloat(formData.price)
+                price: parseFloat(formData.price),
+                images: formData.images
             };
 
             console.log('Submitting menu item:', submitData);
@@ -83,7 +108,6 @@ const AddMenuItem = () => {
             setSuccessMessage('Menu item added successfully!');
             setLoading(false);
             
-            // Navigate back to restaurant details after 2 seconds
             setTimeout(() => {
                 navigate(`/restaurant/${restaurantId}`);
             }, 2000);
@@ -163,15 +187,50 @@ const AddMenuItem = () => {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Image URL"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="https://example.com/image.jpg"
-                            />
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    Images
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Image URL"
+                                        value={newImageUrl}
+                                        onChange={(e) => setNewImageUrl(e.target.value)}
+                                        disabled={loading}
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <IconButton 
+                                        onClick={handleAddImage}
+                                        disabled={loading || !newImageUrl.trim()}
+                                        color="primary"
+                                    >
+                                        <AddIcon />
+                                    </IconButton>
+                                </Box>
+                                <List>
+                                    {formData.images.map((image, index) => (
+                                        <ListItem key={index}>
+                                            <ListItemText 
+                                                primary={image}
+                                                sx={{
+                                                    wordBreak: 'break-all',
+                                                    pr: 2
+                                                }}
+                                            />
+                                            <ListItemSecondaryAction>
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleRemoveImage(index)}
+                                                    disabled={loading}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            </Box>
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
@@ -185,7 +244,7 @@ const AddMenuItem = () => {
                                 disabled={loading}
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">Rs.</InputAdornment>,
-                                    step: "1" // Changing to whole numbers since LKR doesn't typically use cents
+                                    step: "1"
                                 }}
                             />
                         </Grid>

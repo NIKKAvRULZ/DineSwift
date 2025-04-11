@@ -7,12 +7,16 @@ const getAllRestaurants = async (req, res) => {
         const { search, cuisine, minRating } = req.query;
         let query = {};
 
+        console.log('Filtering restaurants with params:', { search, cuisine, minRating });
+
         if (search) {
             query.name = { $regex: search, $options: 'i' };
         }
 
         if (cuisine) {
-            query.cuisine = cuisine;
+            // Use case-insensitive regex for cuisine to match regardless of case
+            query.cuisine = { $regex: `^${cuisine}$`, $options: 'i' };
+            console.log('Added cuisine filter:', cuisine);
         }
 
         // Handle rating filter
@@ -20,15 +24,21 @@ const getAllRestaurants = async (req, res) => {
             query.rating = { $gte: parseFloat(minRating) };
         }
 
+        console.log('MongoDB query:', JSON.stringify(query));
+
         // Get all restaurants first
         const restaurants = await Restaurant.find(query);
+        console.log(`Found ${restaurants.length} restaurants matching criteria`);
         
         // For each restaurant, populate only menu items with images
         const populatedRestaurants = await Promise.all(
             restaurants.map(async (restaurant) => {
                 const menuItems = await MenuItem.find({
                     restaurantId: restaurant._id,
-                    image: { $exists: true, $ne: '' }
+                    $or: [
+                        { images: { $exists: true, $ne: [] } },
+                        { image: { $exists: true, $ne: '' } }
+                    ]
                 });
                 
                 // Convert to plain object to be able to modify
@@ -40,6 +50,7 @@ const getAllRestaurants = async (req, res) => {
         
         res.json(populatedRestaurants);
     } catch (error) {
+        console.error('Error in getAllRestaurants:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -65,7 +76,10 @@ const getRestaurant = async (req, res) => {
         // Populate only menu items with images
         const menuItems = await MenuItem.find({
             restaurantId: restaurant._id,
-            image: { $exists: true, $ne: '' }
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
         });
         
         // Convert to plain object to be able to modify
@@ -117,7 +131,10 @@ const updateRestaurant = async (req, res) => {
         // Populate only menu items with images
         const menuItems = await MenuItem.find({
             restaurantId: restaurant._id,
-            image: { $exists: true, $ne: '' }
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
         });
         
         // Convert to plain object to be able to modify
@@ -179,7 +196,10 @@ const findNearbyRestaurants = async (req, res) => {
             restaurants.map(async (restaurant) => {
                 const menuItems = await MenuItem.find({
                     restaurantId: restaurant._id,
-                    image: { $exists: true, $ne: '' }
+                    $or: [
+                        { images: { $exists: true, $ne: [] } },
+                        { image: { $exists: true, $ne: '' } }
+                    ]
                 });
                 
                 // Convert to plain object to be able to modify

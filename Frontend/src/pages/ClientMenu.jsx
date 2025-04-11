@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import defaultItemImage from '../assets/placeholder-menu.png';
 import defaultResImage from '../assets/placeholder-restaurant.png';
+import ImageCarousel from '../components/ImageCarousel';
+import menuService from '../services/menuService';
 
 const ClientMenu = () => {
   const { id } = useParams();
@@ -16,6 +18,10 @@ const ClientMenu = () => {
   const [favoriteItems, setFavoriteItems] = useState({}); // Track favorite items
   const [lastUpdate, setLastUpdate] = useState(0); // Track last update time
   const [ratingUpdateCount, setRatingUpdateCount] = useState(0); // Track rating updates
+  const [lastRatingUpdate, setLastRatingUpdate] = useState(null);
+  const [userRatings, setUserRatings] = useState({}); // Track user's ratings
+  const [isRating, setIsRating] = useState({}); // Track items being rated
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' }); // Toast notifications
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -33,42 +39,42 @@ const ClientMenu = () => {
   useEffect(() => {
     const fetchRestaurantAndMenu = async () => {
       try {
-        // No token required for client view
-        const restaurantMenu = await axios.get(`http://localhost:5002/api/restaurants/${id}/menu-items`);
-        const restaurant = await axios.get(`http://localhost:5002/api/restaurants/${id}`);
+        setLoading(true);
+        // Use the menu service instead of direct axios calls
+        const menuItems = await menuService.getMenuItems(id);
+        const restaurant = await menuService.getRestaurant(id);
         
-        setRestaurant(restaurant.data);
+        setRestaurant(restaurant);
         
         // Filter out menu items without valid images
-        const menuItemsWithImages = restaurantMenu.data.filter(item => 
-          item.image && item.image.trim() !== ''
-        );
-        
-        // Check if any ratings have changed
-        const hasRatingChanges = menuItemsWithImages.some((newItem, index) => {
-          const currentItem = menuItems[index];
-          if (!currentItem) return false;
-          
-          const ratingChanged = newItem.rating !== currentItem.rating;
-          const countChanged = newItem.ratingCount !== currentItem.ratingCount;
-          
-          if (ratingChanged || countChanged) {
-            console.log('Rating change detected:', {
-              itemId: newItem._id,
-              name: newItem.name,
-              oldRating: currentItem.rating,
-              newRating: newItem.rating,
-              oldCount: currentItem.ratingCount,
-              newCount: newItem.ratingCount
-            });
-            return true;
+        const menuItemsWithImages = menuItems.filter(item => {
+          // Check if there are multiple images
+          if (item.images && item.images.length > 0) {
+            return item.images.some(img => img && img.trim() !== '');
           }
-          return false;
+          // Check for single image
+          return item.image && item.image.trim() !== '';
         });
         
-        if (hasRatingChanges) {
-          console.log('Updating menu items with new ratings');
-          setRatingUpdateCount(prev => prev + 1);
+        // Apply user ratings to the menu items if they exist
+        const savedRatings = localStorage.getItem('userRatings');
+        let userRatingData = {};
+        
+        if (savedRatings) {
+          try {
+            userRatingData = JSON.parse(savedRatings);
+            setUserRatings(userRatingData);
+            
+            // Update menu items with user ratings
+            menuItemsWithImages.forEach(item => {
+              const itemId = item._id || item.id;
+              if (userRatingData[itemId]) {
+                item.userRating = userRatingData[itemId];
+              }
+            });
+          } catch (e) {
+            console.error('Error parsing saved ratings:', e);
+          }
         }
         
         setMenuItems(menuItemsWithImages);
@@ -80,11 +86,12 @@ const ClientMenu = () => {
         // Load favorites from localStorage
         const savedFavorites = localStorage.getItem('favoriteItems');
         if (savedFavorites) {
-          setFavoriteItems(JSON.parse(savedFavorites));
+          try {
+            setFavoriteItems(JSON.parse(savedFavorites));
+          } catch (e) {
+            console.error('Error parsing saved favorites:', e);
+          }
         }
-
-        // Update last update time
-        setLastUpdate(Date.now());
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch menu data');
         console.error('Error fetching menu data:', err);
@@ -93,18 +100,172 @@ const ClientMenu = () => {
       }
     };
 
+    // Initial fetch only
+    fetchRestaurantAndMenu();
+  }, [id]); // Only run once when component mounts or id changes
+
+  // Set up polling mechanism to fetch updated ratings
+  useEffect(() => {
     // Initial fetch
     fetchRestaurantAndMenu();
-
-    // Set up polling every 3 seconds (more frequent to catch rating updates)
-    const pollInterval = setInterval(fetchRestaurantAndMenu, 3000);
-
-    // Clean up interval on unmount
-    return () => clearInterval(pollInterval);
+    
+    // Set up polling interval to refresh data
+    const intervalId = setInterval(() => {
+      fetchUpdatedMenuItems();
+    }, 3000); // Poll every 3 seconds
+    
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, [id]);
+  
+  // Function to fetch only updated menu items
+  const fetchUpdatedMenuItems = useCallback(async () => {
+    try {
+      const newMenuItems = await menuService.getMenuItems(id);
+      
+      // Check if there are any rating changes
+      let hasUpdates = false;
+      
+      // Filter out items without valid images
+      const newMenuItemsWithImages = newMenuItems.filter(item => {
+        // Check if there are multiple images
+        if (item.images && item.images.length > 0) {
+          return item.images.some(img => img && img.trim() !== '');
+        }
+        // Check for single image
+        return item.image && item.image.trim() !== '';
+      });
+      
+      // Compare with current menu items to detect rating changes
+      const updatedItems = newMenuItemsWithImages.map(newItem => {
+        const currentItem = menuItems.find(item => 
+          (item._id || item.id) === (newItem._id || newItem.id)
+        );
+        
+        if (currentItem) {
+          // If rating or ratingCount has changed
+          if (newItem.rating !== currentItem.rating || 
+              newItem.ratingCount !== currentItem.ratingCount) {
+            hasUpdates = true;
+            console.log(`Rating updated for ${newItem.name}: ${currentItem.rating} → ${newItem.rating}`);
+          }
+        }
+        return newItem;
+      });
+      
+      if (hasUpdates) {
+        setMenuItems(updatedItems);
+        setLastUpdate(new Date().toISOString());
+        setRatingUpdateCount(prev => prev + 1);
+        console.log('Menu items updated with new ratings');
+      }
+    } catch (err) {
+      console.error('Error fetching updated menu items:', err);
+    }
+  }, [id, menuItems]);
+
+  // Handle rating an item
+  const handleRateItem = useCallback(async (itemId, newRating) => {
+    try {
+      // Set rating status for this item
+      setIsRating(prev => ({ ...prev, [itemId]: true }));
+      
+      // Get existing item data
+      const item = menuItems.find(item => (item._id || item.id) === itemId);
+      if (!item) return;
+      
+      // Store user rating immediately for better UX
+      setUserRatings(prev => {
+        const newRatings = { ...prev, [itemId]: newRating };
+        localStorage.setItem('userRatings', JSON.stringify(newRatings));
+        return newRatings;
+      });
+      
+      // Calculate optimistic new rating for display
+      const previousRating = item.rating || 0;
+      const previousRatingCount = item.ratingCount || 0;
+      
+      let newRatingCount = previousRatingCount;
+      // Only increase count if this is new rating, not updating existing
+      if (!userRatings[itemId]) newRatingCount += 1;
+      
+      const oldRatingTotal = previousRating * previousRatingCount;
+      let newRatingTotal;
+      
+      if (userRatings[itemId]) {
+        // Adjust when updating existing rating
+        newRatingTotal = oldRatingTotal - userRatings[itemId] + newRating;
+      } else {
+        // Add new rating to total
+        newRatingTotal = oldRatingTotal + newRating;
+      }
+      
+      const optimisticRating = newRatingCount > 0 ? newRatingTotal / newRatingCount : 0;
+      
+      // Update UI immediately (optimistic)
+      setMenuItems(prevItems => 
+        prevItems.map(item => {
+          if ((item._id || item.id) === itemId) {
+            return { 
+              ...item, 
+              rating: optimisticRating,
+              ratingCount: newRatingCount,
+              userRating: newRating
+            };
+          }
+          return item;
+        })
+      );
+      
+      // Submit to server using menuService
+      const response = await menuService.submitRating(id, itemId, newRating);
+      
+      console.log('Rating submitted successfully:', response);
+      
+      // Update with actual server data if available
+      if (response && response.menuItem) {
+        setMenuItems(prevItems => 
+          prevItems.map(item => {
+            if ((item._id || item.id) === itemId) {
+              return { 
+                ...item, 
+                rating: response.menuItem.rating,
+                ratingCount: response.menuItem.ratingCount,
+                userRating: newRating
+              };
+            }
+            return item;
+          })
+        );
+      }
+      
+      // Show success toast
+      setToast({
+        visible: true,
+        message: `You rated "${item.name}" ${newRating} stars!`,
+        type: 'success'
+      });
+      
+      // Auto-hide toast after 3 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      setToast({
+        visible: true,
+        message: 'Error submitting rating. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      // Clear rating status
+      setIsRating(prev => ({ ...prev, [itemId]: false }));
+    }
+  }, [id, menuItems, userRatings]);
 
   // Toggle favorite status for an item
-  const toggleFavorite = (itemId) => {
+  const toggleFavorite = useCallback((itemId) => {
     setFavoriteItems(prev => {
       const newFavorites = { 
         ...prev, 
@@ -114,7 +275,7 @@ const ClientMenu = () => {
       localStorage.setItem('favoriteItems', JSON.stringify(newFavorites));
       return newFavorites;
     });
-  };
+  }, []);
 
   // Filter by category and sort with favorites at the top
   const filteredAndSortedItems = selectedCategory === 'all'
@@ -244,10 +405,9 @@ const ClientMenu = () => {
               className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-orange-100"
             >
               <div className="relative h-60">
-                <img
-                  src={item.image ?? defaultItemImage}
-                  alt={item.name}
-                  className="w-full h-full object-contain bg-gray-50 p-2"
+                <ImageCarousel 
+                  images={item.images || [item.image]} 
+                  defaultImage={defaultItemImage}
                 />
                 {item.discount > 0 && (
                   <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-tr-lg rounded-bl-lg text-sm font-bold shadow-md">
@@ -294,34 +454,66 @@ const ClientMenu = () => {
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => {
                       const starValue = i + 1;
-                      const itemRating = item.rating || 0;
-                      const isFilled = starValue <= Math.floor(itemRating);
-                      const isHalfFilled = !isFilled && starValue <= itemRating + 0.5 && itemRating % 1 !== 0;
+                      const itemId = item._id || item.id;
+                      
+                      // Use user's rating if available
+                      const userRating = userRatings[itemId] || item.userRating;
+                      
+                      // For display, prioritize user rating over item rating
+                      const ratingToShow = userRating || item.rating || 0;
+                      
+                      // Determine star appearance: filled, half-filled, or empty
+                      const isFilled = starValue <= Math.floor(ratingToShow);
+                      const isHalfFilled = !isFilled && starValue <= ratingToShow + 0.5 && ratingToShow % 1 !== 0;
                       
                       return (
-                        <span key={i} className="text-lg">
+                        <button 
+                          key={i} 
+                          className="text-lg focus:outline-none"
+                          onClick={() => handleRateItem(itemId, starValue)}
+                          disabled={isRating[itemId]}
+                        >
                           {isFilled ? (
-                            <span className="text-yellow-400">★</span>
+                            <span className="text-yellow-400 hover:text-yellow-500">★</span>
                           ) : isHalfFilled ? (
-                            <span className="text-yellow-400 relative">
+                            <span className="text-yellow-400 relative hover:text-yellow-500">
                               <span className="absolute text-yellow-400" style={{ width: '50%', overflow: 'hidden' }}>★</span>
                               <span className="text-gray-300">★</span>
                             </span>
                           ) : (
-                            <span className="text-gray-300">★</span>
+                            <span className="text-gray-300 hover:text-yellow-500">★</span>
                           )}
-                        </span>
+                        </button>
                       );
                     })}
                   </div>
                   <span className="ml-2 text-sm text-gray-600">
-                    {item.rating ? `${item.rating.toFixed(1)} (${item.ratingCount || 0} ratings)` : 'Not rated yet'}
+                    {isRating[item._id || item.id] 
+                      ? 'Saving rating...' 
+                      : userRatings[item._id || item.id] 
+                        ? `Your rating: ${userRatings[item._id || item.id]}`
+                        : item.rating 
+                          ? `${item.rating.toFixed(1)} (${item.ratingCount || 0})`
+                          : 'Click to rate'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">
-                    Rs {item.price.toFixed(2)}
-                  </span>
+                  <div className="flex flex-col">
+                    {item.discount > 0 ? (
+                      <>
+                        <span className="text-lg font-semibold text-gray-900">
+                          Rs {(item.price * (1 - item.discount / 100)).toFixed(2)}
+                        </span>
+                        <span className="text-sm text-gray-500 line-through">
+                          Rs {item.price.toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-semibold text-gray-900">
+                        Rs {item.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -342,6 +534,20 @@ const ClientMenu = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
+            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+          } text-white transition-opacity duration-300 opacity-90 z-50`}
+        >
+          {toast.message}
+        </motion.div>
+      )}
     </motion.div>
   );
 };
