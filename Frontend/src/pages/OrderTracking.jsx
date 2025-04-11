@@ -133,7 +133,7 @@ const stages = [
     key: 'Pending',
     label: 'Order Placed',
     icon: '📝',
-    animation: stageAnimations.Pending,
+    animation: stageAnimations.Pending   ,
     bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
     activeColor: 'bg-blue-500'
   },
