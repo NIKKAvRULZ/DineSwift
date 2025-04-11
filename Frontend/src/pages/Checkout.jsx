@@ -37,17 +37,17 @@ const Checkout = () => {
 
       const orderData = {
         customerId: user.id,
-        restaurantId: items[0].restaurantId, // Assuming all items are from same restaurant
+        restaurantId: items[0].restaurantId,
         items: items.map(item => ({
           name: item.name,
           price: item.price,
           quantity: item.quantity
         })),
         totalAmount: total,
-        enum: 'pending',
         paymentMethod,
         deliveryAddress: address
       };
+      
 
       const response = await orderService.createOrder(orderData, user.token);
       setIsOrderPlaced(true);

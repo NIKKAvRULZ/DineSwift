@@ -38,7 +38,7 @@ const Orders = () => {
 
   const getStatusBadgeColor = (status) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
+      Pending: 'bg-yellow-100 text-yellow-800',
       confirmed: 'bg-blue-100 text-blue-800',
       preparing: 'bg-purple-100 text-purple-800',
       ready: 'bg-indigo-100 text-indigo-800',
@@ -51,7 +51,7 @@ const Orders = () => {
 
   const filteredOrders = orders.filter((order) => {
     if (filter === 'active') {
-      return ['pending', 'confirmed', 'preparing', 'ready', 'delivering'].includes(order.status);
+      return ['Pending', 'confirmed', 'preparing', 'ready', 'delivering'].includes(order.status);
     }
     if (filter === 'completed') {
       return ['delivered', 'cancelled'].includes(order.status);

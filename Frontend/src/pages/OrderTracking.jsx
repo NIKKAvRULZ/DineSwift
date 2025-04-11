@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import orderService from '../services/orderService';
 
 const stageAnimations = {
-    pending: {
+    Pending: {
       scale: [1, 1.1, 1],  
       rotate: [0, -5, 5, -5, 0],  
       opacity: [1, 0.7, 1],  // Flickering effect like waiting status
@@ -130,10 +130,10 @@ const triggerConfetti = () => {
 
 const stages = [
   {
-    key: 'pending',
+    key: 'Pending',
     label: 'Order Placed',
     icon: '📝',
-    animation: stageAnimations.pending,
+    animation: stageAnimations.Pending,
     bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
     activeColor: 'bg-blue-500'
   },

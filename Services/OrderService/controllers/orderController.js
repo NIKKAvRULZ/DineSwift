@@ -23,7 +23,7 @@ exports.createOrder = async (req, res) => {
             restaurantId,
             items,
             totalAmount,
-            status: status || "pending",
+            status: (status || "pending").toLowerCase(),
             paymentMethod,
             deliveryAddress
         });
