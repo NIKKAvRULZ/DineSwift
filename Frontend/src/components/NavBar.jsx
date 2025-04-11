@@ -68,9 +68,10 @@ const Navbar = () => {
                 </motion.div>
                 <motion.div variants={linkHover} whileHover="hover">
                   <Link
-                    to="/orders"
+                    to="/restaurant-menu"
                     className="px-4 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
                   >
+                  
                     Orders
                   </Link>
                 </motion.div>

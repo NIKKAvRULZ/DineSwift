@@ -4,7 +4,10 @@ const Restaurant = require('../models/Restaurant');
 // Get all menu items
 const getAllMenuItems = async (req, res) => {
     try {
-        const menuItems = await MenuItem.find().populate('restaurantId');
+        // Only return menu items with images
+        const menuItems = await MenuItem.find({ 
+            image: { $exists: true, $ne: '' } 
+        }).populate('restaurantId');
         res.json(menuItems);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -14,7 +17,10 @@ const getAllMenuItems = async (req, res) => {
 // Get all menu items for a specific restaurant
 const getRestaurantMenuItems = async (req, res) => {
     try {
-        const menuItems = await MenuItem.find({ restaurantId: req.params.restaurantId });
+        const menuItems = await MenuItem.find({ 
+            restaurantId: req.params.restaurantId,
+            image: { $exists: true, $ne: '' } // Only return items with images
+        });
         res.json(menuItems);
     } catch (error) {
         res.status(500).json({ error: error.message });

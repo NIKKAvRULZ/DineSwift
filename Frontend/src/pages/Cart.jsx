@@ -83,41 +83,54 @@ const Cart = () => {
           
           <AnimatePresence>
             {Object.entries(groupedItems).map(([restaurantId, items]) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+              <motion.div 
+                key={restaurantId} 
+                className="mb-6 border-b pb-4"
               >
-                <div>
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-gray-600">Rs {item.price.toFixed(2)} each</p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-red-500 hover:text-red-700"
+                <h3 className="font-semibold text-lg mb-3">{items[0]?.restaurantName || 'Restaurant'}</h3>
+                {items.map(item => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow mb-2"
                   >
-                    Remove
-                  </button>
-                </div>
+                    <div>
+                      <h3 className="font-semibold">{item.name}</h3>
+                      <p className="text-gray-600">Rs {item.price.toFixed(2)} each</p>
+                      {item.discount > 0 && (
+                        <span className="text-sm text-red-500 font-medium">
+                          {item.discount}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          className="p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
             ))}
           </AnimatePresence>
@@ -128,7 +141,7 @@ const Cart = () => {
               {Object.entries(groupedItems).map(([restaurantId, items]) => (
                 <div key={restaurantId} className="flex justify-between text-sm text-gray-600">
                   <span>{items[0].restaurantName} Subtotal:</span>
-                  <span>${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                  <span>Rs {items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>

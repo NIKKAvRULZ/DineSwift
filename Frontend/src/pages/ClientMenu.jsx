@@ -1,26 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { useCart } from '../context/CartContext'; // Import useCart
-import { useNavigate } from 'react-router-dom';
-import defaultItemImage from '../assets/placeholder-menu.png' 
-import defaultResImage from '../assets/placeholder-restaurant.png' 
+import defaultItemImage from '../assets/placeholder-menu.png';
+import defaultResImage from '../assets/placeholder-restaurant.png';
 
-const Menu = () => {
+const ClientMenu = () => {
   const { id } = useParams();
-  const { user } = useAuth();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { cartItems, getTotal } = useCart(); // Destructure cartItems and getTotal from useCart
-  const navigate = useNavigate();
-  const { addToCart } = useCart(); // Destructure addToCart from useCart
-
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -38,16 +30,10 @@ const Menu = () => {
   useEffect(() => {
     const fetchRestaurantAndMenu = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const restaurantMenu =  await axios.get(`http://localhost:5002/api/restaurants/${id}/menu-items`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const restaurant =  await axios.get(`http://localhost:5002/api/restaurants/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        console.log(restaurant.data)
-        console.log(restaurantMenu.data)
-
+        // No token required for client view
+        const restaurantMenu = await axios.get(`http://localhost:5002/api/restaurants/${id}/menu-items`);
+        const restaurant = await axios.get(`http://localhost:5002/api/restaurants/${id}`);
+        
         setRestaurant(restaurant.data);
         
         // Filter out menu items without valid images
@@ -61,24 +47,18 @@ const Menu = () => {
         setCategories(['all', ...uniqueCategories]);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch menu data');
+        console.error('Error fetching menu data:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRestaurantAndMenu();
-  }, []);
+  }, [id]);
 
   const filteredItems = selectedCategory === 'all'
     ? menuItems
     : menuItems.filter(item => item.category === selectedCategory);
-
-  
-  // Add item to the cart
-  const handleAddToCart = (item) => {
-    addToCart(item, id); // Use addToCart from CartContext
-  };
-
 
   if (loading) {
     return (
@@ -146,26 +126,28 @@ const Menu = () => {
         </motion.div>
 
         {/* Categories */}
-        <motion.div 
-          variants={itemAnimation}
-          className="flex gap-4 overflow-x-auto pb-4 mb-8"
-        >
-          {categories.map(category => (
-            <motion.button
-              key={category}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-                selectedCategory === category
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-orange-50'
-              } transition-all duration-300 shadow-sm`}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </motion.button>
-          ))}
-        </motion.div>
+        {categories.length > 0 && (
+          <motion.div 
+            variants={itemAnimation}
+            className="flex gap-4 overflow-x-auto pb-4 mb-8"
+          >
+            {categories.map(category => (
+              <motion.button
+                key={category}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+                  selectedCategory === category
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-orange-50'
+                } transition-all duration-300 shadow-sm`}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
 
         {/* Menu Items Grid */}
         <motion.div
@@ -174,7 +156,7 @@ const Menu = () => {
         >
           {filteredItems.map(item => (
             <motion.div
-              key={item.id}
+              key={item.id || item._id}
               variants={itemAnimation}
               whileHover={{ y: -5 }}
               className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-orange-100"
@@ -198,23 +180,32 @@ const Menu = () => {
                 <p className="text-gray-600 mb-4 line-clamp-2">
                   {item.description}
                 </p>
+                {/* Display Rating */}
+                <div className="flex items-center mb-3">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-lg">
+                        {i < Math.floor(item.rating || 0) ? (
+                          <span className="text-yellow-400">★</span>
+                        ) : (
+                          <span className="text-gray-300">★</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-600">
+                    {item.rating ? `${item.rating.toFixed(1)}` : 'Not rated yet'}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-900">
                     Rs {item.price.toFixed(2)}
-                    {item.discount > 0 && (
-                      <span className="ml-2 text-sm text-red-500 font-medium">
-                        {item.discount}% OFF
-                      </span>
-                    )}
                   </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleAddToCart(item)}
-                    className="px-4 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
-                  >
-                    Add to Cart
-                  </motion.button>
+                  {item.discount > 0 && (
+                    <span className="text-sm text-red-500 font-medium">
+                      {item.discount}% OFF
+                    </span>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -235,37 +226,8 @@ const Menu = () => {
           </motion.div>
         )}
       </div>
-
-      {/* Cart Preview */}
-      {cartItems.length > 0 && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl border-t border-gray-200 p-4"
-        >
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div>
-              <span className="text-gray-600">
-                {cartItems.reduce((acc, item) => acc + item.quantity, 0)} items
-              </span>
-              <span className="mx-2">•</span>
-              <span className="font-semibold">
-                Rs {getTotal().toFixed(2)}
-              </span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/cart')} // Navigate to cart page 
-              className="px-6 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
-            >
-              View Cart
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
     </motion.div>
   );
 };
 
-export default Menu;
+export default ClientMenu; 

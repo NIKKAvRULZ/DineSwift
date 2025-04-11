@@ -128,9 +128,12 @@ const Checkout = () => {
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
                     <p className="text-gray-500 text-sm">Quantity: {item.quantity}</p>
+                    {item.discount > 0 && (
+                      <p className="text-red-500 text-sm">{item.discount}% OFF</p>
+                    )}
                   </div>
                 </div>
-                <span className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="text-lg font-semibold">Rs {(item.price * item.quantity).toFixed(2)}</span>
               </motion.div>
             ))}
           </div>
@@ -143,7 +146,7 @@ const Checkout = () => {
           >
             <div className="border-t pt-2 mt-2 font-bold flex justify-between text-xl">
               <span className="text-gray-800">Total Amount:</span>
-              <span className="text-gray-800">${total.toFixed(2)}</span>
+              <span className="text-gray-800">Rs {total.toFixed(2)}</span>
             </div>
           </motion.div>
         </div>

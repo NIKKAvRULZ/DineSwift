@@ -21,6 +21,7 @@ import Checkout from "./pages/Checkout"; // Import Checkout page
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import ClientMenu from "./pages/ClientMenu"; // Import ClientMenu page
 
 function App() {
   return (
@@ -95,6 +96,9 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                {/* New route for client restaurant view */}
+                <Route path="/restaurant-menu" element={<Restaurants isClientView={true} />} />
+                <Route path="/restaurant-menu/:id" element={<ClientMenu />} />
               </Routes>
             </main>
             <Footer />
