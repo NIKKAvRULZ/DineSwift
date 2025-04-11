@@ -9,7 +9,7 @@ const MenuItem = ({ item }) => {
       <img 
         src={item.imageUrl} 
         alt={item.name}
-        className="w-full h-48 object-cover"
+        className="w-full h-60 object-contain bg-gray-50 p-2"
       />
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>

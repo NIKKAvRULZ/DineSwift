@@ -1,9 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import RestaurantCard from '../components/RestaurantCard';
+
+// Toast component
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 50 }}
+      className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      } text-white`}
+    >
+      {message}
+    </motion.div>
+  );
+};
 
 const Restaurants = ({ isClientView = false }) => {
   const { isAuthenticated } = useAuth();
@@ -14,6 +38,30 @@ const Restaurants = ({ isClientView = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
+  // Add toast state
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+
+  // Create event listener for favoriteToggled custom event
+  useEffect(() => {
+    const handleFavoriteToggle = (event) => {
+      const { restaurantName, isFavorite } = event.detail;
+      setToast({
+        visible: true,
+        message: isFavorite 
+          ? `Added ${restaurantName} to favorites` 
+          : `Removed ${restaurantName} from favorites`,
+        type: 'success'
+      });
+    };
+
+    // Add event listener
+    window.addEventListener('favoriteToggled', handleFavoriteToggle);
+
+    // Clean up the event listener
+    return () => {
+      window.removeEventListener('favoriteToggled', handleFavoriteToggle);
+    };
+  }, []);
 
   useEffect(() => {
     // Only require authentication if not in client view mode
@@ -84,6 +132,17 @@ const Restaurants = ({ isClientView = false }) => {
 
   return (
     <motion.div initial="initial" animate="animate" className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast.visible && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast({ visible: false })} 
+          />
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           {isClientView ? "Our Restaurant Menu" : "Restaurants Near You"}

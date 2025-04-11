@@ -132,6 +132,9 @@ const MenuItemCard = ({ menuItem, onDelete }) => {
                         />
                         <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                             ({menuItem.rating.toFixed(1)})
+                            {menuItem.ratingCount > 0 && 
+                                <span> · {menuItem.ratingCount} {menuItem.ratingCount === 1 ? 'rating' : 'ratings'}</span>
+                            }
                         </Typography>
                     </Box>
                 </Box>

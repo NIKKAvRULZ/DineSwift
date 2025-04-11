@@ -17,6 +17,7 @@ const {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
+    rateMenuItem
 } = require('../controllers/menuItemController');
 
 // Restaurant routes
@@ -35,5 +36,6 @@ router.get('/menu-items/:id', getMenuItem);
 router.post('/restaurants/:restaurantId/menu-items', addMenuItem);
 router.put('/menu-items/:id', updateMenuItem);
 router.delete('/menu-items/:id', deleteMenuItem);
+router.post('/restaurants/:restaurantId/menu-items/:id/rate', rateMenuItem);
 
 module.exports = router;
