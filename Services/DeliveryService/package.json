@@ -4,7 +4,7 @@
   "description": "Microservice for managing food delivery",
   "main": "index.js",
   "scripts": {
-    "start": "node --no-warnings index.js | Out-Host",
+    "start": "node --no-warnings index.js",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation nodemon index.js"
   },
   "dependencies": {
@@ -13,7 +13,6 @@
     "express": "^4.19.2",
     "joi": "^17.12.2",
     "mongoose": "^8.7.0",
-    "punycode": "^2.3.1",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {

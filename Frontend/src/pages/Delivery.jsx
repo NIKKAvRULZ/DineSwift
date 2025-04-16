@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useOrder } from '../context/OrderContext';
-import AssignDelivery from './AssignDelivery';
 import DeliveryMap from './DeliveryMap';
 import UpdateDeliveryStatus from './UpdateDeliveryStatus';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
+
+// Connect to the backend Socket.IO server
+const socket = io('http://localhost:5004', {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 const Delivery = () => {
   const navigate = useNavigate();
   const { activeOrder: contextActiveOrder } = useOrder();
   const [activeOrder, setActiveOrder] = useState(contextActiveOrder);
   const [location, setLocation] = useState(null);
+  const [driverLocation, setDriverLocation] = useState(null);
   const [deliveryId, setDeliveryId] = useState('');
   const [deliveryDetails, setDeliveryDetails] = useState(null);
   const [error, setError] = useState(null);
@@ -36,33 +44,83 @@ const Delivery = () => {
     }
   }, [activeOrder]);
 
+  // Set up Socket.IO listeners
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+    });
+
+    socket.on('driverLocationUpdate', (data) => {
+      console.log('Driver location update:', data);
+      if (data.deliveryId === deliveryId) {
+        setDriverLocation(data.location);
+      }
+    });
+
+    socket.on('deliveryStatusUpdated', (data) => {
+      console.log('Delivery status updated:', data);
+      if (data.deliveryId === deliveryId) {
+        fetchDeliveryDetails();
+      }
+    });
+
+    return () => {
+      socket.off('connect');
+      socket.off('driverLocationUpdate');
+      socket.off('deliveryStatusUpdated');
+    };
+  }, [deliveryId]);
+
   const fetchDeliveryDetails = async () => {
     setError(null);
     setDeliveryDetails(null);
+    setDriverLocation(null);
     if (!deliveryId) {
       setError('Please enter a Delivery ID');
       return;
     }
 
-    // Validate deliveryId format
     const orderIdRegex = /^[0-9a-fA-F]{24}$/;
     if (!orderIdRegex.test(deliveryId)) {
       setError('Delivery ID must be a valid 24-character MongoDB ObjectId (hexadecimal)');
+      setDeliveryDetails(null);
+      setDriverLocation(null);
       return;
     }
 
     try {
+      console.log(`Fetching delivery details for ID: ${deliveryId}`); // Debug log
       const response = await axios.get(`http://localhost:5004/api/delivery/status/${deliveryId}`);
-      console.log('Delivery details:', response.data); // Debug
+      console.log('Delivery details response:', response.data);
       setDeliveryDetails(response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch delivery details');
-      console.error('Error fetching delivery:', err);
-    }
-  };
 
-  const handleDeliveryAssigned = (newDeliveryId) => {
-    console.log('New delivery assigned with ID:', newDeliveryId);
+      // Set initial driver location if available
+      if (response.data.driverId && response.data.status !== 'delivered') {
+        console.log(`Fetching driver details for driver ID: ${response.data.driverId}`); // Debug log
+        const driverResponse = await axios.get(
+          `http://localhost:5004/api/delivery/driver/${response.data.driverId}`
+        );
+        console.log('Driver details response:', driverResponse.data); // Debug log
+        if (driverResponse.data.location) {
+          setDriverLocation({
+            lat: driverResponse.data.location.coordinates[1],
+            lng: driverResponse.data.location.coordinates[0],
+          });
+        }
+      }
+      setError('');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to fetch delivery details';
+      setError(errorMessage);
+      setDeliveryDetails(null);
+      setDriverLocation(null);
+      console.error('Error fetching delivery:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        url: `http://localhost:5004/api/delivery/status/${deliveryId}`,
+      });
+    }
   };
 
   if (!activeOrder) {
@@ -90,11 +148,15 @@ const Delivery = () => {
     in_progress: 'In Progress',
     delivered: 'Delivered',
     cancelled: 'Cancelled',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready',
+    picked_up: 'Picked Up',
+    delivering: 'Delivering',
   }[status] || status);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-100 min-h-screen">
-      {/* Add the "Assign New Delivery" Button at the Top */}
       <div className="mb-6">
         <button
           onClick={() => navigate('/assign-delivery')}
@@ -184,13 +246,12 @@ const Delivery = () => {
 
         <div className="px-6 py-8 border-b border-gray-200">
           <h4 className="text-lg font-semibold text-gray-900 mb-6">Delivery Location</h4>
-          <DeliveryMap location={deliveryDetails?.location} />
+          <DeliveryMap location={deliveryDetails?.location} driverLocation={driverLocation} />
         </div>
 
         <div className="px-6 py-8 border-b border-gray-200">
           <h4 className="text-lg font-semibold text-gray-900 mb-6">Control Panel</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <AssignDelivery onDeliveryAssigned={handleDeliveryAssigned} />
+          <div className="grid grid-cols-1 gap-8">
             <UpdateDeliveryStatus />
           </div>
         </div>
@@ -286,7 +347,7 @@ const Delivery = () => {
                   <path
                     className="opacity-75"
                     fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 12h4z"
                   />
                 </svg>
               </div>
