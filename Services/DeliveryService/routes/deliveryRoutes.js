@@ -25,10 +25,10 @@ const validateRequest = (schema, source = 'body') => {
 
 const assignDeliverySchema = Joi.object({
   orderId: Joi.string()
-    .regex(/^[0-9a-fA-F]{24}$/)
+    .min(1)
     .required()
     .messages({
-      'string.pattern.base': 'Invalid orderId format, must be a valid MongoDB ObjectId',
+      'string.min': 'orderId must be a non-empty string',
       'any.required': 'orderId is required',
     }),
   driverId: Joi.string()

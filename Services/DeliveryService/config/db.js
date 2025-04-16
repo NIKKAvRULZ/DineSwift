@@ -1,19 +1,6 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      writeConcern: {
-        w: 'majority',
-        wtimeout: 5000
-      }
-    });
-    console.log(`MongoDB connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
-  }
-
   mongoose.connection.on('connected', () => {
     console.log('Mongoose connected to DB');
   });
@@ -25,6 +12,20 @@ const connectDB = async () => {
   mongoose.connection.on('error', (err) => {
     console.error('Mongoose connection error:', err.message);
   });
+
+  try {
+    console.log('Attempting to connect to MongoDB...');
+    await mongoose.connect(process.env.MONGO_URI, {
+      writeConcern: {
+        w: 'majority',
+        wtimeout: 5000,
+      },
+    });
+    console.log('MongoDB connection successful');
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    process.exit(1);
+  }
 };
 
 module.exports = connectDB;

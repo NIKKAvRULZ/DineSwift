@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const driverSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  contact: { type: String, required: false }, // Added contact field
+  contact: { type: String, required: false }, // Phone number
+  email: { type: String, required: false },   // Email address
   status: {
     type: String,
     enum: ['available', 'assigned', 'in_progress', 'offline'],
