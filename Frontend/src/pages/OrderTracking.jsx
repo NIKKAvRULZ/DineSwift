@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import orderService from '../services/orderService';
+import restaurantService from "../services/restaurantService";
 
 const stageAnimations = {
     Pending: {
@@ -181,8 +182,10 @@ const stages = [
 
 const OrderTracking = () => {
   const { orderId } = useParams();
+  const { restaurantId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -329,9 +332,9 @@ const OrderTracking = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-600">Restaurant</p>
-                    <p className="font-medium">{order?.restaurantName}</p>
+                    <p className="font-medium">{order?.restaurant?.name || 'Not available'}</p>
                   </div>
-                  <div>
+                  <div> 
                     <p className="text-gray-600">Order Date</p>
                     <p className="font-medium">
                       {new Date(order?.createdAt).toLocaleString()}
@@ -339,11 +342,11 @@ const OrderTracking = () => {
                   </div>
                   <div>
                     <p className="text-gray-600">Total Amount</p>
-                    <p className="font-medium">${order?.total?.toFixed(2)}</p>
+                    <p className="font-medium">${Number(order?.totalAmount).toFixed(2) || '0.00'}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Items</p>
-                    <p className="font-medium">{order?.items?.length} items</p>
+                    <p className="font-medium">{order?.items?.length || 0} items</p>
                   </div>
                 </div>
               </div>
