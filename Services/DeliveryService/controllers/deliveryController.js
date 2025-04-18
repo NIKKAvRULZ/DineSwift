@@ -272,3 +272,50 @@ exports.trackDelivery = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.getActiveDelivery = async (req, res) => {
+  try {
+    // Find the most recent non-delivered/cancelled delivery
+    const delivery = await Delivery.findOne({
+      status: { $in: ['pending', 'assigned', 'in_progress'] },
+    })
+      .sort({ createdAt: -1 }) // Latest first
+      .populate('driverId');
+
+    if (!delivery) {
+      return res.status(404).json({ message: 'No active delivery found' });
+    }
+
+    // Format response to match /track endpoint
+    const trackingData = {
+      deliveryId: delivery._id,
+      orderId: delivery.orderId,
+      status: delivery.status,
+      location: delivery.location
+        ? {
+            longitude: delivery.location.coordinates[0],
+            latitude: delivery.location.coordinates[1],
+          }
+        : null,
+      driver: delivery.driverId
+        ? {
+            name: delivery.driverId.name,
+            contact: delivery.driverId.contact || 'N/A',
+            email: delivery.driverId.email || 'N/A',
+            currentLocation: delivery.driverId.location
+              ? {
+                  longitude: delivery.driverId.location.coordinates[0],
+                  latitude: delivery.driverId.location.coordinates[1],
+                }
+              : null,
+          }
+        : null,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+    };
+
+    res.status(200).json(trackingData);
+  } catch (error) {
+    console.error('Error fetching active delivery:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

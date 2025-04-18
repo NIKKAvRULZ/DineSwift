@@ -23,28 +23,90 @@ const Delivery = () => {
   const [deliveryDetails, setDeliveryDetails] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const mockOrder = {
-      id: '12345',
-      restaurantName: 'Example Restaurant',
-      status: 'confirmed',
-      location: { lat: 6.9271, lng: 79.8612 },
-      estimatedDeliveryTime: new Date(Date.now() + 30 * 60000).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      distance: '2.5 miles',
+  // Map backend statuses to frontend progress bar statuses
+  const mapStatus = (backendStatus) => {
+    const statusMap = {
+      pending: 'confirmed',
+      assigned: 'preparing',
+      in_progress: 'picked_up',
+      delivered: 'delivered',
+      cancelled: 'cancelled',
     };
-    setActiveOrder(contextActiveOrder || mockOrder);
+    return statusMap[backendStatus] || 'confirmed';
+  };
+
+  // Map delivery data to activeOrder format
+  const mapToActiveOrder = (delivery) => {
+    const mappedStatus = mapStatus(delivery.status || 'pending');
+    const defaultLocation = { coordinates: [79.8612, 6.9271] }; // [lng, lat]
+    let deliveryLocation = defaultLocation;
+
+    if (delivery.location) {
+      if (delivery.location.latitude && delivery.location.longitude) {
+        deliveryLocation = {
+          coordinates: [delivery.location.longitude, delivery.location.latitude],
+        };
+      } else if (delivery.location.coordinates) {
+        deliveryLocation = {
+          coordinates: [delivery.location.coordinates[0], delivery.location.coordinates[1]],
+        };
+      }
+    }
+
+    return {
+      id: delivery.orderId || 'Unknown',
+      restaurantName: delivery.restaurantName || 'DineSwift Restaurant',
+      status: mappedStatus,
+      location: deliveryLocation,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime
+        ? new Date(delivery.estimatedDeliveryTime).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : new Date(Date.now() + 30 * 60000).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+      distance: delivery.distance || '2.5 miles',
+    };
+  };
+
+  useEffect(() => {
+    const fetchActiveOrder = async () => {
+      if (contextActiveOrder) {
+        setActiveOrder(contextActiveOrder);
+        return;
+      }
+
+      try {
+        const response = await axios.get('http://localhost:5004/api/delivery/active');
+        const delivery = response.data;
+        if (delivery) {
+          const mappedOrder = mapToActiveOrder(delivery);
+          setActiveOrder(mappedOrder);
+          setLocation(mappedOrder.location);
+          console.log('Initial activeOrder:', mappedOrder);
+        } else {
+          setActiveOrder(null);
+        }
+      } catch (err) {
+        console.error('Error fetching active order:', err);
+        setActiveOrder(null);
+      }
+    };
+
+    fetchActiveOrder();
   }, [contextActiveOrder]);
 
   useEffect(() => {
-    if (activeOrder) {
-      setLocation(activeOrder.location);
+    if (deliveryDetails) {
+      const mappedOrder = mapToActiveOrder(deliveryDetails);
+      setActiveOrder(mappedOrder);
+      setLocation(mappedOrder.location);
+      console.log('Updated activeOrder from deliveryDetails:', mappedOrder);
     }
-  }, [activeOrder]);
+  }, [deliveryDetails]);
 
-  // Set up Socket.IO listeners
   useEffect(() => {
     socket.on('connect', () => {
       console.log('Connected to Socket.IO server');
@@ -57,10 +119,19 @@ const Delivery = () => {
       }
     });
 
-    socket.on('deliveryStatusUpdated', (data) => {
+    socket.on('deliveryStatusUpdated', async (data) => {
       console.log('Delivery status updated:', data);
-      if (data.deliveryId === deliveryId) {
-        fetchDeliveryDetails();
+      if (data.deliveryId === deliveryId || activeOrder?.id === data.orderId) {
+        try {
+          const response = await axios.get(`http://localhost:5004/api/delivery/track/${data.deliveryId}`);
+          setDeliveryDetails(response.data);
+          const mappedOrder = mapToActiveOrder(response.data);
+          setActiveOrder(mappedOrder);
+          setLocation(mappedOrder.location);
+          console.log('Refreshed activeOrder after status update:', mappedOrder);
+        } catch (err) {
+          console.error('Error refreshing delivery after status update:', err);
+        }
       }
     });
 
@@ -69,7 +140,7 @@ const Delivery = () => {
       socket.off('driverLocationUpdate');
       socket.off('deliveryStatusUpdated');
     };
-  }, [deliveryId]);
+  }, [deliveryId, activeOrder]);
 
   const fetchDeliveryDetails = async () => {
     setError(null);
@@ -131,7 +202,7 @@ const Delivery = () => {
     assigned: 'bg-blue-100 text-blue-800 border-blue-200',
     in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     delivered: 'bg-green-100 text-green-800 border-green-200',
-    cancelled: 'bg-red-100 text-red-800 border-red-200',
+    cancelled: 'bg-red-100 text-red-800 border-gray-200',
   }[status] || 'bg-gray-100 text-gray-800 border-gray-200');
 
   const getStatusText = (status) => ({
@@ -227,18 +298,20 @@ const Delivery = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
               <h5 className="text-sm font-medium text-gray-700">Estimated Delivery Time</h5>
-              <p className="mt-2 text-lg font-semibold text-gray-900">{activeOrder.estimatedDeliveryTime}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {activeOrder.estimatedDeliveryTime || 'N/A'}
+              </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
               <h5 className="text-sm font-medium text-gray-700">Distance</h5>
-              <p className="mt-2 text-lg font-semibold text-gray-900">{activeOrder.distance}</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{activeOrder.distance || 'N/A'}</p>
             </div>
           </div>
         </div>
 
         <div className="px-6 py-8 border-b border-gray-200">
           <h4 className="text-lg font-semibold text-gray-900 mb-6">Delivery Location</h4>
-          <DeliveryMap location={deliveryDetails?.location} driverLocation={driverLocation} />
+          <DeliveryMap location={location} driverLocation={null} />
         </div>
 
         <div className="px-6 py-8 border-b border-gray-200">
@@ -315,7 +388,9 @@ const Delivery = () => {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Location</p>
                   <p className="text-base font-semibold text-gray-900">
-                    {deliveryDetails.location ? `${deliveryDetails.location.latitude}, ${deliveryDetails.location.longitude}` : 'N/A'}
+                    {deliveryDetails.location
+                      ? `${deliveryDetails.location.latitude}, ${deliveryDetails.location.longitude}`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -345,7 +420,7 @@ const Delivery = () => {
                   <path
                     className="opacity-75"
                     fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 12h4z"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
               </div>
