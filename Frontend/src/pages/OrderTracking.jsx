@@ -135,48 +135,40 @@ const stages = [
     label: 'Order Placed',
     icon: '📝',
     animation: stageAnimations.Pending   ,
-    bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
-    activeColor: 'bg-blue-500'
+    bgColor: 'bg-gradient-to-br from-amber-100 to-amber-200',
+    activeColor: 'bg-amber-500'
   },
   {
-    key: 'confirmed',
-    label: 'Confirmed',
+    key: 'Accepted',
+    label: 'Accepted',
     icon: '✅',
     animation: stageAnimations.confirmed,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-sky-100 to-sky-200',
+    activeColor: 'bg-sky-500'
   },
   {
-    key: 'preparing',
+    key: 'Preparing',
     label: 'Preparing',
     icon: '👨‍🍳',
     animation: stageAnimations.preparing,
-    bgColor: 'bg-gradient-to-br from-yellow-100 to-yellow-200',
-    activeColor: 'bg-yellow-500'
+    bgColor: 'bg-gradient-to-br from-indigo-100 to-indigo-200',
+    activeColor: 'bg-indigo-500'
   },
   {
-    key: 'ready',
-    label: 'Ready',
-    icon: '🍽️',
-    animation: stageAnimations.ready,
-    bgColor: 'bg-gradient-to-br from-purple-100 to-purple-200',
-    activeColor: 'bg-purple-500'
-  },
-  {
-    key: 'delivering',
+    key: 'On the Way',
     label: 'On the Way',
     icon: '🚗',
     animation: stageAnimations.delivering,
-    bgColor: 'bg-gradient-to-br from-orange-100 to-orange-200',
-    activeColor: 'bg-orange-500'
+    bgColor: 'bg-gradient-to-br from-teal-100 to-teal-200',
+    activeColor: 'bg-teal-500'
   },
   {
-    key: 'delivered',
+    key: 'Delivered',
     label: 'Delivered',
     icon: '🎉',
     animation: stageAnimations.delivered,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-lime-100 to-lime-200',
+    activeColor: 'bg-lime-500'
   }
 ];
 
@@ -215,7 +207,7 @@ const OrderTracking = () => {
   }, [orderId, navigate]);
 
   useEffect(() => {
-    if (order?.status === 'delivered') {
+    if (order?.status === 'Delivered') {
       triggerConfetti();
     }
   }, [order?.status]);
