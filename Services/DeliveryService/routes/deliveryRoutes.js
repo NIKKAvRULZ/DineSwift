@@ -5,6 +5,7 @@ const {
   getDeliveryStatus,
   updateDeliveryStatus,
   getAvailableDrivers,
+  trackDelivery,
 } = require('../controllers/deliveryController');
 
 const router = express.Router();
@@ -94,5 +95,6 @@ router.post('/assign', validateRequest(assignDeliverySchema, 'body'), assignDeli
 router.get('/status/:deliveryId', validateRequest(deliveryIdSchema, 'params'), getDeliveryStatus);
 router.put('/status/:deliveryId', validateRequest(updateDeliveryStatusSchema, 'body'), updateDeliveryStatus);
 router.get('/available-drivers', validateRequest(availableDriversSchema, 'query'), getAvailableDrivers);
+router.get('/track/:deliveryId', validateRequest(deliveryIdSchema, 'params'), trackDelivery);
 
 module.exports = router;

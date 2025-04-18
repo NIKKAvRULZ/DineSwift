@@ -89,24 +89,16 @@ const Delivery = () => {
     }
 
     try {
-      console.log(`Fetching delivery details for ID: ${deliveryId}`); // Debug log
-      const response = await axios.get(`http://localhost:5004/api/delivery/status/${deliveryId}`);
+      console.log(`Fetching delivery details for ID: ${deliveryId}`);
+      const response = await axios.get(`http://localhost:5004/api/delivery/track/${deliveryId}`);
       console.log('Delivery details response:', response.data);
       setDeliveryDetails(response.data);
 
-      // Set initial driver location if available
-      if (response.data.driverId && response.data.status !== 'delivered') {
-        console.log(`Fetching driver details for driver ID: ${response.data.driverId}`); // Debug log
-        const driverResponse = await axios.get(
-          `http://localhost:5004/api/delivery/driver/${response.data.driverId}`
-        );
-        console.log('Driver details response:', driverResponse.data); // Debug log
-        if (driverResponse.data.location) {
-          setDriverLocation({
-            lat: driverResponse.data.location.coordinates[1],
-            lng: driverResponse.data.location.coordinates[0],
-          });
-        }
+      if (response.data.driver && response.data.driver.currentLocation) {
+        setDriverLocation({
+          lat: response.data.driver.currentLocation.latitude,
+          lng: response.data.driver.currentLocation.longitude,
+        });
       }
       setError('');
     } catch (err) {
@@ -118,7 +110,7 @@ const Delivery = () => {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
-        url: `http://localhost:5004/api/delivery/status/${deliveryId}`,
+        url: `http://localhost:5004/api/delivery/track/${deliveryId}`,
       });
     }
   };
@@ -285,7 +277,7 @@ const Delivery = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Delivery ID</p>
-                  <p className="text-base font-semibold text-gray-900">{deliveryDetails._id}</p>
+                  <p className="text-base font-semibold text-gray-900">{deliveryDetails.deliveryId}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Order ID</p>
@@ -294,13 +286,19 @@ const Delivery = () => {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Driver Name</p>
                   <p className="text-base font-semibold text-gray-900">
-                    {deliveryDetails.driverId?.name || 'Not Assigned'}
+                    {deliveryDetails.driver?.name || 'Not Assigned'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Driver Contact</p>
                   <p className="text-base font-semibold text-gray-900">
-                    {deliveryDetails.driverId?.contact || 'N/A'}
+                    {deliveryDetails.driver?.contact || 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Driver Email</p>
+                  <p className="text-base font-semibold text-gray-900">
+                    {deliveryDetails.driver?.email || 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -317,7 +315,7 @@ const Delivery = () => {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Location</p>
                   <p className="text-base font-semibold text-gray-900">
-                    {deliveryDetails.location?.coordinates?.join(', ') || 'N/A'}
+                    {deliveryDetails.location ? `${deliveryDetails.location.latitude}, ${deliveryDetails.location.longitude}` : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">

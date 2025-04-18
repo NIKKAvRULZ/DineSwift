@@ -156,7 +156,6 @@ exports.assignDelivery = async (req, res) => {
   }
 };
 
-// Rest of the controller functions remain unchanged
 exports.getAvailableDrivers = async (req, res) => {
   try {
     const drivers = await Driver.find({ status: 'available' });
@@ -226,6 +225,50 @@ exports.updateDeliveryStatus = async (req, res) => {
     res.status(200).json({ message: 'Delivery status updated', delivery });
   } catch (error) {
     console.error('Error updating delivery status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.trackDelivery = async (req, res) => {
+  try {
+    const { deliveryId } = req.params;
+
+    // Validate deliveryId format
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdRegex.test(deliveryId)) {
+      return res.status(400).json({ message: 'Invalid Delivery ID format' });
+    }
+
+    // Find delivery and populate driver details
+    const delivery = await Delivery.findById(deliveryId).populate('driverId');
+    if (!delivery) {
+      return res.status(404).json({ message: 'Delivery not found' });
+    }
+
+    // Prepare tracking data
+    const trackingData = {
+      deliveryId: delivery._id,
+      orderId: delivery.orderId,
+      status: delivery.status,
+      location: delivery.location ? {
+        longitude: delivery.location.coordinates[0],
+        latitude: delivery.location.coordinates[1],
+      } : null,
+      driver: delivery.driverId ? {
+        name: delivery.driverId.name,
+        contact: delivery.driverId.contact || 'N/A',
+        email: delivery.driverId.email || 'N/A',
+        currentLocation: delivery.driverId.location ? {
+          longitude: delivery.driverId.location.coordinates[0],
+          latitude: delivery.driverId.location.coordinates[1],
+        } : null,
+      } : null,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+    };
+
+    res.status(200).json(trackingData);
+  } catch (error) {
+    console.error('Error tracking delivery:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
