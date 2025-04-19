@@ -1,44 +1,22 @@
-const nodemailer = require("nodemailer");
-const twilio = require("twilio");
+const { sendEmail } = require("../services/emailService");
+const { sendSMS } = require("../services/smsService");
 
-const sendEmail = async (to, subject, text) => {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.SMTP_USER,
-    to,
-    subject,
-    text,
-  };
+const sendNotification = async (req, res) => {
+  const { type, to, subject, message } = req.body;
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent!");
-  } catch (error) {
-    console.error("Error sending email:", error);
+    if (type === "email") {
+      await sendEmail(to, subject, message);
+    } else if (type === "sms") {
+      await sendSMS(to, message);
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid notification type" });
+    }
+
+    res.status(200).json({ success: true, message: "Notification sent successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-const sendSMS = async (to, body) => {
-  const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-
-  try {
-    await client.messages.create({
-      body,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to,
-    });
-    console.log("SMS sent!");
-  } catch (error) {
-    console.error("Error sending SMS:", error);
-  }
-};
-
-module.exports = { sendEmail, sendSMS };
+module.exports = { sendNotification };

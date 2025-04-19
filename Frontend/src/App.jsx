@@ -11,6 +11,7 @@ import Delivery from "./pages/Delivery";
 import Payment from "./pages/Payment";
 import Admin from "./pages/Admin";
 
+
 const App = () => {
   return (
     <>
@@ -24,8 +25,8 @@ const App = () => {
         <Route path="/restaurants" element={<Restaurants />} />
         <Route path="/delivery" element={<Delivery />} />
         <Route path="/payment" element={<Payment />} />
-        <Route path="/Admin" element={<Admin/>} />
-
+        <Route path="/admin" element={<Admin />} />
+        
       </Routes>
       <Footer />
     </>
