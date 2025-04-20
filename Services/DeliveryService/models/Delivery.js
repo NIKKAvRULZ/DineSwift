@@ -10,6 +10,11 @@ const deliverySchema = new mongoose.Schema({
     ref: 'Driver',
     default: null,
   },
+  status: {
+    type: String,
+    enum: ['pending', 'assigned', 'in_progress', 'delivered', 'cancelled'],
+    default: 'pending',
+  },
   location: {
     type: {
       type: String,
@@ -17,21 +22,27 @@ const deliverySchema = new mongoose.Schema({
       default: 'Point',
     },
     coordinates: {
-      type: [Number],
+      type: [Number], // [longitude, latitude]
       required: true,
     },
   },
-  status: {
-    type: String,
-    enum: ['pending', 'assigned', 'in_progress', 'delivered', 'cancelled'],
-    default: 'pending',
-  },
   estimatedDeliveryTime: {
     type: Date,
-    default: null,
+    default: () => new Date(Date.now() + 30 * 60000), // 30 minutes from now
   },
+  restaurantName: {
+    type: String,
+    default: 'DineSwift Restaurant',
+  },
+  orderTotal: {
+    type: Number,
+    default: 32.59,
+  },
+}, {
+  timestamps: true,
 });
 
+// Index for geospatial queries
 deliverySchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Delivery', deliverySchema);

@@ -3,7 +3,15 @@ import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leafl
 import L from 'leaflet';
 import { motion } from 'framer-motion';
 import { FaMapPin, FaSpinner } from 'react-icons/fa';
+import io from 'socket.io-client';
 import 'leaflet/dist/leaflet.css';
+
+// Socket.IO connection
+const socket = io('http://localhost:5004', {
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+});
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -80,8 +88,11 @@ const spinnerInnerVariants = {
   },
 };
 
-const DeliveryMap = ({ location, driverLocation, isDarkMode = false }) => {
+const DeliveryMap = ({ location, driverLocation: initialDriverLocation, isDarkMode = false, deliveryId }) => {
+  console.log('DeliveryMap Props:', { location, initialDriverLocation, deliveryId });
   const [isLoading, setIsLoading] = useState(true);
+  const [driverLocation, setDriverLocation] = useState(initialDriverLocation);
+  console.log('Driver Location State:', driverLocation);
   const defaultPosition = [6.9271, 79.8612]; // Colombo, Sri Lanka
 
   // Validate location and driverLocation
@@ -94,14 +105,58 @@ const DeliveryMap = ({ location, driverLocation, isDarkMode = false }) => {
 
   const driverPosition = useMemo(() => {
     if (driverLocation?.coordinates && Array.isArray(driverLocation.coordinates) && driverLocation.coordinates.length === 2) {
-      return [driverLocation.coordinates[1], driverLocation.coordinates[0]]; // [lat, lon]
+      const [lon, lat] = driverLocation.coordinates; // [lon, lat]
+      const pos = [lat, lon]; // [lat, lon] for Leaflet
+      console.log('Driver Position:', pos);
+      return pos;
     }
     return null;
   }, [driverLocation]);
 
-  // Simulate map loading (replace with actual map load detection if needed)
+  // Handle real-time driver location updates
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000); // Simulate 1s load
+    socket.on('connect', () => console.log('Socket.IO connected'));
+    socket.on('connect_error', (err) => console.error('Socket.IO error:', err));
+    if (deliveryId) {
+      socket.on('driverLocationUpdate', (data) => {
+        console.log('Received driverLocationUpdate:', data);
+        // Convert ObjectId to string for comparison
+        const eventDeliveryId = data.deliveryId?.toString ? data.deliveryId.toString() : data.deliveryId;
+        console.log('Comparing deliveryId:', { eventDeliveryId, propDeliveryId: deliveryId });
+        if (eventDeliveryId === deliveryId) {
+          let coords;
+          if (data.location?.coordinates) {
+            coords = data.location.coordinates; // [lon, lat]
+          } else if (data.location?.lat && data.location?.lng) {
+            coords = [data.location.lng, data.location.lat]; // Convert [lng, lat] to [lon, lat]
+          } else {
+            console.warn('Invalid location format:', data.location);
+            return;
+          }
+          console.log('Updating driverLocation with coords:', coords);
+          setDriverLocation({ coordinates: coords });
+        } else {
+          console.log('DeliveryId mismatch, ignoring update');
+        }
+      });
+    } else {
+      console.warn('No deliveryId provided, cannot listen for updates');
+    }
+    return () => {
+      socket.off('connect');
+      socket.off('connect_error');
+      socket.off('driverLocationUpdate');
+    };
+  }, [deliveryId]);
+
+  // Log driverLocation changes
+  useEffect(() => {
+    console.log('Driver Location Updated:', driverLocation);
+  }, [driverLocation]);
+
+  // Simulate map loading
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -110,8 +165,8 @@ const DeliveryMap = ({ location, driverLocation, isDarkMode = false }) => {
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const tileLayerAttribution = isDarkMode
-    ? '&copy; <a href="https://carto.com/attributions">CARTO</a>'
-    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    ? '© <a href="https://carto.com/attributions">CARTO</a>'
+    : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <motion.div

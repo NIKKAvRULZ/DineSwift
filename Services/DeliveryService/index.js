@@ -1,95 +1,79 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const connectDB = require('./config/db');
-const deliveryRoutes = require('./routes/deliveryRoutes');
 const http = require('http');
 const { Server } = require('socket.io');
-const Delivery = require('./models/Delivery');
-const Driver = require('./models/Driver');
+const deliveryRoutes = require('./routes/deliveryRoutes');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
+});
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Pass Socket.IO instance to controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Routes
 app.use('/api/delivery', deliveryRoutes);
 
-const PORT = process.env.PORT || 5004;
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  process.exit(1);
-});
-
-const simulateDriverMovement = async (io) => {
+// Simulated driver location updates (replace with real driver updates)
+setInterval(async () => {
   try {
-    const activeDeliveries = await Delivery.find({
+    const delivery = await mongoose.model('Delivery').findOne({
       status: { $in: ['assigned', 'in_progress'] },
-      driverId: { $ne: null },
     }).populate('driverId');
-
-    for (const delivery of activeDeliveries) {
-      const driver = delivery.driverId;
-      if (!driver) continue;
-
-      if (!driver.location || !driver.location.coordinates || !Array.isArray(driver.location.coordinates)) {
-        console.warn(`Driver ${driver._id} is missing a valid location. Skipping movement simulation.`);
-        continue;
-      }
-
-      const [longitude, latitude] = driver.location.coordinates;
-      const newLongitude = longitude + (Math.random() - 0.5) * 0.001;
-      const newLatitude = latitude + (Math.random() - 0.5) * 0.001;
-
-      driver.location.coordinates = [newLongitude, newLatitude];
-      await driver.save();
-
-      io.emit('driverLocationUpdate', {
-        deliveryId: delivery._id,
-        driverId: driver._id,
-        location: {
-          lat: newLatitude,
-          lng: newLongitude,
-        },
+    if (delivery && delivery.driverId) {
+      // Simulate driver movement
+      const newCoords = [
+        delivery.driverId.location.coordinates[0] + (Math.random() - 0.5) * 0.001,
+        delivery.driverId.location.coordinates[1] + (Math.random() - 0.5) * 0.001,
+      ];
+      await mongoose.model('Driver').findByIdAndUpdate(delivery.driverId._id, {
+        location: { type: 'Point', coordinates: newCoords },
       });
+      io.emit('driverLocationUpdate', {
+        deliveryId: delivery._id.toString(),
+        driverId: delivery.driverId._id.toString(),
+        location: { type: 'Point', coordinates: newCoords },
+      });
+      console.log(`Emitting driverLocationUpdate for delivery ${delivery._id}`);
     }
   } catch (error) {
-    console.error('Error simulating driver movement:', error);
+    console.error('Error emitting driverLocationUpdate:', error);
   }
-};
+}, 10000); // Every 10 seconds
 
-const startServer = async () => {
-  try {
-    await connectDB();
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/DineSwift', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((error) => {
+  console.error('MongoDB connection error:', error);
+});
 
-    const server = http.createServer(app);
-    const io = new Server(server, {
-      cors: {
-        origin: '*',
-      },
-    });
+// Start server
+const PORT = process.env.PORT || 5004;
+server.listen(PORT, () => {
+  console.log(`DeliveryService running on port ${PORT}`);
+});
 
-    io.on('connection', (socket) => {
-      console.log('a user connected');
-      socket.on('disconnect', () => {
-        console.log('user disconnected');
-      });
-    });
-
-    app.set('socketio', io);
-
-    setInterval(() => simulateDriverMovement(io), 10000);
-
-    server.listen(PORT, () => console.log(`Delivery Service running on port ${PORT}`));
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
+// Socket.IO connection
+io.on('connection', (socket) => {
+  console.log('Client connected to Socket.IO');
+  socket.on('disconnect', () => {
+    console.log('Client disconnected from Socket.IO');
+  });
+});

@@ -5,7 +5,7 @@ import UpdateDeliveryStatus from './UpdateDeliveryStatus';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
-import { FaInfoCircle, FaPlus, FaMoon, FaSun, FaArrowRight, FaClock, FaMapMarkerAlt, FaUtensils, FaMapPin, FaDollarSign, FaSearch, FaTag, FaUser, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaInfoCircle, FaPlus, FaMoon, FaSun, FaArrowRight, FaClock, FaMapMarkerAlt, FaUtensils, FaMapPin, FaDollarSign, FaSearch, FaTag, FaUser, FaPhone, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,7 +35,6 @@ const haversineDistance = (coords1, coords2) => {
 
 // Simulated reverse geocoding function (replace with real API in production)
 const reverseGeocode = (coordinates) => {
-  // Simulated response (in production, use a service like Google Maps Geocoding API)
   return '123 Galle Rd, Colombo, Sri Lanka';
 };
 
@@ -142,62 +141,58 @@ const dismissButtonVariants = {
   },
 };
 
+// Updated animation variants for Delivery Information
 const detailsCardVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 50, scale: 0.9 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: 'easeOut', when: 'beforeChildren', staggerChildren: 0.1 },
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.6, -0.05, 0.01, 0.99], // Smooth ease
+      when: 'beforeChildren',
+      staggerChildren: 0.1,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 50,
+    scale: 0.9,
+    transition: { duration: 0.4, ease: 'easeIn' },
   },
 };
 
 const detailsItemVariants = {
-  hidden: { opacity: 0, y: 15 },
+  hidden: { opacity: 0, x: -20, scale: 0.95 },
   visible: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: 'easeOut', type: 'spring', stiffness: 120 },
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut',
+      type: 'spring',
+      stiffness: 120,
+    },
   },
   hover: {
-    scale: 1.05,
-    boxShadow: '0 8px 16px rgba(235, 25, 0, 0.3)',
-    transition: { duration: 0.3, ease: 'easeOut' },
+    scale: 1.03,
+    boxShadow: '0 6px 12px rgba(235, 25, 0, 0.2)',
+    transition: { duration: 0.2, ease: 'easeOut' },
   },
 };
 
 const iconVariants = {
-  rest: { rotate: 0 },
+  rest: { rotate: 0, scale: 1 },
   hover: {
-    rotate: 5,
+    rotate: 10,
+    scale: 1.1,
     transition: { duration: 0.3, ease: 'easeOut' },
   },
 };
 
-const spinnerVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.4, ease: 'easeOut' },
-  },
-};
-
-const spinnerRingVariants = {
-  animate: {
-    scale: [1, 1.2, 1],
-    opacity: [0.7, 1, 0.7],
-    transition: { repeat: Infinity, duration: 1.5, ease: 'easeInOut' },
-  },
-};
-
-const spinnerInnerVariants = {
-  animate: {
-    rotate: 360,
-    transition: { repeat: Infinity, duration: 1, ease: 'linear' },
-  },
-};
-
-// Animation variants for Delivery Information
+// Existing animation variants for Delivery Information
 const infoContainerVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
@@ -269,13 +264,102 @@ const dividerVariants = {
   },
 };
 
+// Animation variants for Delivery Progress Timeline
+const timelineContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { when: 'beforeChildren', staggerChildren: 0.4, delay: 0.3 },
+  },
+};
+
+const timelineLineVariants = {
+  hidden: { pathLength: 0, opacity: 0 },
+  visible: {
+    pathLength: 1,
+    opacity: 1,
+    transition: {
+      pathLength: { duration: 1.5, ease: 'easeInOut', repeat: 0 },
+      opacity: { duration: 0.1 },
+    },
+  },
+};
+
+const timelineItemVariants = {
+  hidden: { opacity: 0, y: 50, rotate: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    rotate: 0,
+    transition: { duration: 0.6, ease: 'easeOut', type: 'spring', stiffness: 100 },
+  },
+  hover: {
+    y: -5,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+};
+
+const statusHighlightVariants = {
+  active: {
+    scale: [1, 1.15, 1],
+    rotate: [-5, 5, -5, 0],
+    transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+  },
+};
+
+const checkmarkVariants = {
+  hidden: { scale: 0, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      scale: { duration: 0.4, ease: 'easeOut', type: 'spring', stiffness: 200, damping: 10 },
+      opacity: { duration: 0.2 },
+    },
+  },
+};
+
+const labelVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, ease: 'easeOut', delay: 0.2 },
+  },
+};
+
+const spinnerVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+};
+
+const spinnerRingVariants = {
+  animate: {
+    scale: [1, 1.2, 1],
+    opacity: [0.7, 1, 0.7],
+    transition: { repeat: Infinity, duration: 1.5, ease: 'easeInOut' },
+  },
+};
+
+const spinnerInnerVariants = {
+  animate: {
+    rotate: 360,
+    transition: { repeat: Infinity, duration: 1, ease: 'linear' },
+  },
+};
+
 const Delivery = () => {
   const navigate = useNavigate();
   const { activeOrder: contextActiveOrder } = useOrder();
   const [activeOrder, setActiveOrder] = useState(contextActiveOrder);
   const [location, setLocation] = useState(null);
   const [driverLocation, setDriverLocation] = useState(null);
-  const [deliveryId, setDeliveryId] = useState('');
+  const [deliveryId, setDeliveryId] = useState(''); // For active delivery
+  const [lookupDeliveryId, setLookupDeliveryId] = useState(''); // For lookup input
   const [deliveryDetails, setDeliveryDetails] = useState(null);
   const [error, setError] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -292,16 +376,19 @@ const Delivery = () => {
   };
 
   const mapToActiveOrder = (delivery) => {
+    console.log('Mapping delivery:', delivery);
     const mappedStatus = mapStatus(delivery.status || 'pending');
     const defaultLocation = { coordinates: [79.8612, 6.9271] };
     let deliveryLocation = defaultLocation;
 
-    if (delivery.location) {
-      if (delivery.location.latitude && delivery.location.longitude) {
-        deliveryLocation = { coordinates: [delivery.location.longitude, delivery.location.latitude] };
-      } else if (delivery.location.coordinates) {
-        deliveryLocation = { coordinates: [delivery.location.coordinates[0], delivery.location.coordinates[1]] };
-      }
+    if (delivery.location?.coordinates) {
+      deliveryLocation = { coordinates: delivery.location.coordinates };
+    }
+
+    // Map driver location
+    let driverLocation = null;
+    if (delivery.driver?.location?.coordinates) {
+      driverLocation = { coordinates: delivery.driver.location.coordinates };
     }
 
     // Calculate real address and distance
@@ -309,11 +396,12 @@ const Delivery = () => {
     const address = reverseGeocode(deliveryLocation.coordinates);
     const distance = haversineDistance(restaurantCoords, deliveryLocation.coordinates);
 
-    return {
+    const mappedOrder = {
       id: delivery.orderId || 'Unknown',
       restaurantName: delivery.restaurantName || 'DineSwift Restaurant',
       status: mappedStatus,
       location: deliveryLocation,
+      driverLocation,
       estimatedDeliveryTime: delivery.estimatedDeliveryTime
         ? new Date(delivery.estimatedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : new Date(Date.now() + 30 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -321,61 +409,78 @@ const Delivery = () => {
       address: address,
       orderTotal: delivery.orderTotal ? `$${parseFloat(delivery.orderTotal).toFixed(2)}` : '$32.50',
     };
+
+    console.log('Mapped order:', mappedOrder);
+    return mappedOrder;
   };
 
   useEffect(() => {
     const fetchActiveOrder = async () => {
       if (contextActiveOrder) {
         setActiveOrder(contextActiveOrder);
+        setLocation(contextActiveOrder.location);
+        setDriverLocation(contextActiveOrder.driverLocation);
+        setDeliveryId(contextActiveOrder.id);
+        console.log('Context deliveryId:', contextActiveOrder.id);
         return;
       }
       try {
         const response = await axios.get('http://localhost:5004/api/delivery/active');
+        console.log('Active delivery response:', response.data);
         const delivery = response.data;
-        if (delivery) {
+        if (delivery && delivery.deliveryId) {
           const mappedOrder = mapToActiveOrder(delivery);
           setActiveOrder(mappedOrder);
           setLocation(mappedOrder.location);
+          setDriverLocation(mappedOrder.driverLocation);
+          setDeliveryId(delivery.deliveryId);
+          console.log('Active deliveryId set:', delivery.deliveryId);
         } else {
+          console.log('No active delivery found or missing deliveryId');
           setActiveOrder(null);
         }
       } catch (err) {
         console.error('Error fetching active order:', err);
         setActiveOrder(null);
+        setError('Failed to fetch active delivery');
       }
     };
     fetchActiveOrder();
   }, [contextActiveOrder]);
 
   useEffect(() => {
-    if (deliveryDetails) {
+    if (deliveryDetails && deliveryDetails.deliveryId) {
       const mappedOrder = mapToActiveOrder(deliveryDetails);
       setActiveOrder(mappedOrder);
       setLocation(mappedOrder.location);
+      setDriverLocation(mappedOrder.driverLocation);
+      setDeliveryId(deliveryDetails.deliveryId);
+      console.log('Delivery details deliveryId set:', deliveryDetails.deliveryId);
     }
   }, [deliveryDetails]);
 
   useEffect(() => {
     socket.on('connect', () => console.log('Connected to Socket.IO server'));
-    socket.on('driverLocationUpdate', (data) => {
-      if (data.deliveryId === deliveryId) setDriverLocation(data.location);
-    });
     socket.on('deliveryStatusUpdated', async (data) => {
-      if (data.deliveryId === deliveryId || activeOrder?.id === data.orderId) {
+      const eventDeliveryId = data.deliveryId?.toString ? data.deliveryId.toString() : data.deliveryId;
+      if (eventDeliveryId === deliveryId || activeOrder?.id === data.orderId) {
         try {
-          const response = await axios.get(`http://localhost:5004/api/delivery/track/${data.deliveryId}`);
+          const response = await axios.get(`http://localhost:5004/api/delivery/track/${eventDeliveryId}`);
           setDeliveryDetails(response.data);
           const mappedOrder = mapToActiveOrder(response.data);
           setActiveOrder(mappedOrder);
           setLocation(mappedOrder.location);
+          setDriverLocation(mappedOrder.driverLocation);
+          setDeliveryId(response.data.deliveryId);
+          console.log('Status update deliveryId set:', response.data.deliveryId);
         } catch (err) {
           console.error('Error refreshing delivery:', err);
+          setError('Failed to refresh delivery status');
         }
       }
     });
     return () => {
       socket.off('connect');
-      socket.off('driverLocationUpdate');
       socket.off('deliveryStatusUpdated');
     };
   }, [deliveryId, activeOrder]);
@@ -384,29 +489,34 @@ const Delivery = () => {
     setError(null);
     setDeliveryDetails(null);
     setDriverLocation(null);
-    if (!deliveryId) {
+    if (!lookupDeliveryId) {
       setError('Please enter a Delivery ID');
+      console.log('No lookupDeliveryId provided for lookup');
       return;
     }
     const orderIdRegex = /^[0-9a-fA-F]{24}$/;
-    if (!orderIdRegex.test(deliveryId)) {
+    if (!orderIdRegex.test(lookupDeliveryId)) {
       setError('Invalid Delivery ID format');
+      console.log('Invalid lookupDeliveryId format:', lookupDeliveryId);
       return;
     }
     try {
-      console.log(`Fetching delivery details for ID: ${deliveryId}`);
-      const response = await axios.get(`http://localhost:5004/api/delivery/track/${deliveryId}`);
+      console.log(`Fetching delivery details for ID: ${lookupDeliveryId}`);
+      const response = await axios.get(`http://localhost:5004/api/delivery/track/${lookupDeliveryId}`);
       console.log('API Response:', response.data);
-      if (response.data && typeof response.data === 'object') {
+      if (response.data && typeof response.data === 'object' && response.data.deliveryId) {
         setDeliveryDetails(response.data);
+        setDeliveryId(response.data.deliveryId); // Update active deliveryId
+        console.log('Track deliveryId set:', response.data.deliveryId);
         setError('');
       } else {
         setError('Invalid response from server');
         setDeliveryDetails(null);
+        console.log('Invalid API response:', response.data);
       }
     } catch (err) {
       console.error('Error fetching delivery details:', err);
-      setError(err.response?.data?.message || 'Failed to fetch delivery details. Please check if the server is running.');
+      setError(err.response?.data?.message || 'Failed to fetch delivery details.');
       setDeliveryDetails(null);
     }
   };
@@ -456,70 +566,6 @@ const Delivery = () => {
     picked_up: 'The driver has picked up your order and is on the way.',
     delivered: 'Your order has been successfully delivered to you.',
     cancelled: 'The order has been cancelled.',
-  };
-
-  // Animation variants for Delivery Progress Timeline
-  const timelineContainerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { when: 'beforeChildren', staggerChildren: 0.4, delay: 0.3 },
-    },
-  };
-
-  const timelineLineVariants = {
-    hidden: { pathLength: 0, opacity: 0 },
-    visible: {
-      pathLength: 1,
-      opacity: 1,
-      transition: {
-        pathLength: { duration: 1.5, ease: 'easeInOut', repeat: 0 },
-        opacity: { duration: 0.1 },
-      },
-    },
-  };
-
-  const timelineItemVariants = {
-    hidden: { opacity: 0, y: 50, rotate: -10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      rotate: 0,
-      transition: { duration: 0.6, ease: 'easeOut', type: 'spring', stiffness: 100 },
-    },
-    hover: {
-      y: -5,
-      transition: { duration: 0.3, ease: 'easeOut' },
-    },
-  };
-
-  const statusHighlightVariants = {
-    active: {
-      scale: [1, 1.15, 1],
-      rotate: [-5, 5, -5, 0],
-      transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
-    },
-  };
-
-  const checkmarkVariants = {
-    hidden: { scale: 0, opacity: 0 },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        scale: { duration: 0.4, ease: 'easeOut', type: 'spring', stiffness: 200, damping: 10 },
-        opacity: { duration: 0.2 },
-      },
-    },
-  };
-
-  const labelVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.5, ease: 'easeOut', delay: 0.2 },
-    },
   };
 
   return (
@@ -640,7 +686,7 @@ const Delivery = () => {
                             className="absolute w-6 h-6 text-white -top-1 -right-1"
                             fill="none"
                             stroke="currentColor"
-                            viewBox="0 0 24 24"
+                            viewBox="0 24"
                             variants={checkmarkVariants}
                             initial="hidden"
                             animate="visible"
@@ -767,7 +813,7 @@ const Delivery = () => {
               Delivery Location
             </h4>
             <div>
-              <DeliveryMap location={location} driverLocation={null} />
+              <DeliveryMap location={location} driverLocation={driverLocation} isDarkMode={isDarkMode} deliveryId={deliveryId} />
             </div>
           </div>
 
@@ -825,8 +871,8 @@ const Delivery = () => {
                       whileFocus="focus"
                       id="deliveryIdLookup"
                       type="text"
-                      value={deliveryId}
-                      onChange={(e) => setDeliveryId(e.target.value)}
+                      value={lookupDeliveryId}
+                      onChange={(e) => setLookupDeliveryId(e.target.value)}
                       className={`w-full pl-12 pr-4 py-4 ${
                         isDarkMode
                           ? 'bg-gray-900/50 text-black border-gray-700 placeholder-gray-400'
@@ -902,121 +948,123 @@ const Delivery = () => {
                 )}
               </AnimatePresence>
 
-              {deliveryDetails ? (
-                <motion.div
-                  variants={detailsCardVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className={`p-8 rounded-2xl shadow-lg ${
-                    isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
-                  } backdrop-blur-lg border relative overflow-hidden`}
-                >
-                  <h5 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 pb-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    Delivery Information
-                  </h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[
-                      {
-                        label: 'Delivery ID',
-                        value: deliveryDetails?.deliveryId || 'N/A',
-                        icon: <FaTag className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Order ID',
-                        value: deliveryDetails?.orderId || 'N/A',
-                        icon: <FaTag className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Driver Name',
-                        value: deliveryDetails?.driver?.name || 'Not Assigned',
-                        icon: <FaUser className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Driver Contact',
-                        value: deliveryDetails?.driver?.contact || 'N/A',
-                        icon: <FaPhone className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Driver Email',
-                        value: deliveryDetails?.driver?.email || 'N/A',
-                        icon: <FaEnvelope className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Status',
-                        value: deliveryDetails?.status ? (
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deliveryDetails.status).replace(
-                              'bg-blue-100 text-blue-800',
-                              isDarkMode ? 'bg-[#b91c1c]/20 text-[#b91c1c]' : 'bg-[#eb1900]/20 text-[#eb1900]'
-                            )}`}
-                          >
-                            {getStatusText(deliveryDetails.status)}
-                          </span>
-                        ) : 'N/A',
-                        icon: <FaInfoCircle className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Location',
-                        value: deliveryDetails?.location && deliveryDetails.location.latitude && deliveryDetails.location.longitude
-                          ? `${deliveryDetails.location.latitude}, ${deliveryDetails.location.longitude}`
-                          : 'N/A',
-                        icon: <FaMapPin className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                      {
-                        label: 'Estimated Delivery',
-                        value: deliveryDetails?.estimatedDeliveryTime
-                          ? new Date(deliveryDetails.estimatedDeliveryTime).toLocaleString()
-                          : 'N/A',
-                        icon: <FaClock className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
-                      },
-                    ].map((item, idx) => (
-                      <motion.div
-                        key={item.label}
-                        variants={detailsItemVariants}
-                        whileHover="hover"
-                        className={`p-6 rounded-lg ${
-                          isDarkMode ? 'bg-gray-900/30' : 'bg-gray-50/30'
-                        } shadow-sm transition-all duration-300 flex items-start space-x-3`}
-                      >
-                        <motion.div variants={iconVariants} initial="rest" whileHover="hover">
-                          {item.icon}
-                        </motion.div>
-                        <div>
-                          <p className={`text-sm font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {item.label}
-                          </p>
-                          <p className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {item.value}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              ) : (
-                deliveryId &&
-                !error && (
+              <AnimatePresence>
+                {deliveryDetails && (
                   <motion.div
-                    variants={spinnerVariants}
+                    variants={detailsCardVariants}
                     initial="hidden"
                     animate="visible"
-                    className="mt-8 flex justify-center"
+                    exit="exit"
+                    className={`p-8 rounded-2xl shadow-lg ${
+                      isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
+                    } backdrop-blur-lg border relative overflow-hidden`}
                   >
-                    <div className="relative h-16 w-16">
-                      <motion.div
-                        variants={spinnerRingVariants}
-                        animate="animate"
-                        className="absolute inset-0 rounded-full border-4 border-[#eb1900] border-opacity-70"
-                        style={{ boxShadow: '0 0 10px rgba(235, 25, 0, 0.5)' }}
-                      />
-                      <motion.div
-                        variants={spinnerInnerVariants}
-                        animate="animate"
-                        className="absolute inset-2 rounded-full border-2 border-[#c71500]"
-                      />
+                    <h5 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 pb-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      Delivery Information
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {[
+                        {
+                          label: 'Delivery ID',
+                          value: deliveryDetails?.deliveryId || 'N/A',
+                          icon: <FaTag className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Order ID',
+                          value: deliveryDetails?.orderId || 'N/A',
+                          icon: <FaTag className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Driver Name',
+                          value: deliveryDetails?.driver?.name || 'Not Assigned',
+                          icon: <FaUser className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Driver Contact',
+                          value: deliveryDetails?.driver?.contact || 'N/A',
+                          icon: <FaPhone className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Driver Email',
+                          value: deliveryDetails?.driver?.email || 'N/A',
+                          icon: <FaEnvelope className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Status',
+                          value: deliveryDetails?.status ? (
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deliveryDetails.status).replace(
+                                'bg-blue-100 text-blue-800',
+                                isDarkMode ? 'bg-[#b91c1c]/20 text-[#b91c1c]' : 'bg-[#eb1900]/20 text-[#eb1900]'
+                              )}`}
+                            >
+                              {getStatusText(deliveryDetails.status)}
+                            </span>
+                          ) : 'N/A',
+                          icon: <FaInfoCircle className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Location',
+                          value: deliveryDetails?.location && deliveryDetails.location.coordinates
+                            ? `${deliveryDetails.location.coordinates[1]}, ${deliveryDetails.location.coordinates[0]}`
+                            : 'N/A',
+                          icon: <FaMapPin className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                        {
+                          label: 'Estimated Delivery',
+                          value: deliveryDetails?.estimatedDeliveryTime
+                            ? new Date(deliveryDetails.estimatedDeliveryTime).toLocaleString()
+                            : 'N/A',
+                          icon: <FaClock className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                        },
+                      ].map((item, idx) => (
+                        <motion.div
+                          key={item.label}
+                          variants={detailsItemVariants}
+                          whileHover="hover"
+                          className={`p-6 rounded-lg ${
+                            isDarkMode ? 'bg-gray-900/30' : 'bg-gray-50/30'
+                          } shadow-sm transition-all duration-300 flex items-start space-x-3`}
+                        >
+                          <motion.div variants={iconVariants} initial="rest" whileHover="hover">
+                            {item.icon}
+                          </motion.div>
+                          <div>
+                            <p className={`text-sm font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {item.label}
+                            </p>
+                            <p className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {item.value}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   </motion.div>
-                )
+                )}
+              </AnimatePresence>
+
+              {lookupDeliveryId && !deliveryDetails && !error && (
+                <motion.div
+                  variants={spinnerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="mt-8 flex justify-center"
+                >
+                  <div className="relative h-16 w-16">
+                    <motion.div
+                      variants={spinnerRingVariants}
+                      animate="animate"
+                      className="absolute inset-0 rounded-full border-4 border-[#eb1900] border-opacity-70"
+                      style={{ boxShadow: '0 0 10px rgba(235, 25, 0, 0.5)' }}
+                    />
+                    <motion.div
+                      variants={spinnerInnerVariants}
+                      animate="animate"
+                      className="absolute inset-2 rounded-full border-2 border-[#c71500]"
+                    />
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           </div>

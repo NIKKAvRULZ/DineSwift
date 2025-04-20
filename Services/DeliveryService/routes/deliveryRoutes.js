@@ -92,6 +92,14 @@ const availableDriversSchema = Joi.object({
   }),
 });
 
+// Middleware to log requests for debugging
+const logRequest = (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+};
+
+router.use(logRequest);
+
 router.post('/assign', validateRequest(assignDeliverySchema, 'body'), assignDelivery);
 router.get('/status/:deliveryId', validateRequest(deliveryIdSchema, 'params'), getDeliveryStatus);
 router.put('/status/:deliveryId', validateRequest(updateDeliveryStatusSchema, 'body'), updateDeliveryStatus);

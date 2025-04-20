@@ -1,321 +1,212 @@
 const Delivery = require('../models/Delivery');
 const Driver = require('../models/Driver');
+const mongoose = require('mongoose');
 
-// Calculate distance between two points using Haversine formula (in kilometers)
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-exports.assignDelivery = async (req, res) => {
+// Assign a delivery
+const assignDelivery = async (req, res) => {
+  const { orderId, driverId, location } = req.body;
   try {
-    console.log('Received request to assign delivery:', req.body);
-    const { orderId, driverId, location } = req.body;
-
-    // Validate orderId (ensure it's a non-empty string)
-    if (!orderId || typeof orderId !== 'string') {
-      console.log('Validation failed: orderId is not a string');
-      return res.status(400).json({
-        message: 'Validation failed',
-        errors: ['orderId must be a non-empty string'],
-      });
-    }
-
-    // Validate location (GeoJSON Point)
-    if (!location || !Array.isArray(location) || location.length !== 2) {
-      console.log('Validation failed: invalid location');
-      return res.status(400).json({
-        message: 'Validation failed',
-        errors: ['Location must be an array of [longitude, latitude]'],
-      });
-    }
-
-    // Check if a delivery already exists for this order
-    console.log('Checking for existing delivery with orderId:', orderId);
-    const existingDelivery = await Delivery.findOne({ orderId });
-    if (existingDelivery) {
-      console.log('Delivery already exists:', existingDelivery);
-      return res.status(400).json({ message: 'Delivery already exists for this order' });
-    }
-
-    let delivery;
-    if (driverId) {
-      console.log('Manual driver assignment with driverId:', driverId);
-      const driver = await Driver.findById(driverId);
-      if (!driver) {
-        console.log('Driver not found for driverId:', driverId);
-        return res.status(404).json({ message: 'Driver not found' });
-      }
-      if (driver.status !== 'available') {
-        console.log('Driver is not available:', driver);
-        return res.status(400).json({ message: 'Driver is not available' });
-      }
-
-      console.log('Creating delivery with driver:', driverId);
-      delivery = new Delivery({
-        orderId,
-        driverId,
-        location: {
-          type: 'Point',
-          coordinates: location,
-        },
-        status: 'assigned',
-        estimatedDeliveryTime: new Date(Date.now() + 30 * 60 * 1000),
-      });
-
-      console.log('Updating driver status to assigned:', driverId);
-      driver.status = 'assigned';
-      await driver.save();
-    } else {
-      console.log('Automatic driver assignment');
-      const drivers = await Driver.find({ status: 'available' });
-      console.log('Found available drivers:', drivers.length);
-      if (drivers.length === 0) {
-        console.log('No drivers available, creating pending delivery');
-        delivery = new Delivery({
-          orderId,
-          location: {
-            type: 'Point',
-            coordinates: location,
-          },
-          status: 'pending',
-          estimatedDeliveryTime: null,
-        });
-      } else {
-        console.log('Finding nearest driver');
-        const nearestDriver = drivers.reduce((nearest, driver) => {
-          if (!driver.location || !driver.location.coordinates || !Array.isArray(driver.location.coordinates) || driver.location.coordinates.length !== 2) {
-            console.warn(`Driver ${driver._id} has invalid location, skipping`);
-            return nearest;
-          }
-          console.log('Driver location:', driver.location);
-          const [driverLongitude, driverLatitude] = driver.location.coordinates; // [longitude, latitude]
-          const [deliveryLongitude, deliveryLatitude] = location; // [longitude, latitude]
-          const distance = calculateDistance(
-            deliveryLatitude, // lat1
-            deliveryLongitude, // lon1
-            driverLatitude, // lat2
-            driverLongitude // lon2
-          );
-          console.log(`Distance to driver ${driver._id}:`, distance);
-          return distance < nearest.distance ? { driver, distance } : nearest;
-        }, { driver: null, distance: Infinity }).driver;
-
-        if (!nearestDriver) {
-          console.log('No drivers with valid locations, creating pending delivery');
-          delivery = new Delivery({
-            orderId,
-            location: {
-              type: 'Point',
-              coordinates: location,
-            },
-            status: 'pending',
-            estimatedDeliveryTime: null,
-          });
-        } else {
-          console.log('Nearest driver found:', nearestDriver._id);
-          delivery = new Delivery({
-            orderId,
-            driverId: nearestDriver._id,
-            location: {
-              type: 'Point',
-              coordinates: location,
-            },
-            status: 'assigned',
-            estimatedDeliveryTime: new Date(Date.now() + 30 * 60 * 1000),
-          });
-
-          console.log('Updating nearest driver status to assigned:', nearestDriver._id);
-          nearestDriver.status = 'assigned';
-          await nearestDriver.save();
-        }
-      }
-    }
-
-    console.log('Saving delivery:', delivery);
-    await delivery.save();
-
-    console.log('Emitting delivery status update');
-    const io = req.app.get('socketio');
-    io.emit('deliveryStatusUpdated', {
-      deliveryId: delivery._id,
-      status: delivery.status,
+    const delivery = new Delivery({
+      orderId,
+      driverId: driverId ? new mongoose.Types.ObjectId(driverId) : null,
+      location: { type: 'Point', coordinates: location },
+      status: driverId ? 'assigned' : 'pending',
+      estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
+      restaurantName: 'DineSwift Restaurant', // Hardcoded, replace with actual data
+      orderTotal: 32.59, // Hardcoded, replace with actual data
     });
-
-    console.log('Delivery assigned successfully:', delivery);
-    res.status(201).json({ message: 'Delivery assigned successfully', delivery });
+    await delivery.save();
+    if (driverId) {
+      await Driver.findByIdAndUpdate(driverId, { status: 'busy' });
+    }
+    res.status(201).json({
+      deliveryId: delivery._id.toString(),
+      orderId: delivery.orderId,
+      status: delivery.status,
+      location: delivery.location,
+      driverId: delivery.driverId ? delivery.driverId.toString() : null,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+      restaurantName: delivery.restaurantName,
+      orderTotal: delivery.orderTotal,
+    });
+    console.log(`Assigned delivery ${delivery._id} for order ${orderId}`);
   } catch (error) {
     console.error('Error assigning delivery:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getAvailableDrivers = async (req, res) => {
+// Get delivery status
+const getDeliveryStatus = async (req, res) => {
+  const { deliveryId } = req.params;
   try {
-    const drivers = await Driver.find({ status: 'available' });
-    res.status(200).json({ drivers });
-  } catch (error) {
-    console.error('Error fetching available drivers:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getDeliveryStatus = async (req, res) => {
-  try {
-    const { deliveryId } = req.params;
-
-    // Validate deliveryId format
-    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-    if (!objectIdRegex.test(deliveryId)) {
-      return res.status(400).json({ message: 'Invalid Delivery ID format' });
-    }
-
     const delivery = await Delivery.findById(deliveryId).populate('driverId');
     if (!delivery) {
       return res.status(404).json({ message: 'Delivery not found' });
     }
-
-    res.status(200).json(delivery);
+    res.json({
+      deliveryId: delivery._id.toString(),
+      orderId: delivery.orderId,
+      status: delivery.status,
+      location: delivery.location,
+      driver: delivery.driverId ? {
+        _id: delivery.driverId._id.toString(),
+        name: delivery.driverId.name,
+        contact: delivery.driverId.contact,
+        email: delivery.driverId.email,
+        location: delivery.driverId.location,
+      } : null,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+      restaurantName: delivery.restaurantName,
+      orderTotal: delivery.orderTotal,
+    });
+    console.log(`Fetched status for delivery ${deliveryId}`);
   } catch (error) {
     console.error('Error fetching delivery status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.updateDeliveryStatus = async (req, res) => {
+// Update delivery status
+const updateDeliveryStatus = async (req, res) => {
+  const { deliveryId } = req.params;
+  const { status } = req.body;
   try {
-    const { status } = req.body;
-    const { deliveryId } = req.params;
-
-    // Validate input
-    if (!status) {
-      return res.status(400).json({ message: 'Status is required' });
-    }
-
-    // Find the delivery
-    const delivery = await Delivery.findById(deliveryId);
+    const delivery = await Delivery.findById(deliveryId).populate('driverId');
     if (!delivery) {
       return res.status(404).json({ message: 'Delivery not found' });
     }
-
-    // Update the status
     delivery.status = status;
-
-    // If the delivery is marked as 'delivered', set the driver's status back to 'available'
-    if (status === 'delivered' && delivery.driverId) {
-      const driver = await Driver.findById(delivery.driverId);
-      if (driver) {
-        driver.status = 'available';
-        await driver.save();
+    if (status === 'delivered' || status === 'cancelled') {
+      if (delivery.driverId) {
+        await Driver.findByIdAndUpdate(delivery.driverId, { status: 'available' });
       }
     }
-
     await delivery.save();
-
-    // Emit a Socket.IO event to notify clients about the status update
-    const io = req.app.get('socketio');
-    io.emit('deliveryStatusUpdated', { deliveryId, status });
-
-    res.status(200).json({ message: 'Delivery status updated', delivery });
+    res.json({
+      deliveryId: delivery._id.toString(),
+      orderId: delivery.orderId,
+      status: delivery.status,
+      location: delivery.location,
+      driver: delivery.driverId ? {
+        _id: delivery.driverId._id.toString(),
+        name: delivery.driverId.name,
+        contact: delivery.driverId.contact,
+        email: delivery.driverId.email,
+        location: delivery.driverId.location,
+      } : null,
+      estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+      restaurantName: delivery.restaurantName,
+      orderTotal: delivery.orderTotal,
+    });
+    console.log(`Updated status for delivery ${deliveryId} to ${status}`);
+    req.io.emit('deliveryStatusUpdated', {
+      deliveryId: delivery._id.toString(),
+      status,
+      orderId: delivery.orderId,
+    });
   } catch (error) {
     console.error('Error updating delivery status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.trackDelivery = async (req, res) => {
+// Get available drivers
+const getAvailableDrivers = async (req, res) => {
+  const { longitude, latitude } = req.query;
   try {
-    const { deliveryId } = req.params;
-
-    // Validate deliveryId format
-    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-    if (!objectIdRegex.test(deliveryId)) {
-      return res.status(400).json({ message: 'Invalid Delivery ID format' });
+    const query = { status: 'available' };
+    if (longitude && latitude) {
+      query.location = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+          $maxDistance: 10000, // 10km
+        },
+      };
     }
+    const drivers = await Driver.find(query);
+    res.json(drivers.map(driver => ({
+      _id: driver._id.toString(),
+      name: driver.name,
+      contact: driver.contact,
+      email: driver.email,
+      location: driver.location,
+    })));
+    console.log(`Fetched available drivers near [${longitude}, ${latitude}]`);
+  } catch (error) {
+    console.error('Error fetching available drivers:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
-    // Find delivery and populate driver details
+// Track delivery
+const trackDelivery = async (req, res) => {
+  const { deliveryId } = req.params;
+  try {
     const delivery = await Delivery.findById(deliveryId).populate('driverId');
     if (!delivery) {
       return res.status(404).json({ message: 'Delivery not found' });
     }
-
-    // Prepare tracking data
-    const trackingData = {
-      deliveryId: delivery._id,
+    res.json({
+      deliveryId: delivery._id.toString(),
       orderId: delivery.orderId,
       status: delivery.status,
-      location: delivery.location ? {
-        longitude: delivery.location.coordinates[0],
-        latitude: delivery.location.coordinates[1],
-      } : null,
+      location: delivery.location,
       driver: delivery.driverId ? {
+        _id: delivery.driverId._id.toString(),
         name: delivery.driverId.name,
-        contact: delivery.driverId.contact || 'N/A',
-        email: delivery.driverId.email || 'N/A',
-        currentLocation: delivery.driverId.location ? {
-          longitude: delivery.driverId.location.coordinates[0],
-          latitude: delivery.driverId.location.coordinates[1],
-        } : null,
+        contact: delivery.driverId.contact,
+        email: delivery.driverId.email,
+        location: delivery.driverId.location,
       } : null,
       estimatedDeliveryTime: delivery.estimatedDeliveryTime,
-    };
-
-    res.status(200).json(trackingData);
+      restaurantName: delivery.restaurantName,
+      orderTotal: delivery.orderTotal,
+    });
+    console.log(`Tracked delivery ${deliveryId}`);
   } catch (error) {
     console.error('Error tracking delivery:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getActiveDelivery = async (req, res) => {
+// Get active delivery
+const getActiveDelivery = async (req, res) => {
   try {
-    // Find the most recent non-delivered/cancelled delivery
     const delivery = await Delivery.findOne({
       status: { $in: ['pending', 'assigned', 'in_progress'] },
-    })
-      .sort({ createdAt: -1 }) // Latest first
-      .populate('driverId');
-
+    }).populate('driverId');
     if (!delivery) {
       return res.status(404).json({ message: 'No active delivery found' });
     }
-
-    // Format response to match /track endpoint
-    const trackingData = {
-      deliveryId: delivery._id,
+    res.json({
+      deliveryId: delivery._id.toString(),
       orderId: delivery.orderId,
       status: delivery.status,
-      location: delivery.location
-        ? {
-            longitude: delivery.location.coordinates[0],
-            latitude: delivery.location.coordinates[1],
-          }
-        : null,
-      driver: delivery.driverId
-        ? {
-            name: delivery.driverId.name,
-            contact: delivery.driverId.contact || 'N/A',
-            email: delivery.driverId.email || 'N/A',
-            currentLocation: delivery.driverId.location
-              ? {
-                  longitude: delivery.driverId.location.coordinates[0],
-                  latitude: delivery.driverId.location.coordinates[1],
-                }
-              : null,
-          }
-        : null,
+      location: delivery.location,
+      driver: delivery.driverId ? {
+        _id: delivery.driverId._id.toString(),
+        name: delivery.driverId.name,
+        contact: delivery.driverId.contact,
+        email: delivery.driverId.email,
+        location: delivery.driverId.location,
+      } : null,
       estimatedDeliveryTime: delivery.estimatedDeliveryTime,
-    };
-
-    res.status(200).json(trackingData);
+      restaurantName: delivery.restaurantName,
+      orderTotal: delivery.orderTotal,
+    });
+    console.log(`Fetched active delivery ${delivery._id}`);
   } catch (error) {
     console.error('Error fetching active delivery:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+module.exports = {
+  assignDelivery,
+  getDeliveryStatus,
+  updateDeliveryStatus,
+  getAvailableDrivers,
+  trackDelivery,
+  getActiveDelivery,
 };

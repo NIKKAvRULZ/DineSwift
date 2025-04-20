@@ -1,21 +1,39 @@
 const mongoose = require('mongoose');
 
 const driverSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  contact: { type: String, required: false }, // Phone number (e.g., "+94 771 234 567")
-  email: { type: String, required: false },   // Email address (e.g., "driver@example.com")
+  name: {
+    type: String,
+    required: true,
+  },
+  contact: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
   status: {
     type: String,
-    enum: ['available', 'assigned', 'in_progress', 'offline'],
+    enum: ['available', 'busy'],
     default: 'available',
   },
   location: {
-    type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], required: true }, // [longitude, latitude]
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true,
+    },
   },
+}, {
+  timestamps: true,
 });
 
-// 2dsphere index for geospatial queries
+// Index for geospatial queries
 driverSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Driver', driverSchema);
