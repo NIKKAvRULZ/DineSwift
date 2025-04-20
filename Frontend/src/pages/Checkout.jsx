@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import orderService from '../api/orderService';
 import { MapPin, ShoppingCart, CreditCard, Clock, Check, X } from 'lucide-react';
+import restaurantPlaceholder from '../assets/placeholder-restaurant.png';
 
 const Checkout = () => {
   const location = useLocation();
@@ -78,7 +79,7 @@ const Checkout = () => {
           {/* Restaurant Header */}
           <div className="flex items-center mb-8">
             <img 
-              src={restaurantDetails?.image || "https://via.placeholder.com/100"}
+              src={restaurantDetails?.image || {restaurantPlaceholder}}
               alt={restaurantDetails?.name}
               className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-200"
             />

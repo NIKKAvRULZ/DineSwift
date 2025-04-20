@@ -50,10 +50,10 @@ const Orders = () => {
 
   const filteredOrders = orders.filter((order) => {
     if (filter === 'active') {
-      return ['Pending', 'confirmed', 'preparing', 'ready', 'delivering'].includes(order.status);
+      return ['Pending', 'Accepted', 'Preparing', 'On the Way'].includes(order.status);
     }
     if (filter === 'completed') {
-      return ['delivered', 'cancelled'].includes(order.status);
+      return ['Delivered', 'Cancelled'].includes(order.status);
     }
     return true;
   });

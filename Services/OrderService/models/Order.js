@@ -20,7 +20,7 @@ const OrderSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ["Pending", "confirmed", "preparing", "ready", "delivering", "delivered"], 
+        enum: ["Pending", "Accepted", "Preparing", "On the Way", "Delivered"], 
         default: "Pending"
     },
     paymentMethod: { 

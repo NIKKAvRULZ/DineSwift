@@ -4,7 +4,8 @@ const Order = require("../models/Order");
 exports.createOrder = async (req, res) => {
     try {
         const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
-        
+        console.log("Incoming order payload:", req.body);
+
         // Validate required fields
         if (!customerId || !restaurantId || !items || !totalAmount || !paymentMethod || !deliveryAddress) {
             return res.status(400).json({ 
@@ -23,7 +24,7 @@ exports.createOrder = async (req, res) => {
             restaurantId,
             items,
             totalAmount,
-            status: (status || "pending").toLowerCase(),
+            status: status || "pending",
             paymentMethod,
             deliveryAddress
         });
