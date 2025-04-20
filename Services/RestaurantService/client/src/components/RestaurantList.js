@@ -1,56 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Container, 
-    Grid, 
-    Card, 
-    CardContent, 
-    Typography, 
-    CardActions, 
-    Button,
+import {
     Box,
-    Alert,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle
+    Grid,
+    useTheme,
+    TextField,
+    MenuItem,
+    Stack
 } from '@mui/material';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
+
+import PageHeader from './common/PageHeader';
+import LoadingState from './common/LoadingState';
+import EmptyState from './common/EmptyState';
+import RestaurantCard from './common/RestaurantCard';
+import ConfirmDialog from './common/ConfirmDialog';
+import Notification from './common/Notification';
 
 const apiUrl = 'http://localhost:5002';
 
 const RestaurantList = () => {
+    const theme = useTheme();
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [restaurantToDelete, setRestaurantToDelete] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [cuisines, setCuisines] = useState([]);
+    const [selectedCuisine, setSelectedCuisine] = useState('');
+    const [selectedRating, setSelectedRating] = useState('');
+    
+    const ratingOptions = [
+        { value: '', label: 'All Ratings' },
+        { value: '4', label: '4+ Stars' },
+        { value: '3', label: '3+ Stars' },
+        { value: '2', label: '2+ Stars' },
+        { value: '1', label: '1+ Star' }
+    ];
+    const [notification, setNotification] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+
+    // Debounce search term changes
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchRestaurants();
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, selectedCuisine, selectedRating]);
+
+    const handleCloseNotification = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setNotification({ ...notification, open: false });
+    };
+
+    const showNotification = (message, severity = 'success') => {
+        setNotification({
+            open: true,
+            message,
+            severity
+        });
+    };
 
     useEffect(() => {
         fetchRestaurants();
+        fetchCuisines();
     }, []);
     
+    const fetchCuisines = async () => {
+        try {
+            const response = await axios.get(`${apiUrl}/api/restaurants/cuisines`);
+            setCuisines(response.data);
+        } catch (error) {
+            console.error('Error fetching cuisines:', error);
+            showNotification('Error fetching cuisines', 'error');
+        }
+    };
+
     const fetchRestaurants = async () => {
         try {
-            console.log('Fetching restaurants from API');
             setLoading(true);
             setError(null);
-            const response = await axios.get(`${apiUrl}/api/restaurants`);
-            console.log('Response data:', response.data);
+            
+            let url = `${apiUrl}/api/restaurants`;
+            const params = new URLSearchParams();
+            
+            if (searchTerm) {
+                params.append('search', searchTerm);
+            }
+            if (selectedCuisine) {
+                params.append('cuisine', selectedCuisine);
+            }
+            if (selectedRating) {
+                params.append('minRating', selectedRating);
+            }
+            const queryString = params.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
+
+            const response = await axios.get(url);
             setRestaurants(response.data);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching restaurants:', error);
-            const errorMessage = error.response 
-                ? `Error ${error.response.status}: ${error.response.data.message || error.message}` 
+            const errorMessage = error.response
+                ? `Error ${error.response.status}: ${error.response.data.message || error.message}`
                 : error.message;
             setError(errorMessage);
+            showNotification(errorMessage, 'error');
             setLoading(false);
         }
     };
@@ -68,7 +132,7 @@ const RestaurantList = () => {
             await axios.delete(`${apiUrl}/api/restaurants/${restaurantToDelete._id}`);
             setDeleteDialogOpen(false);
             setRestaurantToDelete(null);
-            // Refresh the restaurant list
+            showNotification('Restaurant deleted successfully');
             fetchRestaurants();
         } catch (error) {
             console.error('Error deleting restaurant:', error);
@@ -76,131 +140,124 @@ const RestaurantList = () => {
                 ? `Error ${error.response.status}: ${error.response.data.message || error.message}` 
                 : error.message;
             setError(errorMessage);
+            showNotification(errorMessage, 'error');
             setLoading(false);
             setDeleteDialogOpen(false);
         }
     };
 
-    const handleDeleteCancel = () => {
-        setDeleteDialogOpen(false);
-        setRestaurantToDelete(null);
-    };
+    if (error) {
+        return (
+            <EmptyState
+                title="Error Loading Restaurants"
+                message={error}
+                icon={RestaurantIcon}
+            />
+        );
+    }
+
+    if (!loading && !error && restaurants.length === 0) {
+        return (
+            <EmptyState
+                title="No Restaurants Found"
+                message="Get started by adding your first restaurant!"
+                actionLabel="Add Restaurant"
+                actionPath="/add-restaurant"
+                icon={RestaurantIcon}
+            />
+        );
+    }
 
     return (
-        <Container>
-            <Box sx={{ my: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <RestaurantIcon sx={{ mr: 1 }} />
-                    Restaurants
-                </Typography>
-                
-                {loading && (
-                    <Box display="flex" justifyContent="center" my={4}>
-                        <CircularProgress />
-                    </Box>
-                )}
-                
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
-                
-                {!loading && !error && restaurants.length === 0 && (
-                    <Alert severity="info" sx={{ mb: 2 }}>
-                        No restaurants found. Try adding a restaurant first.
-                    </Alert>
-                )}
-                
-                <Grid container spacing={3}>
-                    {restaurants.map((restaurant) => (
-                        <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
-                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Typography variant="h5" component="h2">
-                                        {restaurant.name}
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        {restaurant.location}
-                                    </Typography>
-                                    <Typography variant="body2" component="p">
-                                        Menu Items: {restaurant.menuItems?.length || 0}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, p: 2 }}>
-                                    <Box>
-                                        <Button 
-                                            size="small" 
-                                            component={Link} 
-                                            to={`/restaurant/${restaurant._id}`}
-                                            variant="outlined"
-                                        >
-                                            View Details
-                                        </Button>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Button 
-                                            size="small" 
-                                            component={Link}
-                                            to={`/add-menu-item/${restaurant._id}`}
-                                            color="primary"
-                                            variant="contained"
-                                            startIcon={<AddIcon />}
-                                        >
-                                            Add Menu Item
-                                        </Button>
-                                        <Button 
-                                            size="small"
-                                            component={Link}
-                                            to={`/edit-restaurant/${restaurant._id}`}
-                                            color="info"
-                                            variant="contained"
-                                            startIcon={<EditIcon />}
-                                        >
-                                            Edit
-                                        </Button>
-                                        <Button 
-                                            size="small"
-                                            color="error"
-                                            variant="contained"
-                                            startIcon={<DeleteIcon />}
-                                            onClick={() => handleDeleteClick(restaurant)}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </Box>
-                                </CardActions>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
+        <Box sx={{ py: 3 }}>
+            <PageHeader
+                title="Restaurants"
+                subtitle="Manage your restaurant listings"
+                actionLabel="Add Restaurant"
+                actionPath="/add-restaurant"
+                actionIcon={AddCircleIcon}
+            />
+
+            <Box sx={{ mb: 3 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                        fullWidth
+                        label="Search restaurants"
+                        variant="outlined"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Type to search..."
+                        size="small"
+                    />
+                    <TextField
+                        select
+                        label="Filter by cuisine"
+                        value={selectedCuisine}
+                        onChange={(e) => setSelectedCuisine(e.target.value)}
+                        variant="outlined"
+                        size="small"
+                        sx={{ minWidth: 160 }}
+                    >
+                        <MenuItem value="">All Cuisines</MenuItem>
+                        {cuisines.map((cuisine) => (
+                            <MenuItem key={cuisine} value={cuisine}>
+                                {cuisine}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField
+                        select
+                        label="Filter by rating"
+                        value={selectedRating}
+                        onChange={(e) => setSelectedRating(e.target.value)}
+                        variant="outlined"
+                        size="small"
+                        sx={{ minWidth: 160 }}
+                    >
+                        {ratingOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Stack>
             </Box>
             
-            {/* Delete Confirmation Dialog */}
-            <Dialog
+            <Grid container spacing={3}>
+                {loading ? (
+                    <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', my: 4 }}>
+                            <LoadingState message="Loading restaurants..." />
+                        </Box>
+                    </Grid>
+                ) : (
+                    restaurants.map((restaurant) => (
+                        <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
+                            <RestaurantCard
+                                restaurant={restaurant}
+                                onDelete={handleDeleteClick}
+                            />
+                        </Grid>
+                    ))
+                )}
+            </Grid>
+
+            <ConfirmDialog
                 open={deleteDialogOpen}
-                onClose={handleDeleteCancel}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    {"Confirm Restaurant Deletion"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete the restaurant "{restaurantToDelete?.name}"? 
-                        This will also delete all associated menu items and cannot be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDeleteCancel} color="primary">Cancel</Button>
-                    <Button onClick={handleDeleteConfirm} color="error" autoFocus>
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                title="Delete Restaurant"
+                message={`Are you sure you want to delete "${restaurantToDelete?.name}"? This will also delete all associated menu items and cannot be undone.`}
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setDeleteDialogOpen(false)}
+            />
+
+            <Notification
+                open={notification.open}
+                message={notification.message}
+                severity={notification.severity}
+                onClose={handleCloseNotification}
+            />
+        </Box>
     );
 };
 
-export default RestaurantList; 
+export default RestaurantList;

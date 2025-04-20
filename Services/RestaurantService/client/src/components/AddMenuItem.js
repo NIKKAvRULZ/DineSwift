@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -10,80 +10,80 @@ import {
     Alert,
     Snackbar,
     CircularProgress,
+    Grid,
     InputAdornment,
-    IconButton
+    FormControlLabel,
+    Switch,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import FastfoodIcon from '@mui/icons-material/Fastfood';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
 
+const CATEGORIES = [
+    'Appetizers',
+    'Main Course',
+    'Desserts',
+    'Beverages',
+    'Sides',
+    'Specials'
+];
+
 const AddMenuItem = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
-    const [restaurant, setRestaurant] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
+        description: '',
+        image: '',
+        category: '',
         price: '',
+        isSpicy: false,
+        discount: 0
     });
     
     const [loading, setLoading] = useState(false);
-    const [fetchLoading, setFetchLoading] = useState(true);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     
-    useEffect(() => {
-        const fetchRestaurant = async () => {
-            try {
-                setFetchLoading(true);
-                const response = await axios.get(`${apiUrl}/api/restaurants/${restaurantId}`);
-                setRestaurant(response.data);
-                setFetchLoading(false);
-            } catch (error) {
-                console.error('Error fetching restaurant:', error);
-                setErrorMessage('Could not fetch restaurant details');
-                setFetchLoading(false);
-            }
-        };
-        
-        fetchRestaurant();
-    }, [restaurantId]);
-    
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSwitchChange = (e) => {
+        setFormData(prev => ({
+            ...prev,
+            [e.target.name]: e.target.checked
+        }));
     };
     
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validate price is a number
-        if (isNaN(parseFloat(formData.price))) {
-            setErrorMessage('Price must be a valid number');
-            return;
-        }
-        
         try {
             setLoading(true);
             setErrorMessage('');
-            
-            const data = { 
-                ...formData, 
-                price: parseFloat(formData.price) 
+
+            // Ensure price is a number
+            const submitData = {
+                ...formData,
+                price: parseFloat(formData.price)
             };
-            
-            console.log('Submitting menu item data:', data);
-            const response = await axios.post(`${apiUrl}/api/restaurants/${restaurantId}/menu-items`, data);
+
+            console.log('Submitting menu item:', submitData);
+            const response = await axios.post(`${apiUrl}/api/restaurants/${restaurantId}/menu-items`, submitData);
             console.log('Menu item added:', response.data);
-            
             setSuccessMessage('Menu item added successfully!');
-            setFormData({ name: '', price: '' });
             setLoading(false);
             
-            // Navigate back to restaurant detail after 2 seconds
+            // Navigate back to restaurant details after 2 seconds
             setTimeout(() => {
                 navigate(`/restaurant/${restaurantId}`);
             }, 2000);
@@ -101,35 +101,8 @@ const AddMenuItem = () => {
         navigate(`/restaurant/${restaurantId}`);
     };
     
-    if (fetchLoading) {
-        return (
-            <Container>
-                <Box display="flex" justifyContent="center" my={4}>
-                    <CircularProgress />
-                </Box>
-            </Container>
-        );
-    }
-    
-    if (!restaurant) {
-        return (
-            <Container>
-                <Alert severity="error" sx={{ mt: 2 }}>
-                    Restaurant not found
-                </Alert>
-                <Button
-                    variant="contained"
-                    onClick={() => navigate('/')}
-                    sx={{ mt: 2 }}
-                >
-                    Back to Restaurant List
-                </Button>
-            </Container>
-        );
-    }
-    
     return (
-        <Container maxWidth="sm">
+        <Container maxWidth="md">
             <Box sx={{ my: 4 }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
@@ -141,39 +114,114 @@ const AddMenuItem = () => {
             </Box>
             
             <Paper elevation={3} sx={{ p: 3, my: 2 }}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <FastfoodIcon sx={{ mr: 1 }} />
-                    Add Menu Item to {restaurant.name}
+                <Typography variant="h5" component="h2" gutterBottom>
+                    Add Menu Item
                 </Typography>
                 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                    <TextField
-                        fullWidth
-                        label="Item Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        margin="normal"
-                        disabled={loading}
-                    />
-                    
-                    <TextField
-                        fullWidth
-                        label="Price"
-                        name="price"
-                        type="number"
-                        value={formData.price}
-                        onChange={handleChange}
-                        required
-                        margin="normal"
-                        disabled={loading}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">$</InputAdornment>
-                            )
-                        }}
-                    />
+                    <Grid container spacing={3}>
+                        {/* Basic Information */}
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Item Name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Category</InputLabel>
+                                <Select
+                                    name="category"
+                                    value={formData.category}
+                                    label="Category"
+                                    onChange={handleChange}
+                                    disabled={loading}
+                                >
+                                    {CATEGORIES.map((category) => (
+                                        <MenuItem key={category} value={category}>
+                                            {category}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                multiline
+                                rows={3}
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Image URL"
+                                name="image"
+                                value={formData.image}
+                                onChange={handleChange}
+                                disabled={loading}
+                                placeholder="https://example.com/image.jpg"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Price"
+                                name="price"
+                                type="number"
+                                value={formData.price}
+                                onChange={handleChange}
+                                required
+                                disabled={loading}
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                    step: "0.01"
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                label="Discount"
+                                name="discount"
+                                type="number"
+                                value={formData.discount}
+                                onChange={handleChange}
+                                disabled={loading}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                    inputProps: {
+                                        min: 0,
+                                        max: 100
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.isSpicy}
+                                        onChange={handleSwitchChange}
+                                        name="isSpicy"
+                                        disabled={loading}
+                                        color="error"
+                                    />
+                                }
+                                label="Spicy Item"
+                            />
+                        </Grid>
+                    </Grid>
                     
                     <Button 
                         type="submit" 
@@ -211,4 +259,4 @@ const AddMenuItem = () => {
     );
 };
 
-export default AddMenuItem; 
+export default AddMenuItem;

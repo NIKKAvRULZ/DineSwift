@@ -6,6 +6,8 @@ const {
     getRestaurant,
     updateRestaurant,
     deleteRestaurant,
+    findNearbyRestaurants,
+    getCuisineTypes
 } = require('../controllers/restaurantController');
 
 const {
@@ -18,8 +20,10 @@ const {
 } = require('../controllers/menuItemController');
 
 // Restaurant routes
+router.get('/restaurants/cuisines', getCuisineTypes);
 router.get('/restaurants', getAllRestaurants);
 router.post('/restaurants', addRestaurant);
+router.get('/restaurants/nearby', findNearbyRestaurants);
 router.get('/restaurants/:id', getRestaurant);
 router.put('/restaurants/:id', updateRestaurant);
 router.delete('/restaurants/:id', deleteRestaurant);
