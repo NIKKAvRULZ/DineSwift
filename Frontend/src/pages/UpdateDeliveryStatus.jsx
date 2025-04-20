@@ -4,6 +4,63 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaExclamationCircle, FaSpinner, FaArrowRight } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
+
+const formSectionVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: 'easeOut', delay: 0.2 },
+  },
+};
+
+const inputVariants = {
+  rest: { scale: 1, boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)' },
+  focus: {
+    scale: 1.01,
+    boxShadow: '0 0 8px rgba(235, 25, 0, 0.3)',
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+};
+
+const buttonVariants = {
+  rest: { scale: 1, boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' },
+  hover: {
+    scale: 1.05,
+    boxShadow: '0 6px 12px rgba(235, 25, 0, 0.2)',
+    transition: { duration: 0.2, ease: 'easeOut' },
+  },
+  tap: { scale: 0.95, transition: { duration: 0.1 } },
+};
+
+const statusBadgeVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+  pulse: {
+    scale: [1, 1.05, 1],
+    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+const notificationVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.2, ease: 'easeIn' } },
+};
+
 const UpdateDeliveryStatus = ({ isDarkMode }) => {
   const [deliveryId, setDeliveryId] = useState('');
   const [currentStatus, setCurrentStatus] = useState(null);
@@ -88,45 +145,65 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7 }}
-      className={`p-8 rounded-3xl shadow-2xl backdrop-blur-lg ${
-        isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className={`w-full max-w-3xl mx-auto px-8 py-8 rounded-xl shadow-lg backdrop-blur-md border ${
+        isDarkMode ? 'bg-gray-800/70 border-gray-700' : 'bg-white/70 border-gray-200'
       }`}
     >
-      <h5 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
+      {/* Header */}
+      <h2
+        className={`text-3xl font-semibold ${
+          isDarkMode ? 'text-white' : 'text-gray-900'
+        } mb-6 font-sans tracking-tight`}
+      >
         Update Delivery Status
-      </h5>
+      </h2>
+      <div className={`border-b mb-6 ${
+        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      }`}></div>
+
+      {/* Current Status Badge */}
       {currentStatus && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`mb-4 p-3 rounded-lg ${
-            isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-          }`}
+          variants={statusBadgeVariants}
+          initial="hidden"
+          animate={['visible', 'pulse']}
+          className={`inline-flex items-center px-4 py-2 mb-6 rounded-full text-sm font-medium shadow-sm ${
+            isDarkMode
+              ? 'bg-gray-700 text-gray-200 border-gray-600'
+              : 'bg-gray-100 text-gray-700 border-gray-300'
+          } border`}
         >
-          <span className="font-medium">Current Status: </span>
-          {getStatusText(currentStatus)}
+          <span className="mr-2">Current Status:</span>
+          <span className="font-semibold">{getStatusText(currentStatus)}</span>
         </motion.div>
       )}
+
+      {/* Notifications */}
       <AnimatePresence>
         {error && (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            variants={notificationVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className={`flex items-center ${
-              isDarkMode ? 'bg-red-900/50 text-red-200' : 'bg-red-100 text-red-800'
-            } font-medium p-4 rounded-lg mb-6`}
+              isDarkMode ? 'bg-red-900/40 text-red-100' : 'bg-red-100 text-red-800'
+            } p-4 rounded-lg mb-6 border ${
+              isDarkMode ? 'border-red-800/50' : 'border-red-300'
+            }`}
           >
-            <FaExclamationCircle className="mr-2" />
-            {error}
+            <FaExclamationCircle className="mr-3 text-lg" />
+            <span className="flex-1">{error}</span>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setError(null)}
-              className="ml-auto text-red-600 hover:text-red-800"
+              className={`p-1 rounded-full ${
+                isDarkMode ? 'text-red-300 hover:text-red-100' : 'text-red-600 hover:text-red-800'
+              }`}
               aria-label="Dismiss error"
             >
               ×
@@ -135,20 +212,25 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
         )}
         {success && (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            variants={notificationVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className={`flex items-center ${
-              isDarkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-800'
-            } font-medium p-4 rounded-lg mb-6`}
+              isDarkMode ? 'bg-green-900/40 text-green-100' : 'bg-green-100 text-green-800'
+            } p-4 rounded-lg mb-6 border ${
+              isDarkMode ? 'border-green-800/50' : 'border-green-300'
+            }`}
           >
-            <FaCheckCircle className="mr-2" />
-            {success}
+            <FaCheckCircle className="mr-3 text-lg" />
+            <span className="flex-1">{success}</span>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setSuccess(null)}
-              className="ml-auto text-green-600 hover:text-green-800"
+              className={`p-1 rounded-full ${
+                isDarkMode ? 'text-green-300 hover:text-green-100' : 'text-green-600 hover:text-green-800'
+              }`}
               aria-label="Dismiss success"
             >
               ×
@@ -156,93 +238,121 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
           </motion.div>
         )}
       </AnimatePresence>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="relative space-y-2">
-          <motion.label
-            initial={{ y: 0 }}
-            animate={{ y: deliveryId ? -24 : 0 }}
-            className={`absolute top-4 left-4 text-sm font-medium uppercase tracking-wide ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            } transition-all duration-200`}
-            htmlFor="deliveryId"
-          >
-            Delivery ID
-          </motion.label>
-          <motion.input
-            whileFocus={{ scale: 1.01 }}
-            id="deliveryId"
-            type="text"
-            value={deliveryId}
-            onChange={(e) => setDeliveryId(e.target.value)}
-            required
-            disabled={isSubmitting}
-            className={`w-full px-4 pt-5 pb-3 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50/50 border-gray-300 text-gray-700'
-            } border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed placeholder-transparent`}
-            placeholder="Enter Delivery ID"
-            aria-label="Delivery ID"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="status"
-            className={`block text-sm font-medium uppercase tracking-wide ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}
-          >
-            Status
-          </label>
-          <motion.select
-            whileFocus={{ scale: 1.01 }}
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            required
-            disabled={isSubmitting || !currentStatus}
-            className={`w-full px-4 py-4 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50/50 border-gray-300 text-gray-700'
-            } border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed`}
-            aria-label="Select delivery status"
-          >
-            <option value="" disabled>
-              Select status
-            </option>
-            {availableStatuses.map((statusOption) => (
-              <option key={statusOption} value={statusOption}>
-                {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+
+      {/* Form */}
+      <motion.div
+        variants={formSectionVariants}
+        initial="hidden"
+        animate="visible"
+        className={`p-6 rounded-lg ${
+          isDarkMode ? 'bg-gray-900/30' : 'bg-gray-50/50'
+        }`}
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Delivery ID Input */}
+          <div className="relative">
+            <motion.label
+              className={`absolute left-3 text-sm font-medium uppercase tracking-wide ${
+                deliveryId
+                  ? '-top-5 text-xs ' + (isDarkMode ? 'text-gray-300' : 'text-gray-700')
+                  : 'top-3 ' + (isDarkMode ? 'text-gray-400' : 'text-gray-500')
+              } transition-all duration-300`}
+              htmlFor="deliveryId"
+            >
+              Delivery ID
+            </motion.label>
+            <motion.input
+              variants={inputVariants}
+              initial="rest"
+              animate="rest"
+              whileFocus="focus"
+              id="deliveryId"
+              type="text"
+              value={deliveryId}
+              onChange={(e) => setDeliveryId(e.target.value)}
+              required
+              disabled={isSubmitting}
+              className={`w-full px-3 py-2.5 ${
+                isDarkMode
+                  ? 'bg-gray-900/50 text-white border-gray-700'
+                  : 'bg-white text-gray-900 border-gray-200'
+              } border rounded-md focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-[#eb1900] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed placeholder-transparent font-sans sm:text-sm`}
+              placeholder="Enter Delivery ID"
+              aria-label="Delivery ID"
+            />
+          </div>
+
+          {/* Status Select */}
+          <div className="relative">
+            <label
+              className={`block text-sm font-medium uppercase tracking-wide ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              } mb-2`}
+              htmlFor="status"
+            >
+              Status
+            </label>
+            <motion.select
+              variants={inputVariants}
+              initial="rest"
+              animate="rest"
+              whileFocus="focus"
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              required
+              disabled={isSubmitting || !currentStatus}
+              className={`w-full px-3 py-2.5 ${
+                isDarkMode
+                  ? 'bg-gray-900/50 text-white border-gray-700'
+                  : 'bg-white text-gray-900 border-gray-200'
+              } border rounded-md focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-[#eb1900] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-sans sm:text-sm appearance-none`}
+              aria-label="Select delivery status"
+            >
+              <option value="" disabled>
+                Select status
               </option>
-            ))}
-          </motion.select>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.05, x: 5 }}
-          whileTap={{ scale: 0.95 }}
-          type="submit"
-          disabled={isSubmitting || !currentStatus}
-          className={`w-full px-8 py-4 ${
-            isDarkMode
-              ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]'
-              : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'
-          } text-white rounded-lg shadow-md hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#eb1900]/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-semibold`}
-          data-tooltip-id="update-status-tooltip"
-          data-tooltip-content={isSubmitting ? 'Updating status...' : 'Update delivery status'}
-          aria-label="Update delivery status"
-        >
-          {isSubmitting ? (
-            <FaSpinner className="animate-spin h-5 w-5 mr-2 text-white" />
-          ) : (
-            <FaArrowRight className="mr-2" />
-          )}
-          {isSubmitting ? 'Updating...' : 'Update Status'}
-          <Tooltip
-            id="update-status-tooltip"
-            place="top"
-            className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl ${
-              isDarkMode ? '!bg-gray-700' : ''
-            }`}
-          />
-        </motion.button>
-      </form>
+              {availableStatuses.map((statusOption) => (
+                <option key={statusOption} value={statusOption}>
+                  {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                </option>
+              ))}
+            </motion.select>
+          </div>
+
+          {/* Submit Button */}
+          <motion.button
+            variants={buttonVariants}
+            initial="rest"
+            whileHover="hover"
+            whileTap="tap"
+            type="submit"
+            disabled={isSubmitting || !currentStatus}
+            className={`w-full py-3 px-6 ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]'
+                : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'
+            } text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center sm:text-sm`}
+            data-tooltip-id="update-status-tooltip"
+            data-tooltip-content={isSubmitting ? 'Updating status...' : 'Update delivery status'}
+            aria-label="Update delivery status"
+          >
+            {isSubmitting ? (
+              <FaSpinner className="animate-spin h-5 w-5 mr-2" />
+            ) : (
+              <FaArrowRight className="mr-2" />
+            )}
+            {isSubmitting ? 'Updating...' : 'Update Status'}
+            <Tooltip
+              id="update-status-tooltip"
+              place="top"
+              className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg ${
+                isDarkMode ? '!bg-gray-700' : ''
+              }`}
+            />
+          </motion.button>
+        </form>
+      </motion.div>
     </motion.div>
   );
 };

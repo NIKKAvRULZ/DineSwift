@@ -1,131 +1,188 @@
-import React, { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, ZoomControl } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
-import { FaMapMarkerAlt, FaRedo } from 'react-icons/fa';
-import { Tooltip } from 'react-tooltip';
+import { FaMapPin, FaSpinner } from 'react-icons/fa';
+import 'leaflet/dist/leaflet.css';
 
-// Custom marker with pulse effect
-const customIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+// Fix Leaflet default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// Custom marker icons
+const deliveryIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   shadowSize: [41, 41],
 });
 
-const DeliveryMap = ({ location, driverLocation }) => {
-  const defaultPosition = [6.9271, 79.8612]; // Colombo
-  const mapRef = useRef(null);
+const driverIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  shadowSize: [41, 41],
+});
 
-  let deliveryPosition = defaultPosition;
-  if (location) {
-    if (Array.isArray(location.coordinates)) {
-      deliveryPosition = [location.coordinates[1], location.coordinates[0]];
-    } else if (location.lat && location.lng) {
-      deliveryPosition = [location.lat, location.lng];
+// Animation variants
+const mapContainerVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.8, ease: 'easeOut', type: 'spring', stiffness: 120 },
+  },
+};
+
+const markerVariants = {
+  hidden: { scale: 0, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 0.5, ease: 'easeOut', type: 'spring', stiffness: 150 },
+  },
+  pulse: {
+    scale: [1, 1.2, 1],
+    transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+  },
+};
+
+const popupVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+};
+
+const spinnerVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+};
+
+const spinnerInnerVariants = {
+  animate: {
+    rotate: 360,
+    transition: { repeat: Infinity, duration: 1, ease: 'linear' },
+  },
+};
+
+const DeliveryMap = ({ location, driverLocation, isDarkMode = false }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const defaultPosition = [6.9271, 79.8612]; // Colombo, Sri Lanka
+
+  // Validate location and driverLocation
+  const mapCenter = useMemo(() => {
+    if (location?.coordinates && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+      return [location.coordinates[1], location.coordinates[0]]; // [lat, lon]
     }
-  }
+    return defaultPosition;
+  }, [location]);
 
-  const driverPosition = driverLocation && driverLocation.lat && driverLocation.lng
-    ? [driverLocation.lat, driverLocation.lng]
-    : null;
-
-  // Reset map view
-  const resetMapView = () => {
-    if (mapRef.current) {
-      mapRef.current.setView(deliveryPosition, 14);
+  const driverPosition = useMemo(() => {
+    if (driverLocation?.coordinates && Array.isArray(driverLocation.coordinates) && driverLocation.coordinates.length === 2) {
+      return [driverLocation.coordinates[1], driverLocation.coordinates[0]]; // [lat, lon]
     }
-  };
+    return null;
+  }, [driverLocation]);
 
-  // Cleanup marker styles
+  // Simulate map loading (replace with actual map load detection if needed)
   useEffect(() => {
-    return () => {
-      document.querySelectorAll('.pulse-marker').forEach((el) => el.remove());
-    };
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Simulate 1s load
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!deliveryPosition[0] || !deliveryPosition[1]) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="h-[32rem] w-full rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center"
-      >
-        <div className="text-center p-8 bg-white/80 backdrop-blur-lg rounded-xl">
-          <FaMapMarkerAlt className="text-[#eb1900] text-5xl mx-auto mb-4 animate-bounce" />
-          <p className="text-gray-600 font-semibold text-lg">No Location Data Available</p>
-          <p className="text-gray-500 mt-2">Please check the delivery details.</p>
-        </div>
-      </motion.div>
-    );
-  }
+  // Tile layer for dark/light mode
+  const tileLayerUrl = isDarkMode
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const tileLayerAttribution = isDarkMode
+    ? '&copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.7 }}
-      className="h-[32rem] w-full rounded-2xl overflow-hidden shadow-xl relative border border-gray-200/50"
+      variants={mapContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className={`relative w-full h-[50vh] sm:h-[60vh] rounded-2xl shadow-lg overflow-hidden ${
+        isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
+      } backdrop-blur-lg border transition-all duration-300`}
     >
-      <style>
-        {`
-          .pulse-marker::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            background: rgba(235, 25, 0, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 1.5s infinite;
-          }
-          @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-          }
-        `}
-      </style>
-      <MapContainer
-        center={deliveryPosition}
-        zoom={14}
-        style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
-        whenCreated={(map) => {
-          mapRef.current = map;
-        }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <ZoomControl position="bottomright" />
-        <Marker position={deliveryPosition} icon={customIcon}>
-          <div className="pulse-marker" />
-        </Marker>
-        {driverPosition && <Marker position={driverPosition} icon={customIcon} />}
-      </MapContainer>
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={resetMapView}
-        className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:shadow-lg transition-all duration-200"
-        aria-label="Reset map view"
-        data-tooltip-id="reset-map-tooltip"
-        data-tooltip-content="Reset map view"
-      >
-        <FaRedo className="text-[#eb1900]" />
-        <Tooltip
-          id="reset-map-tooltip"
-          place="left"
-          className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl"
-        />
-      </motion.button>
+      {isLoading ? (
+        <motion.div
+          variants={spinnerVariants}
+          initial="hidden"
+          animate="visible"
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <motion.div
+            variants={spinnerInnerVariants}
+            animate="animate"
+            className={`text-4xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'}`}
+          >
+            <FaSpinner />
+          </motion.div>
+        </motion.div>
+      ) : (
+        <MapContainer
+          center={mapCenter}
+          zoom={13}
+          style={{ height: '100%', width: '100%' }}
+          className="z-0"
+          zoomControl={false}
+        >
+          <TileLayer url={tileLayerUrl} attribution={tileLayerAttribution} />
+          <ZoomControl position="bottomright" />
+          {location?.coordinates && (
+            <motion.div variants={markerVariants} initial="hidden" animate="visible">
+              <Marker position={mapCenter} icon={deliveryIcon}>
+                <motion.div variants={popupVariants} initial="hidden" animate="visible">
+                  <Popup>
+                    <div className={`p-2 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} rounded-lg shadow-md`}>
+                      <div className="flex items-center space-x-2">
+                        <FaMapPin className={`text-lg ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'}`} />
+                        <span className="font-semibold text-sm">Delivery Location</span>
+                      </div>
+                      <p className="text-xs mt-1">123 Galle Rd, Colombo</p>
+                    </div>
+                  </Popup>
+                </motion.div>
+              </Marker>
+            </motion.div>
+          )}
+          {driverPosition && (
+            <motion.div variants={markerVariants} initial="hidden" animate={['visible', 'pulse']}>
+              <Marker position={driverPosition} icon={driverIcon}>
+                <motion.div variants={popupVariants} initial="hidden" animate="visible">
+                  <Popup>
+                    <div className={`p-2 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} rounded-lg shadow-md`}>
+                      <div className="flex items-center space-x-2">
+                        <FaMapPin className={`text-lg ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'}`} />
+                        <span className="font-semibold text-sm">Driver Location</span>
+                      </div>
+                      <p className="text-xs mt-1">En route to delivery</p>
+                    </div>
+                  </Popup>
+                </motion.div>
+              </Marker>
+            </motion.div>
+          )}
+        </MapContainer>
+      )}
     </motion.div>
   );
 };
