@@ -10,6 +10,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
+        const response = await axios.get("http://localhost:5005/api/payment/payments");
         setPayments(response.data.payments); // Adjusted to match API response
       } catch (err) {
         setError("Failed to fetch payments");
@@ -23,6 +24,7 @@ const Admin = () => {
   // Update payment status
   const updatePaymentStatus = async (id, status) => {
     try {
+      await axios.put(`http://localhost:5005/api/payment/${id}`, { status });
       setPayments(payments.map(p => (p._id === id ? { ...p, status } : p)));
     } catch (err) {
       alert("Failed to update payment status");
@@ -32,6 +34,7 @@ const Admin = () => {
   // Delete a payment
   const deletePayment = async (id) => {
     try {
+      await axios.delete(`http://localhost:5005/api/payment/${id}`);
       setPayments(payments.filter(p => p._id !== id));
     } catch (err) {
       alert("Failed to delete payment");
