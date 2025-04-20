@@ -4,6 +4,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const deliveryRoutes = require('./routes/deliveryRoutes');
+require('dotenv').config(); // Load .env variables
 
 const app = express();
 const server = http.createServer(app);
@@ -27,19 +28,20 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/delivery', deliveryRoutes);
 
-// Simulated driver location updates (replace with real driver updates)
+// Simulated driver location updates
 setInterval(async () => {
   try {
-    const delivery = await mongoose.model('Delivery').findOne({
+    const Delivery = require('./models/Delivery'); // Import here to avoid loading before DB connection
+    const Driver = require('./models/Driver');
+    const delivery = await Delivery.findOne({
       status: { $in: ['assigned', 'in_progress'] },
     }).populate('driverId');
     if (delivery && delivery.driverId) {
-      // Simulate driver movement
       const newCoords = [
         delivery.driverId.location.coordinates[0] + (Math.random() - 0.5) * 0.001,
         delivery.driverId.location.coordinates[1] + (Math.random() - 0.5) * 0.001,
       ];
-      await mongoose.model('Driver').findByIdAndUpdate(delivery.driverId._id, {
+      await Driver.findByIdAndUpdate(delivery.driverId._id, {
         location: { type: 'Point', coordinates: newCoords },
       });
       io.emit('driverLocationUpdate', {
@@ -48,21 +50,46 @@ setInterval(async () => {
         location: { type: 'Point', coordinates: newCoords },
       });
       console.log(`Emitting driverLocationUpdate for delivery ${delivery._id}`);
+    } else {
+      console.log('No active delivery with assigned driver found');
     }
   } catch (error) {
-    console.error('Error emitting driverLocationUpdate:', error);
+    console.error('Error emitting driverLocationUpdate:', error.message);
   }
-}, 10000); // Every 10 seconds
+}, 10000);
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/DineSwift', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('Connected to MongoDB');
-}).catch((error) => {
-  console.error('MongoDB connection error:', error);
+// MongoDB connection with retry logic
+const connectWithRetry = () => {
+  console.log('Attempting to connect to MongoDB Atlas...');
+  mongoose
+    .connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      writeConcern: { w: 'majority', wtimeout: 5000 },
+    })
+    .then(() => {
+      console.log('Connected to MongoDB Atlas');
+    })
+    .catch((error) => {
+      console.error('MongoDB connection error:', error.message);
+      setTimeout(connectWithRetry, 5000); // Retry every 5 seconds
+    });
+};
+
+// Connection event listeners
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connected to DB');
 });
+mongoose.connection.on('disconnected', () => {
+  console.warn('Mongoose disconnected');
+});
+mongoose.connection.on('error', (err) => {
+  console.error('Mongoose connection error:', err.message);
+});
+
+// Start MongoDB connection
+connectWithRetry();
 
 // Start server
 const PORT = process.env.PORT || 5004;
