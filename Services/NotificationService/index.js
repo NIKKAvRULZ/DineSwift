@@ -1,5 +1,6 @@
-const express = require("express");
+console.log("Loaded from .env:", require('dotenv').config());
 const dotenv = require("dotenv");
+const express = require("express");
 const mongoose = require("mongoose");
 const notificationRoutes = require("./routes/notificationRoutes");
 
