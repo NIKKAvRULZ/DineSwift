@@ -1,19 +1,34 @@
 const Delivery = require('../models/Delivery');
 const Driver = require('../models/Driver');
 const mongoose = require('mongoose');
+const axios = require('axios');
 
 // Assign a delivery
 const assignDelivery = async (req, res) => {
   const { orderId, driverId, location } = req.body;
   try {
+    // Fetch order details from OrderService
+    const orderResponse = await axios.get(`http://localhost:5003/api/orders/${orderId}`);
+    const order = orderResponse.data;
+    
+    // Validate order existence
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found in OrderService' });
+    }
+
+    // Validate order status (optional: only allow delivery for certain statuses)
+    if (!['pending', 'confirmed', 'preparing', 'ready'].includes(order.status)) {
+      return res.status(400).json({ message: `Cannot assign delivery for order in status: ${order.status}` });
+    }
+
     const delivery = new Delivery({
       orderId,
       driverId: driverId ? new mongoose.Types.ObjectId(driverId) : null,
       location: { type: 'Point', coordinates: location },
       status: driverId ? 'assigned' : 'pending',
       estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
-      restaurantName: 'DineSwift Restaurant', // Hardcoded, replace with actual data
-      orderTotal: 32.59, // Hardcoded, replace with actual data
+      restaurantName: order.restaurantId, // Use restaurantId as placeholder; ideally, fetch restaurant name
+      orderTotal: order.totalAmount, // Use actual order total
     });
     await delivery.save();
     if (driverId) {
@@ -31,7 +46,10 @@ const assignDelivery = async (req, res) => {
     });
     console.log(`Assigned delivery ${delivery._id} for order ${orderId}`);
   } catch (error) {
-    console.error('Error assigning delivery:', error);
+    console.error('Error assigning delivery:', error.message);
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ message: 'Order not found in OrderService' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };

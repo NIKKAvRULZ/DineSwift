@@ -33,11 +33,6 @@ const haversineDistance = (coords1, coords2) => {
   return distance.toFixed(1); // Return distance rounded to 1 decimal place
 };
 
-// Simulated reverse geocoding function (replace with real API in production)
-const reverseGeocode = (coordinates) => {
-  return '123 Galle Rd, Colombo, Sri Lanka';
-};
-
 // Animation variants for Delivery Details Lookup
 const lookupContainerVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
@@ -80,7 +75,7 @@ const inputVariants = {
   focus: {
     scale: 1.03,
     boxShadow: '0 0 10px rgba(235, 25, 0, 0.4)',
-    borderColor: 'transparent',
+    borderColor: 'rgba(0, 0, 0, 0)', // Fix animation warning
     background: 'linear-gradient(to right, #ffffff, #ffffff) padding-box, linear-gradient(to right, #eb1900, #c71500) border-box',
     transition: { duration: 0.3, ease: 'easeOut' },
   },
@@ -150,7 +145,7 @@ const detailsCardVariants = {
     scale: 1,
     transition: {
       duration: 0.6,
-      ease: [0.6, -0.05, 0.01, 0.99], // Smooth ease
+      ease: [0.6, -0.05, 0.01, 0.99],
       when: 'beforeChildren',
       staggerChildren: 0.1,
     },
@@ -375,8 +370,9 @@ const Delivery = () => {
     return statusMap[backendStatus] || 'confirmed';
   };
 
-  const mapToActiveOrder = (delivery) => {
+  const mapToActiveOrder = (delivery, order = {}) => {
     console.log('Mapping delivery:', delivery);
+    console.log('Mapping order:', order);
     const mappedStatus = mapStatus(delivery.status || 'pending');
     const defaultLocation = { coordinates: [79.8612, 6.9271] };
     let deliveryLocation = defaultLocation;
@@ -389,16 +385,18 @@ const Delivery = () => {
     let driverLocation = null;
     if (delivery.driver?.location?.coordinates) {
       driverLocation = { coordinates: delivery.driver.location.coordinates };
+    } else if (delivery.location?.coordinates) {
+      driverLocation = { coordinates: delivery.location.coordinates };
     }
 
-    // Calculate real address and distance
+    // Use OrderService data for address and restaurant
     const restaurantCoords = [79.8612, 6.9271]; // Fixed restaurant location
-    const address = reverseGeocode(deliveryLocation.coordinates);
+    const address = order?.deliveryAddress || '123 Main St, Colombo';
     const distance = haversineDistance(restaurantCoords, deliveryLocation.coordinates);
 
     const mappedOrder = {
       id: delivery.orderId || 'Unknown',
-      restaurantName: delivery.restaurantName || 'DineSwift Restaurant',
+      restaurantName: delivery.restaurantName || order?.restaurantId || 'DineSwift Restaurant',
       status: mappedStatus,
       location: deliveryLocation,
       driverLocation,
@@ -406,8 +404,8 @@ const Delivery = () => {
         ? new Date(delivery.estimatedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : new Date(Date.now() + 30 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       distance: `${distance} miles`,
-      address: address,
-      orderTotal: delivery.orderTotal ? `$${parseFloat(delivery.orderTotal).toFixed(2)}` : '$32.50',
+      address,
+      orderTotal: delivery.orderTotal ? `$${parseFloat(delivery.orderTotal).toFixed(2)}` : order?.totalAmount ? `$${parseFloat(order.totalAmount).toFixed(2)}` : '$25.97',
     };
 
     console.log('Mapped order:', mappedOrder);
@@ -428,13 +426,30 @@ const Delivery = () => {
         const response = await axios.get('http://localhost:5004/api/delivery/active');
         console.log('Active delivery response:', response.data);
         const delivery = response.data;
-        if (delivery && delivery.deliveryId) {
-          const mappedOrder = mapToActiveOrder(delivery);
+        // Normalize deliveryId (handle deliveryld typo)
+        if (delivery && (delivery.deliveryId || delivery.deliveryld)) {
+          const normalizedDelivery = {
+            ...delivery,
+            deliveryId: delivery.deliveryId || delivery.deliveryld,
+            orderTotal: delivery.orderTotal || delivery.orderTota1,
+          };
+          // Fetch order details if orderId is present
+          let order = {};
+          if (normalizedDelivery.orderId) {
+            try {
+              const orderResponse = await axios.get(`http://localhost:5003/api/orders/${normalizedDelivery.orderId}`);
+              order = orderResponse.data;
+              console.log('Fetched order:', order);
+            } catch (err) {
+              console.error('Error fetching order:', err);
+            }
+          }
+          const mappedOrder = mapToActiveOrder(normalizedDelivery, order);
           setActiveOrder(mappedOrder);
           setLocation(mappedOrder.location);
           setDriverLocation(mappedOrder.driverLocation);
-          setDeliveryId(delivery.deliveryId);
-          console.log('Active deliveryId set:', delivery.deliveryId);
+          setDeliveryId(normalizedDelivery.deliveryId);
+          console.log('Active deliveryId set:', normalizedDelivery.deliveryId);
         } else {
           console.log('No active delivery found or missing deliveryId');
           setActiveOrder(null);
@@ -449,13 +464,18 @@ const Delivery = () => {
   }, [contextActiveOrder]);
 
   useEffect(() => {
-    if (deliveryDetails && deliveryDetails.deliveryId) {
-      const mappedOrder = mapToActiveOrder(deliveryDetails);
+    if (deliveryDetails && (deliveryDetails.deliveryId || deliveryDetails.deliveryld)) {
+      const normalizedDelivery = {
+        ...deliveryDetails,
+        deliveryId: deliveryDetails.deliveryId || deliveryDetails.deliveryld,
+        orderTotal: deliveryDetails.orderTotal || deliveryDetails.orderTota1,
+      };
+      const mappedOrder = mapToActiveOrder(normalizedDelivery, deliveryDetails.order || {});
       setActiveOrder(mappedOrder);
       setLocation(mappedOrder.location);
       setDriverLocation(mappedOrder.driverLocation);
-      setDeliveryId(deliveryDetails.deliveryId);
-      console.log('Delivery details deliveryId set:', deliveryDetails.deliveryId);
+      setDeliveryId(normalizedDelivery.deliveryId);
+      console.log('Delivery details deliveryId set:', normalizedDelivery.deliveryId);
     }
   }, [deliveryDetails]);
 
@@ -467,21 +487,33 @@ const Delivery = () => {
         try {
           const response = await axios.get(`http://localhost:5004/api/delivery/track/${eventDeliveryId}`);
           setDeliveryDetails(response.data);
-          const mappedOrder = mapToActiveOrder(response.data);
+          const normalizedDelivery = {
+            ...response.data,
+            deliveryId: response.data.deliveryId || response.data.deliveryld,
+            orderTotal: response.data.orderTotal || response.data.orderTota1,
+          };
+          const mappedOrder = mapToActiveOrder(normalizedDelivery, response.data.order || {});
           setActiveOrder(mappedOrder);
           setLocation(mappedOrder.location);
           setDriverLocation(mappedOrder.driverLocation);
-          setDeliveryId(response.data.deliveryId);
-          console.log('Status update deliveryId set:', response.data.deliveryId);
+          setDeliveryId(normalizedDelivery.deliveryId);
+          console.log('Status update deliveryId set:', normalizedDelivery.deliveryId);
         } catch (err) {
           console.error('Error refreshing delivery:', err);
           setError('Failed to refresh delivery status');
         }
       }
     });
+    socket.on('driverLocationUpdate', (data) => {
+      if (data.deliveryId === deliveryId) {
+        setDriverLocation({ coordinates: data.location.coordinates });
+        console.log('Received driverLocationUpdate:', data);
+      }
+    });
     return () => {
       socket.off('connect');
       socket.off('deliveryStatusUpdated');
+      socket.off('driverLocationUpdate');
     };
   }, [deliveryId, activeOrder]);
 
@@ -504,10 +536,15 @@ const Delivery = () => {
       console.log(`Fetching delivery details for ID: ${lookupDeliveryId}`);
       const response = await axios.get(`http://localhost:5004/api/delivery/track/${lookupDeliveryId}`);
       console.log('API Response:', response.data);
-      if (response.data && typeof response.data === 'object' && response.data.deliveryId) {
-        setDeliveryDetails(response.data);
-        setDeliveryId(response.data.deliveryId); // Update active deliveryId
-        console.log('Track deliveryId set:', response.data.deliveryId);
+      if (response.data && typeof response.data === 'object' && (response.data.deliveryId || response.data.deliveryld)) {
+        const normalizedDelivery = {
+          ...response.data,
+          deliveryId: response.data.deliveryId || response.data.deliveryld,
+          orderTotal: response.data.orderTotal || response.data.orderTota1,
+        };
+        setDeliveryDetails(normalizedDelivery);
+        setDeliveryId(normalizedDelivery.deliveryId); // Update active deliveryId
+        console.log('Track deliveryId set:', normalizedDelivery.deliveryId);
         setError('');
       } else {
         setError('Invalid response from server');
@@ -529,12 +566,24 @@ const Delivery = () => {
             No Active Delivery
           </h2>
           <p className="text-lg mb-6">Start a new delivery to track its progress.</p>
-          <button
+          <motion.button
+            variants={buttonVariants}
+            initial="rest"
+            animate="rest"
+            whileHover="hover"
+            whileTap="tap"
             onClick={() => navigate('/assign-delivery')}
-            className={`px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold`}
+            className={`px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold relative overflow-hidden border-2 border-transparent`}
           >
+            <motion.div
+              className="absolute inset-0 bg-white/40"
+              variants={rippleVariants}
+              initial="initial"
+              animate="initial"
+              whileTap="animate"
+            />
             Assign Delivery
-          </button>
+          </motion.button>
         </div>
       </div>
     );
@@ -574,24 +623,48 @@ const Delivery = () => {
         <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           Delivery Dashboard
         </h1>
-        <button
+        <motion.button
+          variants={buttonVariants}
+          initial="rest"
+          animate="rest"
+          whileHover="hover"
+          whileTap="tap"
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`p-3 rounded-full flex items-center justify-center border-2 ${isDarkMode ? 'bg-gray-700 text-yellow-400 border-yellow-400/50' : 'bg-gray-200 text-gray-800 border-gray-800/50'} shadow-md`}
+          className={`p-3 rounded-full flex items-center justify-center border-2 ${isDarkMode ? 'bg-gray-700 text-yellow-400 border-yellow-400/50' : 'bg-gray-200 text-gray-800 border-gray-800/50'} shadow-md relative overflow-hidden border-transparent`}
           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
+          <motion.div
+            className="absolute inset-0 bg-white/40"
+            variants={rippleVariants}
+            initial="initial"
+            animate="initial"
+            whileTap="animate"
+          />
           {isDarkMode ? <FaSun size={24} /> : <FaMoon size={24} />}
-        </button>
+        </motion.button>
       </header>
 
       <div className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <button
+          <motion.button
+            variants={buttonVariants}
+            initial="rest"
+            animate="rest"
+            whileHover="hover"
+            whileTap="tap"
             onClick={() => navigate('/assign-delivery')}
             className={`w-full sm:w-auto px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold flex items-center justify-center relative overflow-hidden border-2 border-transparent`}
             data-tooltip-id="assign-delivery-tooltip"
             data-tooltip-content="Create a new delivery"
             aria-label="Assign new delivery"
           >
+            <motion.div
+              className="absolute inset-0 bg-white/40"
+              variants={rippleVariants}
+              initial="initial"
+              animate="initial"
+              whileTap="animate"
+            />
             <FaPlus className="mr-2" />
             Assign New Delivery
             <Tooltip
@@ -599,7 +672,7 @@ const Delivery = () => {
               place="top"
               className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl ${isDarkMode ? '!bg-gray-700' : ''}`}
             />
-          </button>
+          </motion.button>
         </div>
 
         <div className={`rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg ${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'}`}>
@@ -686,7 +759,7 @@ const Delivery = () => {
                             className="absolute w-6 h-6 text-white -top-1 -right-1"
                             fill="none"
                             stroke="currentColor"
-                            viewBox="0 24"
+                            viewBox="0 24 24"
                             variants={checkmarkVariants}
                             initial="hidden"
                             animate="visible"
@@ -780,7 +853,7 @@ const Delivery = () => {
                       whileHover="hover"
                       className={`p-8 rounded-xl shadow-md backdrop-blur-md ${
                         isDarkMode ? 'bg-gray-800/70 border-[#b91c1c]/20' : 'bg-white/70 border-[#eb1900]/20'
-                      } border transition-all duration-300`}
+                      } border border-transparent transition-all duration-300`}
                     >
                       <div className="flex items-center">
                         <motion.div variants={iconVariants} initial="rest" whileHover="hover">
@@ -833,7 +906,7 @@ const Delivery = () => {
               animate="visible"
               className={`w-full p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl ${
                 isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
-              } border backdrop-blur-lg`}
+              } border border-transparent backdrop-blur-lg`}
             >
               <motion.h4
                 variants={headerVariants}
@@ -851,7 +924,7 @@ const Delivery = () => {
                 animate="visible"
                 className={`p-8 rounded-2xl shadow-lg ${
                   isDarkMode ? 'bg-gray-900/30 border-[#b91c1c]/30' : 'bg-gray-50/30 border-[#eb1900]/30'
-                } border mb-8 backdrop-blur-sm`}
+                } border border-transparent mb-8 backdrop-blur-sm`}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                   <div className="relative sm:col-span-4">
@@ -875,12 +948,12 @@ const Delivery = () => {
                       onChange={(e) => setLookupDeliveryId(e.target.value)}
                       className={`w-full pl-12 pr-4 py-4 ${
                         isDarkMode
-                          ? 'bg-gray-900/50 text-black border-gray-700 placeholder-gray-400'
+                          ? 'bg-gray-900/50 text-white border-gray-700 placeholder-gray-400'
                           : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
                       } border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#eb1900] transition-all duration-300 font-sans text-base`}
                       placeholder="Enter Delivery ID"
                       aria-label="Delivery ID input"
-                      style={{ border: '2px solid transparent' }}
+                      style={{ border: '2px solid rgba(0, 0, 0, 0)' }} // Fix animation warning
                     />
                   </div>
                   <motion.button
@@ -894,7 +967,7 @@ const Delivery = () => {
                       isDarkMode
                         ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]'
                         : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'
-                    } text-white rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 transition-all duration-300 flex items-center justify-center text-base overflow-hidden`}
+                    } text-white rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 transition-all duration-300 flex items-center justify-center text-base overflow-hidden border-2 border-transparent`}
                     data-tooltip-id="fetch-details-tooltip"
                     data-tooltip-content="Fetch delivery details"
                     aria-label="Fetch delivery details"
@@ -904,7 +977,6 @@ const Delivery = () => {
                       variants={rippleVariants}
                       initial="initial"
                       animate="initial"
-                      key={Date.now()}
                       whileTap="animate"
                     />
                     <FaArrowRight className="mr-2" />
@@ -927,7 +999,7 @@ const Delivery = () => {
                     exit="exit"
                     className={`flex items-center ${
                       isDarkMode ? 'bg-red-900/50 text-red-100 border-red-800/50' : 'bg-red-100/80 text-red-800 border-red-400/50'
-                    } p-6 rounded-lg mb-8 shadow-lg backdrop-blur-lg border`}
+                    } p-6 rounded-lg mb-8 shadow-lg backdrop-blur-lg border border-transparent`}
                   >
                     <FaInfoCircle className="mr-3 text-xl" />
                     <span className="flex-1 text-base">{error}</span>
@@ -957,7 +1029,7 @@ const Delivery = () => {
                     exit="exit"
                     className={`p-8 rounded-2xl shadow-lg ${
                       isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
-                    } backdrop-blur-lg border relative overflow-hidden`}
+                    } backdrop-blur-lg border border-transparent relative overflow-hidden`}
                   >
                     <h5 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 pb-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                       Delivery Information
