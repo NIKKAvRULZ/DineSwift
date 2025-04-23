@@ -16,7 +16,7 @@ const assignDelivery = async (req, res) => {
       return res.status(404).json({ message: 'Order not found in OrderService' });
     }
 
-    // Validate order status (optional: only allow delivery for certain statuses)
+    // Validate order status
     if (!['pending', 'confirmed', 'preparing', 'ready'].includes(order.status)) {
       return res.status(400).json({ message: `Cannot assign delivery for order in status: ${order.status}` });
     }
@@ -24,10 +24,10 @@ const assignDelivery = async (req, res) => {
     const delivery = new Delivery({
       orderId,
       driverId: driverId ? new mongoose.Types.ObjectId(driverId) : null,
-      location: { type: 'Point', coordinates: location },
+      location, // Use location directly as GeoJSON
       status: driverId ? 'assigned' : 'pending',
       estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
-      restaurantName: order.restaurantId, // Use restaurantId as placeholder; ideally, fetch restaurant name
+      restaurantName: order.restaurantId, // Use restaurantId as placeholder
       orderTotal: order.totalAmount, // Use actual order total
     });
     await delivery.save();
@@ -49,6 +49,12 @@ const assignDelivery = async (req, res) => {
     console.error('Error assigning delivery:', error.message);
     if (error.response && error.response.status === 404) {
       return res.status(404).json({ message: 'Order not found in OrderService' });
+    }
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: Object.values(error.errors).map((err) => err.message),
+      });
     }
     res.status(500).json({ message: 'Server error' });
   }
@@ -132,17 +138,20 @@ const updateDeliveryStatus = async (req, res) => {
 // Get available drivers
 const getAvailableDrivers = async (req, res) => {
   const { longitude, latitude } = req.query;
+  console.log('Query parameters:', { longitude, latitude });
   try {
     const query = { status: 'available' };
     if (longitude && latitude) {
       query.location = {
         $near: {
           $geometry: { type: 'Point', coordinates: [parseFloat(longitude), parseFloat(latitude)] },
-          $maxDistance: 10000, // 10km
+          $maxDistance: 10000,
         },
       };
     }
+    console.log('MongoDB query:', query);
     const drivers = await Driver.find(query);
+    console.log('Found drivers:', drivers);
     res.json(drivers.map(driver => ({
       _id: driver._id.toString(),
       name: driver.name,
@@ -150,7 +159,7 @@ const getAvailableDrivers = async (req, res) => {
       email: driver.email,
       location: driver.location,
     })));
-    console.log(`Fetched available drivers near [${longitude}, ${latitude}]`);
+    console.log(`Fetched available drivers near [${longitude || 'none'}, ${latitude || 'none'}]`);
   } catch (error) {
     console.error('Error fetching available drivers:', error);
     res.status(500).json({ message: 'Server error' });

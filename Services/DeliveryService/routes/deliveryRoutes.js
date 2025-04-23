@@ -40,25 +40,33 @@ const assignDeliverySchema = Joi.object({
     .messages({
       'string.pattern.base': 'Invalid driverId format, must be a valid MongoDB ObjectId',
     }),
-  location: Joi.array()
-    .length(2)
-    .items(
-      Joi.number().min(-180).max(180).required().messages({
-        'number.min': 'Longitude must be between -180 and 180',
-        'number.max': 'Longitude must be between -180 and 180',
-        'any.required': 'Longitude is required',
-      }),
-      Joi.number().min(-90).max(90).required().messages({
-        'number.min': 'Latitude must be between -90 and 90',
-        'number.max': 'Latitude must be between -90 and 90',
-        'any.required': 'Latitude is required',
-      })
-    )
-    .required()
-    .messages({
-      'array.length': 'Location must be an array of [longitude, latitude]',
-      'any.required': 'Location is required',
+  location: Joi.object({
+    type: Joi.string().valid('Point').required().messages({
+      'any.only': 'Location type must be "Point"',
+      'any.required': 'Location type is required',
     }),
+    coordinates: Joi.array()
+      .length(2)
+      .items(
+        Joi.number().min(-180).max(180).required().messages({
+          'number.min': 'Longitude must be between -180 and 180',
+          'number.max': 'Longitude must be between -180 and 180',
+          'any.required': 'Longitude is required',
+        }),
+        Joi.number().min(-90).max(90).required().messages({
+          'number.min': 'Latitude must be between -90 and 90',
+          'number.max': 'Latitude must be between -90 and 90',
+          'any.required': 'Latitude is required',
+        })
+      )
+      .required()
+      .messages({
+        'array.length': 'Coordinates must be an array of [longitude, latitude]',
+        'any.required': 'Coordinates are required',
+      }),
+  }).required().messages({
+    'any.required': 'Location is required',
+  }),
 });
 
 const deliveryIdSchema = Joi.object({

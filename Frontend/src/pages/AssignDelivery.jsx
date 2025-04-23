@@ -16,18 +16,30 @@ const AssignDelivery = () => {
   const [position, setPosition] = useState(null);
   const [deliveryId, setDeliveryId] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(true);
 
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
+        setIsLoadingDrivers(true);
         const response = await axios.get('http://localhost:5004/api/delivery/available-drivers');
-        setAvailableDrivers(response.data.drivers);
-        if (response.data.drivers.length > 0) {
-          setDriverId(response.data.drivers[0]._id);
+        // Handle different possible response structures
+        const drivers = Array.isArray(response.data)
+          ? response.data
+          : response.data.drivers || response.data.data || response.data.availableDrivers || [];
+        if (!Array.isArray(drivers)) {
+          throw new Error('Invalid drivers data format');
+        }
+        setAvailableDrivers(drivers);
+        if (drivers.length > 0) {
+          setDriverId(drivers[0]._id);
         }
       } catch (err) {
-        setError('Failed to fetch available drivers');
+        setError('Failed to fetch available drivers. Please try again.');
         console.error('Error fetching drivers:', err);
+        setAvailableDrivers([]);
+      } finally {
+        setIsLoadingDrivers(false);
       }
     };
     fetchDrivers();
@@ -49,7 +61,7 @@ const AssignDelivery = () => {
     }
 
     // Validate driverId
-    if (!driverId || driverId === '') {
+    if (!driverId) {
       setError('Please select a driver');
       setIsSubmitting(false);
       return;
@@ -75,10 +87,10 @@ const AssignDelivery = () => {
       const response = await axios.post('http://localhost:5004/api/delivery/assign', {
         orderId,
         driverId,
-        location: [lon, lat],
+        location: { type: 'Point', coordinates: [lon, lat] },
       });
       console.log('Delivery assigned:', response.data);
-      setDeliveryId(response.data.delivery._id);
+      setDeliveryId(response.data.deliveryId);
       setOrderId('');
       setDriverId(availableDrivers.length > 0 ? availableDrivers[0]._id : '');
       setLongitude('');
@@ -104,7 +116,7 @@ const AssignDelivery = () => {
 
   const handleCloseNotification = () => {
     setDeliveryId(null);
-    navigate('/delivery'); // Navigate back to the Delivery page after closing the notification
+    navigate('/delivery');
   };
 
   const LocationMarker = () => {
@@ -126,12 +138,10 @@ const AssignDelivery = () => {
         {error && <p className="text-[#eb1900] font-medium bg-[#eb1900]/10 p-3 rounded-lg mb-4">{error}</p>}
         {deliveryId && (
           <>
-            {/* Backdrop Overlay with Enhanced Blur Effect */}
             <div
               className="fixed inset-0 bg-black/70 backdrop-blur-lg z-[1000]"
               onClick={handleCloseNotification}
             />
-            {/* Notification Box */}
             <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 bg-gradient-to-br from-[#eb1900]/90 to-[#ff4d4d]/90 text-white p-6 rounded-2xl shadow-2xl border border-[#ff6666]/20 z-[1001] animate-pop-in glow-effect">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -206,29 +216,33 @@ const AssignDelivery = () => {
             <label htmlFor="driverId" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
               Select Driver
             </label>
-            <select
-              id="driverId"
-              value={driverId}
-              onChange={(e) => setDriverId(e.target.value)}
-              required
-              disabled={isSubmitting || availableDrivers.length === 0}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 appearance-none"
-            >
-              {availableDrivers.length === 0 ? (
-                <option value="">No drivers available</option>
-              ) : (
-                <>
-                  <option value="" disabled>
-                    Select a driver
+            {isLoadingDrivers ? (
+              <div className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500">
+                Loading drivers...
+              </div>
+            ) : availableDrivers.length === 0 ? (
+              <div className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500">
+                No drivers available
+              </div>
+            ) : (
+              <select
+                id="driverId"
+                value={driverId}
+                onChange={(e) => setDriverId(e.target.value)}
+                required
+                disabled={isSubmitting}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 appearance-none"
+              >
+                <option value="" disabled>
+                  Select a driver
+                </option>
+                {availableDrivers.map((driver) => (
+                  <option key={driver._id} value={driver._id}>
+                    {driver.name} ({driver.status})
                   </option>
-                  {availableDrivers.map((driver) => (
-                    <option key={driver._id} value={driver._id}>
-                      {driver.name} ({driver.status})
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -287,7 +301,7 @@ const AssignDelivery = () => {
           <div className="md:col-span-2">
             <button
               type="submit"
-              disabled={isSubmitting || availableDrivers.length === 0}
+              disabled={isSubmitting || isLoadingDrivers || availableDrivers.length === 0}
               className="w-full px-6 py-3 bg-[#eb1900] text-white rounded-lg shadow-md hover:bg-[#c71500] focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-medium"
             >
               {isSubmitting ? (
