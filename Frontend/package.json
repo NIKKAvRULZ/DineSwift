@@ -20,7 +20,7 @@
     "@tailwindcss/vite": "^4.0.15",
     "axios": "^1.8.4",
     "canvas-confetti": "^1.9.3",
-    "framer-motion": "^12.7.4",
+    "framer-motion": "^12.8.0",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.485.0",

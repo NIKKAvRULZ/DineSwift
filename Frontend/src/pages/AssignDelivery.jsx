@@ -23,7 +23,6 @@ const AssignDelivery = () => {
       try {
         setIsLoadingDrivers(true);
         const response = await axios.get('http://localhost:5004/api/delivery/available-drivers');
-        // Handle different possible response structures
         const drivers = Array.isArray(response.data)
           ? response.data
           : response.data.drivers || response.data.data || response.data.availableDrivers || [];
@@ -52,7 +51,6 @@ const AssignDelivery = () => {
     setDeliveryId(null);
     setCopied(false);
 
-    // Validate orderId
     const orderIdRegex = /^[0-9a-fA-F]{24}$/;
     if (!orderId || !orderIdRegex.test(orderId)) {
       setError('Order ID must be a valid 24-character MongoDB ObjectId (hexadecimal)');
@@ -60,14 +58,12 @@ const AssignDelivery = () => {
       return;
     }
 
-    // Validate driverId
     if (!driverId) {
       setError('Please select a driver');
       setIsSubmitting(false);
       return;
     }
 
-    // Validate longitude and latitude
     const lon = parseFloat(longitude);
     const lat = parseFloat(latitude);
 
@@ -132,21 +128,27 @@ const AssignDelivery = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-100 min-h-screen">
-      <div className="bg-white rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl relative">
-        <h3 className="text-xl font-bold text-gray-900 mb-6 tracking-tight">Assign New Delivery</h3>
-        {error && <p className="text-[#eb1900] font-medium bg-[#eb1900]/10 p-3 rounded-lg mb-4">{error}</p>}
+    <div className="min-h-screen bg-gradient-to-br from-[#f8ebdd] to-[#f5e6d8] flex items-center justify-center p-4 animate-gradient-bg">
+      <div className="max-w-5xl w-full bg-white rounded-2xl shadow-2xl p-8 transform transition-all duration-500 hover:shadow-3xl animate-page-load">
+        <h3 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight border-b-2 border-[#ed2200] pb-2 animate-scale-in">
+          Assign New Delivery
+        </h3>
+        {error && (
+          <p className="text-white font-medium bg-[#ed2200] p-4 rounded-lg mb-6 shadow-md animate-pulse">
+            {error}
+          </p>
+        )}
         {deliveryId && (
           <>
             <div
-              className="fixed inset-0 bg-black/70 backdrop-blur-lg z-[1000]"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] animate-fade-in-fast"
               onClick={handleCloseNotification}
             />
-            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 bg-gradient-to-br from-[#eb1900]/90 to-[#ff4d4d]/90 text-white p-6 rounded-2xl shadow-2xl border border-[#ff6666]/20 z-[1001] animate-pop-in glow-effect">
-              <div className="space-y-4">
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white/95 text-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-200/50 z-[1001] backdrop-blur-lg animate-pop-in">
+              <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-10 h-10 text-[#ed2200]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -154,39 +156,53 @@ const AssignDelivery = () => {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <h4 className="text-lg font-bold uppercase tracking-wider">Delivery Assigned</h4>
+                    <h4 className="text-xl font-bold uppercase tracking-wider text-gray-900">Delivery Assigned</h4>
                   </div>
                   <button
                     onClick={handleCloseNotification}
-                    className="text-white hover:text-gray-200 focus:outline-none transition-transform duration-200 hover:scale-110"
+                    className="text-gray-600 hover:text-gray-900 focus:outline-none transition-transform duration-200 hover:scale-110"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-sm font-medium text-white/80">Your delivery has been successfully scheduled.</p>
-                <div className="bg-white/10 p-3 rounded-lg flex items-center justify-between">
-                  <span className="text-base font-mono font-semibold tracking-tight">
+                <p className="text-sm font-medium text-gray-600">Your delivery has been successfully scheduled.</p>
+                <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-between">
+                  <span className="text-base font-mono font-semibold tracking-tight text-gray-800">
                     Delivery ID: {deliveryId}
                   </span>
                   <button
                     onClick={() => copyToClipboard(deliveryId)}
-                    className="ml-2 px-3 py-1 bg-[#eb1900] text-white rounded-md shadow-sm hover:bg-[#ff4d4d] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 transition-all duration-300 text-sm font-medium"
+                    className={`relative px-4 py-2 bg-[#ed2200] text-white rounded-lg shadow-sm hover:bg-[#c71500] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#ed2200] focus:ring-offset-2 transition-all duration-300 text-sm font-medium overflow-hidden ${
+                      copied ? 'animate-checkmark' : ''
+                    }`}
                   >
-                    {copied ? 'Copied!' : 'Copy'}
+                    <span className={copied ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}>
+                      {copied ? 'Copied!' : 'Copy'}
+                    </span>
+                    {copied && (
+                      <svg
+                        className="absolute inset-0 m-auto w-6 h-6 text-white animate-checkmark-icon"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </button>
                 </div>
-                <div className="flex justify-between gap-2">
+                <div className="flex justify-between gap-3">
                   <button
                     onClick={() => copyToClipboard(deliveryId)}
-                    className="flex-1 px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#eb1900] transition-all duration-300 text-sm font-semibold"
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#ed2200] focus:ring-offset-2 transition-all duration-300 text-sm font-semibold animate-pulse-on-hover"
                   >
                     Copy Again
                   </button>
                   <button
                     onClick={handleCloseNotification}
-                    className="flex-1 px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#eb1900] transition-all duration-300 text-sm font-semibold"
+                    className="flex-1 px-4 py-2 bg-[#ed2200] text-white rounded-lg hover:bg-[#c71500] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#ed2200] focus:ring-offset-2 transition-all duration-300 text-sm font-semibold animate-pulse-on-hover"
                   >
                     Close
                   </button>
@@ -196,8 +212,8 @@ const AssignDelivery = () => {
           </>
         )}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label htmlFor="orderId" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
+          <div className="space-y-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <label htmlFor="orderId" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
               Order ID
             </label>
             <input
@@ -207,21 +223,20 @@ const AssignDelivery = () => {
               onChange={(e) => setOrderId(e.target.value)}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-[#ed2200] focus:ring-2 focus:ring-[#ed2200]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 placeholder-gray-400 hover:border-[#ed2200]/70"
               placeholder="Enter Order ID"
             />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="driverId" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
+          <div className="space-y-2 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <label htmlFor="driverId" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
               Select Driver
             </label>
             {isLoadingDrivers ? (
-              <div className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500">
+              <div className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-lg text-gray-500 animate-pulse">
                 Loading drivers...
               </div>
             ) : availableDrivers.length === 0 ? (
-              <div className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500">
+              <div className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-lg text-gray-500">
                 No drivers available
               </div>
             ) : (
@@ -231,7 +246,7 @@ const AssignDelivery = () => {
                 onChange={(e) => setDriverId(e.target.value)}
                 required
                 disabled={isSubmitting}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 appearance-none"
+                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-[#ed2200] focus:ring-2 focus:ring-[#ed2200]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 hover:border-[#ed2200]/70"
               >
                 <option value="" disabled>
                   Select a driver
@@ -244,9 +259,8 @@ const AssignDelivery = () => {
               </select>
             )}
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="longitude" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
+          <div className="space-y-2 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
               Longitude
             </label>
             <input
@@ -260,13 +274,12 @@ const AssignDelivery = () => {
               }}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-[#ed2200] focus:ring-2 focus:ring-[#ed2200]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 placeholder-gray-400 hover:border-[#ed2200]/70"
               placeholder="Click map or enter"
             />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="latitude" className="block text-sm font-medium text-gray-600 uppercase tracking-wide">
+          <div className="space-y-2 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+            <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
               Latitude
             </label>
             <input
@@ -280,14 +293,13 @@ const AssignDelivery = () => {
               }}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:border-transparent transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 placeholder-gray-400"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-[#ed2200] focus:ring-2 focus:ring-[#ed2200]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 placeholder-gray-400 hover:border-[#ed2200]/70"
               placeholder="Click map or enter"
             />
           </div>
-
-          <div className="md:col-span-2 space-y-2">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Pin Location</p>
-            <div className="h-64 w-full rounded-lg overflow-hidden shadow-md">
+          <div className="md:col-span-2 space-y-2 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Pin Location</p>
+            <div className="h-80 w-full rounded-xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-[1.01]">
               <MapContainer center={[6.9271, 79.8612]} zoom={14} style={{ height: '100%', width: '100%' }}>
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -297,15 +309,14 @@ const AssignDelivery = () => {
               </MapContainer>
             </div>
           </div>
-
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 animate-slide-up" style={{ animationDelay: '0.7s' }}>
             <button
               type="submit"
               disabled={isSubmitting || isLoadingDrivers || availableDrivers.length === 0}
-              className="w-full px-6 py-3 bg-[#eb1900] text-white rounded-lg shadow-md hover:bg-[#c71500] focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-medium"
+              className="w-full px-6 py-4 bg-[#ed2200] text-white rounded-lg shadow-md hover:bg-[#c71500] focus:outline-none focus:ring-2 focus:ring-[#ed2200] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center font-semibold text-lg animate-pulse-on-hover"
             >
               {isSubmitting ? (
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                <svg className="animate-spin h-6 w-6 mr-3 text-white" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -323,6 +334,143 @@ const AssignDelivery = () => {
           </div>
         </form>
       </div>
+      <style jsx>{`
+        @keyframes pageLoad {
+          0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(30px);
+          }
+          60% {
+            opacity: 1;
+            transform: scale(1.02);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes scaleIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes fadeInFast {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes popIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.85) translateY(20px);
+          }
+          70% {
+            opacity: 1;
+            transform: scale(1.03);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(237, 34, 0, 0.5);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(237, 34, 0, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(237, 34, 0, 0);
+          }
+        }
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        @keyframes checkmark {
+          0% {
+            opacity: 0;
+            transform: scale(0) rotate(-45deg);
+          }
+          60% {
+            opacity: 1;
+            transform: scale(1.2) rotate(0);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) rotate(0);
+          }
+        }
+        @keyframes checkmarkIcon {
+          0% {
+            opacity: 0;
+            transform: scale(0) rotate(-45deg);
+          }
+          60% {
+            opacity: 1;
+            transform: scale(1.2) rotate(0);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) rotate(0);
+          }
+        }
+        .animate-page-load {
+          animation: pageLoad 0.7s ease-out forwards;
+        }
+        .animate-scale-in {
+          animation: scaleIn 0.5s ease-out forwards;
+        }
+        .animate-fade-in-fast {
+          animation: fadeInFast 0.3s ease-out forwards;
+        }
+        .animate-pop-in {
+          animation: popIn 0.4s ease-out forwards;
+        }
+        .animate-slide-up {
+          animation: slideUp 0.5s ease-out forwards;
+        }
+        .animate-pulse-on-hover:hover {
+          animation: pulse 1s infinite;
+        }
+        .animate-checkmark svg {
+          animation: checkmarkIcon 0.3s ease-out forwards;
+        }
+        .animate-gradient-bg {
+          background: linear-gradient(45deg, #f8ebdd, #f5e6d8, #f8ebdd);
+          background-size: 200% 200%;
+          animation: gradient 12s ease infinite;
+        }
+        .shadow-3xl {
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+      `}</style>
     </div>
   );
 };

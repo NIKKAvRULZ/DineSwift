@@ -33,6 +33,55 @@ const haversineDistance = (coords1, coords2) => {
   return distance.toFixed(1); // Return distance rounded to 1 decimal place
 };
 
+// Animation variants for page load
+const pageLoadVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 30 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: 'easeOut', type: 'spring', stiffness: 120 },
+  },
+};
+
+// Animation variants for dark/light mode
+const themeVariants = {
+  light: {
+    background: 'linear-gradient(45deg, #f8ebdd, #f5e6d8)',
+    color: '#1f2937',
+    transition: {
+      background: { duration: 0.5, ease: 'easeOut' },
+      color: { duration: 0.3, ease: 'easeOut' },
+    },
+  },
+  dark: {
+    background: '#111827',
+    color: '#f9fafb',
+    transition: {
+      background: { duration: 0.5, ease: 'easeOut' },
+      color: { duration: 0.3, ease: 'easeOut' },
+    },
+  },
+};
+
+const slideInVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
+
+const slideUpVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut', type: 'spring', stiffness: 150 },
+  },
+};
+
 // Animation variants for Delivery Details Lookup
 const lookupContainerVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
@@ -71,12 +120,15 @@ const inputContainerVariants = {
 };
 
 const inputVariants = {
-  rest: { scale: 1, boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)', borderColor: 'rgba(209, 213, 219, 1)' },
+  rest: {
+    scale: 1,
+    boxShadow: '0 0 0 0 rgba(0, 0, 0, 0)',
+    borderColor: 'rgba(209, 213, 219, 1)',
+  },
   focus: {
     scale: 1.03,
     boxShadow: '0 0 10px rgba(235, 25, 0, 0.4)',
-    borderColor: 'rgba(0, 0, 0, 0)', // Fix animation warning
-    background: 'linear-gradient(to right, #ffffff, #ffffff) padding-box, linear-gradient(to right, #eb1900, #c71500) border-box',
+    borderColor: 'rgba(235, 25, 0, 1)',
     transition: { duration: 0.3, ease: 'easeOut' },
   },
 };
@@ -136,7 +188,7 @@ const dismissButtonVariants = {
   },
 };
 
-// Updated animation variants for Delivery Information
+// Animation variants for Delivery Information
 const detailsCardVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.9 },
   visible: {
@@ -226,15 +278,6 @@ const statusCardVariants = {
     boxShadow: '0 10px 20px rgba(235, 25, 0, 0.3)',
     transition: { duration: 0.3, ease: 'easeOut' },
   },
-  active: {
-    scale: [1, 1.05, 1],
-    boxShadow: [
-      '0 4px 8px rgba(235, 25, 0, 0.2)',
-      '0 8px 16px rgba(235, 25, 0, 0.4)',
-      '0 4px 8px rgba(235, 25, 0, 0.2)',
-    ],
-    transition: { repeat: Infinity, duration: 1.2, ease: 'easeInOut' },
-  },
 };
 
 const infoLabelVariants = {
@@ -268,17 +311,18 @@ const timelineContainerVariants = {
   },
 };
 
-const timelineLineVariants = {
+// New progress line variants for dynamic loading animation
+const progressLineVariants = (progress) => ({
   hidden: { pathLength: 0, opacity: 0 },
   visible: {
-    pathLength: 1,
+    pathLength: progress,
     opacity: 1,
     transition: {
-      pathLength: { duration: 1.5, ease: 'easeInOut', repeat: 0 },
-      opacity: { duration: 0.1 },
+      pathLength: { duration: 1.5, ease: 'easeInOut' },
+      opacity: { duration: 0.3 },
     },
   },
-};
+});
 
 const timelineItemVariants = {
   hidden: { opacity: 0, y: 50, rotate: -10 },
@@ -288,17 +332,16 @@ const timelineItemVariants = {
     rotate: 0,
     transition: { duration: 0.6, ease: 'easeOut', type: 'spring', stiffness: 100 },
   },
-  hover: {
-    y: -5,
-    transition: { duration: 0.3, ease: 'easeOut' },
-  },
 };
 
-const statusHighlightVariants = {
-  active: {
-    scale: [1, 1.15, 1],
-    rotate: [-5, 5, -5, 0],
-    transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+// New variants for the status circle pop-up animation
+const statusCircleVariants = {
+  rest: { scale: 1, y: 0, boxShadow: '0 0 0 rgba(0, 0, 0, 0)' },
+  hover: {
+    scale: 1.1,
+    y: -5,
+    boxShadow: '0 8px 16px rgba(235, 25, 0, 0.4)',
+    transition: { duration: 0.2, ease: 'easeOut' },
   },
 };
 
@@ -347,17 +390,49 @@ const spinnerInnerVariants = {
   },
 };
 
+// New loading spinner variants for timeline
+const timelineSpinnerVariants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+};
+
+// Toggle button animation for dark mode
+const toggleButtonVariants = {
+  light: {
+    rotate: 0,
+    scale: 1,
+    background: '#e5e7eb',
+    color: '#1f2937',
+    boxShadow: '0 0 0 rgba(0, 0, 0, 0)',
+    transition: { duration: 0.3, ease: 'easeOut', type: 'spring', stiffness: 200, damping: 10 },
+  },
+  dark: {
+    rotate: 180,
+    scale: 1.2,
+    background: '#374151',
+    color: '#f9fafb',
+    boxShadow: '0 0 15px rgba(234, 179, 8, 0.5)',
+    transition: { duration: 0.3, ease: 'easeOut', type: 'spring', stiffness: 200, damping: 10 },
+  },
+};
+
 const Delivery = () => {
   const navigate = useNavigate();
   const { activeOrder: contextActiveOrder } = useOrder();
   const [activeOrder, setActiveOrder] = useState(contextActiveOrder);
   const [location, setLocation] = useState(null);
   const [driverLocation, setDriverLocation] = useState(null);
-  const [deliveryId, setDeliveryId] = useState(''); // For active delivery
-  const [lookupDeliveryId, setLookupDeliveryId] = useState(''); // For lookup input
+  const [deliveryId, setDeliveryId] = useState('');
+  const [lookupDeliveryId, setLookupDeliveryId] = useState('');
   const [deliveryDetails, setDeliveryDetails] = useState(null);
   const [error, setError] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isTimelineLoading, setIsTimelineLoading] = useState(true);
+  const [isLookupLoading, setIsLookupLoading] = useState(false);
 
   const mapStatus = (backendStatus) => {
     const statusMap = {
@@ -381,7 +456,6 @@ const Delivery = () => {
       deliveryLocation = { coordinates: delivery.location.coordinates };
     }
 
-    // Map driver location
     let driverLocation = null;
     if (delivery.driver?.location?.coordinates) {
       driverLocation = { coordinates: delivery.driver.location.coordinates };
@@ -389,8 +463,7 @@ const Delivery = () => {
       driverLocation = { coordinates: delivery.location.coordinates };
     }
 
-    // Use OrderService data for address and restaurant
-    const restaurantCoords = [79.8612, 6.9271]; // Fixed restaurant location
+    const restaurantCoords = [79.8612, 6.9271];
     const address = order?.deliveryAddress || '123 Main St, Colombo';
     const distance = haversineDistance(restaurantCoords, deliveryLocation.coordinates);
 
@@ -414,26 +487,26 @@ const Delivery = () => {
 
   useEffect(() => {
     const fetchActiveOrder = async () => {
+      setIsTimelineLoading(true);
       if (contextActiveOrder) {
         setActiveOrder(contextActiveOrder);
         setLocation(contextActiveOrder.location);
         setDriverLocation(contextActiveOrder.driverLocation);
         setDeliveryId(contextActiveOrder.id);
         console.log('Context deliveryId:', contextActiveOrder.id);
+        setIsTimelineLoading(false);
         return;
       }
       try {
         const response = await axios.get('http://localhost:5004/api/delivery/active');
         console.log('Active delivery response:', response.data);
         const delivery = response.data;
-        // Normalize deliveryId (handle deliveryld typo)
         if (delivery && (delivery.deliveryId || delivery.deliveryld)) {
           const normalizedDelivery = {
             ...delivery,
             deliveryId: delivery.deliveryId || delivery.deliveryld,
             orderTotal: delivery.orderTotal || delivery.orderTota1,
           };
-          // Fetch order details if orderId is present
           let order = {};
           if (normalizedDelivery.orderId) {
             try {
@@ -458,6 +531,8 @@ const Delivery = () => {
         console.error('Error fetching active order:', err);
         setActiveOrder(null);
         setError('Failed to fetch active delivery');
+      } finally {
+        setIsTimelineLoading(false);
       }
     };
     fetchActiveOrder();
@@ -465,6 +540,7 @@ const Delivery = () => {
 
   useEffect(() => {
     if (deliveryDetails && (deliveryDetails.deliveryId || deliveryDetails.deliveryld)) {
+      setIsTimelineLoading(true);
       const normalizedDelivery = {
         ...deliveryDetails,
         deliveryId: deliveryDetails.deliveryId || deliveryDetails.deliveryld,
@@ -476,6 +552,7 @@ const Delivery = () => {
       setDriverLocation(mappedOrder.driverLocation);
       setDeliveryId(normalizedDelivery.deliveryId);
       console.log('Delivery details deliveryId set:', normalizedDelivery.deliveryId);
+      setIsTimelineLoading(false);
     }
   }, [deliveryDetails]);
 
@@ -484,6 +561,7 @@ const Delivery = () => {
     socket.on('deliveryStatusUpdated', async (data) => {
       const eventDeliveryId = data.deliveryId?.toString ? data.deliveryId.toString() : data.deliveryId;
       if (eventDeliveryId === deliveryId || activeOrder?.id === data.orderId) {
+        setIsTimelineLoading(true);
         try {
           const response = await axios.get(`http://localhost:5004/api/delivery/track/${eventDeliveryId}`);
           setDeliveryDetails(response.data);
@@ -501,6 +579,8 @@ const Delivery = () => {
         } catch (err) {
           console.error('Error refreshing delivery:', err);
           setError('Failed to refresh delivery status');
+        } finally {
+          setIsTimelineLoading(false);
         }
       }
     });
@@ -521,15 +601,18 @@ const Delivery = () => {
     setError(null);
     setDeliveryDetails(null);
     setDriverLocation(null);
+    setIsLookupLoading(true);
     if (!lookupDeliveryId) {
       setError('Please enter a Delivery ID');
       console.log('No lookupDeliveryId provided for lookup');
+      setIsLookupLoading(false);
       return;
     }
     const orderIdRegex = /^[0-9a-fA-F]{24}$/;
     if (!orderIdRegex.test(lookupDeliveryId)) {
       setError('Invalid Delivery ID format');
       console.log('Invalid lookupDeliveryId format:', lookupDeliveryId);
+      setIsLookupLoading(false);
       return;
     }
     try {
@@ -543,7 +626,7 @@ const Delivery = () => {
           orderTotal: response.data.orderTotal || response.data.orderTota1,
         };
         setDeliveryDetails(normalizedDelivery);
-        setDeliveryId(normalizedDelivery.deliveryId); // Update active deliveryId
+        setDeliveryId(normalizedDelivery.deliveryId);
         console.log('Track deliveryId set:', normalizedDelivery.deliveryId);
         setError('');
       } else {
@@ -555,17 +638,36 @@ const Delivery = () => {
       console.error('Error fetching delivery details:', err);
       setError(err.response?.data?.message || 'Failed to fetch delivery details.');
       setDeliveryDetails(null);
+    } finally {
+      setIsLookupLoading(false);
     }
   };
 
   if (!activeOrder) {
     return (
-      <div className={`w-full min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-gray-100 to-gray-200'}`}>
-        <div className={`p-12 rounded-3xl shadow-2xl backdrop-blur-lg ${isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80 text-gray-800'} max-w-md text-center`}>
-          <h2 className="text-4xl font-bold mb-4">
+      <motion.div
+        variants={pageLoadVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full min-h-screen flex items-center justify-center"
+        style={{ background: isDarkMode ? '#111827' : 'linear-gradient(45deg, #f8ebdd, #f5e6d8)' }}
+      >
+        <motion.div
+          className={`p-12 rounded-3xl shadow-2xl backdrop-blur-lg ${isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80 text-gray-800'} max-w-md text-center`}
+          variants={slideUpVariants}
+        >
+          <motion.h2
+            className="text-4xl font-bold mb-4"
+            variants={slideInVariants}
+          >
             No Active Delivery
-          </h2>
-          <p className="text-lg mb-6">Start a new delivery to track its progress.</p>
+          </motion.h2>
+          <motion.p
+            className="text-lg mb-6"
+            variants={slideInVariants}
+          >
+            Start a new delivery to track its progress.
+          </motion.p>
           <motion.button
             variants={buttonVariants}
             initial="rest"
@@ -573,7 +675,7 @@ const Delivery = () => {
             whileHover="hover"
             whileTap="tap"
             onClick={() => navigate('/assign-delivery')}
-            className={`px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold relative overflow-hidden border-2 border-transparent`}
+            className={`px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold relative overflow-hidden border-2 border-transparent animate-pulse-on-hover`}
           >
             <motion.div
               className="absolute inset-0 bg-white/40"
@@ -584,8 +686,8 @@ const Delivery = () => {
             />
             Assign Delivery
           </motion.button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -617,35 +719,55 @@ const Delivery = () => {
     cancelled: 'The order has been cancelled.',
   };
 
+  // Calculate progress for the animated line
+  const statusOrder = ['confirmed', 'preparing', 'picked_up', 'delivered'];
+  const currentStatusIndex = statusOrder.indexOf(activeOrder.status);
+  const progress = (currentStatusIndex + 1) / statusOrder.length;
+
   return (
-    <div className={`w-full min-h-screen overflow-auto ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-gray-100 to-gray-200'} relative flex flex-col`}>
-      <header className={`sticky top-0 z-10 py-4 px-4 sm:px-6 lg:px-8 ${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-lg shadow-lg flex justify-between items-center`}>
-        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+    <motion.div
+      variants={themeVariants}
+      initial={isDarkMode ? 'dark' : 'light'}
+      animate={isDarkMode ? 'dark' : 'light'}
+      className="w-full min-h-screen overflow-auto relative flex flex-col"
+    >
+      <motion.header
+        className="sticky top-0 z-20 pt-6 pb-4 px-4 sm:px-6 lg:px-8 lg:pr-16 backdrop-blur-lg shadow-lg flex justify-between items-start"
+        variants={slideInVariants}
+        style={{
+          background: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          transition: 'background 0.5s ease-out',
+        }}
+      >
+        <motion.h1
+          className="text-2xl font-bold"
+          variants={slideInVariants}
+          style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}
+        >
           Delivery Dashboard
-        </h1>
+        </motion.h1>
         <motion.button
-          variants={buttonVariants}
-          initial="rest"
-          animate="rest"
-          whileHover="hover"
-          whileTap="tap"
+          variants={toggleButtonVariants}
+          initial={isDarkMode ? 'dark' : 'light'}
+          animate={isDarkMode ? 'dark' : 'light'}
+          whileHover={{ scale: 1.3 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`p-3 rounded-full flex items-center justify-center border-2 ${isDarkMode ? 'bg-gray-700 text-yellow-400 border-yellow-400/50' : 'bg-gray-200 text-gray-800 border-gray-800/50'} shadow-md relative overflow-hidden border-transparent`}
+          className="p-3 mr-6 rounded-full flex items-center justify-center border-2 shadow-md relative overflow-hidden z-20"
+          style={{
+            borderColor: isDarkMode ? 'rgba(234, 179, 8, 0.5)' : 'rgba(31, 41, 55, 0.5)',
+          }}
           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <motion.div
-            className="absolute inset-0 bg-white/40"
-            variants={rippleVariants}
-            initial="initial"
-            animate="initial"
-            whileTap="animate"
-          />
           {isDarkMode ? <FaSun size={24} /> : <FaMoon size={24} />}
         </motion.button>
-      </header>
+      </motion.header>
 
       <div className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
+        <motion.div
+          className="mb-8"
+          variants={slideInVariants}
+        >
           <motion.button
             variants={buttonVariants}
             initial="rest"
@@ -653,7 +775,7 @@ const Delivery = () => {
             whileHover="hover"
             whileTap="tap"
             onClick={() => navigate('/assign-delivery')}
-            className={`w-full sm:w-auto px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold flex items-center justify-center relative overflow-hidden border-2 border-transparent`}
+            className={`w-full sm:w-auto px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold flex items-center justify-center relative overflow-hidden border-2 border-transparent animate-pulse-on-hover`}
             data-tooltip-id="assign-delivery-tooltip"
             data-tooltip-content="Create a new delivery"
             aria-label="Assign new delivery"
@@ -673,16 +795,27 @@ const Delivery = () => {
               className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl ${isDarkMode ? '!bg-gray-700' : ''}`}
             />
           </motion.button>
-        </div>
+        </motion.div>
 
-        <div className={`rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg ${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'}`}>
-          <div className="px-8 py-10">
+        <motion.div
+          className="rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg"
+          variants={pageLoadVariants}
+          style={{
+            background: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+            transition: 'background 0.5s ease-out',
+          }}
+        >
+          <motion.div
+            className="px-8 py-10"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.2s' }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className="text-3xl font-bold" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
                   Order #{activeOrder.id}
                 </h3>
-                <p className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className="mt-2 text-sm font-medium" style={{ color: isDarkMode ? '#d1d5db' : '#4b5563' }}>
                   {activeOrder.restaurantName}
                 </p>
               </div>
@@ -694,10 +827,14 @@ const Delivery = () => {
                 {getStatusText(activeOrder.status)}
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="px-8 py-10 border-t border-gray-200/50">
-            <h4 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+          <motion.div
+            className="px-8 py-10 border-t"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.3s', borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.5)' }}
+          >
+            <h4 className="text-xl font-semibold mb-8" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
               Delivery Progress
             </h4>
             <motion.div
@@ -706,94 +843,125 @@ const Delivery = () => {
               animate="visible"
               className="relative"
             >
-              <motion.div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <svg className="w-full h-full">
-                  <motion.line
-                    x1="0%"
-                    y1="50%"
-                    x2="100%"
-                    y2="50%"
-                    stroke={isDarkMode ? '#4B5563' : '#D1D5DB'}
-                    strokeWidth="2"
-                    variants={timelineLineVariants}
-                  />
-                </svg>
-              </motion.div>
-              <div
-                className="relative flex justify-between"
-                role="list"
-                aria-label="Delivery progress timeline"
-              >
-                {['confirmed', 'preparing', 'picked_up', 'delivered'].map((status, index) => {
-                  const isActive = activeOrder.status === status;
-                  const isCompleted =
-                    index < ['confirmed', 'preparing', 'picked_up', 'delivered'].indexOf(activeOrder.status);
-                  return (
+              {isTimelineLoading ? (
+                <motion.div
+                  variants={timelineSpinnerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="flex justify-center py-8"
+                >
+                  <div className="relative h-12 w-12">
                     <motion.div
-                      key={status}
-                      variants={timelineItemVariants}
-                      whileHover="hover"
-                      className="flex flex-col items-center relative group"
-                      role="listitem"
-                      data-tooltip-id={`status-tooltip-${status}`}
-                      data-tooltip-content={statusDescriptions[status]}
-                    >
-                      <motion.div
-                        className={`relative z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-shadow duration-300 group-hover:shadow-xl ${
-                          isActive
-                            ? isDarkMode
-                              ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b] text-white scale-110 ring-2 ring-[#b91c1c]/50'
-                              : 'bg-gradient-to-r from-[#eb1900] to-[#c71500] text-white scale-110 ring-2 ring-[#eb1900]/50'
-                            : isCompleted
-                            ? 'bg-green-600 text-white ring-2 ring-green-600/50'
-                            : isDarkMode
-                            ? 'bg-gray-700 text-gray-400'
-                            : 'bg-gray-200 text-gray-500'
-                        }`}
-                        animate={isActive ? 'active' : undefined}
-                        variants={statusHighlightVariants}
-                      >
-                        <span className="text-lg font-semibold">{index + 1}</span>
-                        {isCompleted && (
-                          <motion.svg
-                            className="absolute w-6 h-6 text-white -top-1 -right-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 24 24"
-                            variants={checkmarkVariants}
-                            initial="hidden"
-                            animate="visible"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </motion.svg>
-                        )}
-                      </motion.div>
-                      <motion.span
-                        variants={labelVariants}
-                        className={`mt-4 text-sm font-medium ${
-                          isDarkMode ? 'text-gray-300 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'
-                        }`}
-                      >
-                        {getStatusText(status)}
-                      </motion.span>
-                      <Tooltip
-                        id={`status-tooltip-${status}`}
-                        place="top"
-                        className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl ${isDarkMode ? '!bg-gray-700' : ''}`}
+                      variants={spinnerRingVariants}
+                      animate="animate"
+                      className={`absolute inset-0 rounded-full border-4 ${isDarkMode ? 'border-[#b91c1c]' : 'border-[#eb1900]'} border-opacity-70`}
+                      style={{ boxShadow: `0 0 10px ${isDarkMode ? 'rgba(185, 28, 28, 0.5)' : 'rgba(235, 25, 0, 0.5)'}` }}
+                    />
+                    <motion.div
+                      variants={spinnerInnerVariants}
+                      animate="animate"
+                      className={`absolute inset-2 rounded-full border-2 ${isDarkMode ? 'border-[#991b1b]' : 'border-[#c71500]'}`}
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                <>
+                  <motion.div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <svg className="w-full h-full">
+                      <motion.line
+                        x1="0%"
+                        y1="50%"
+                        x2="100%"
+                        y2="50%"
+                        stroke={isDarkMode ? '#4B5563' : '#D1D5DB'}
+                        strokeWidth="2"
                       />
-                    </motion.div>
-                  );
-                })}
-              </div>
+                      <motion.line
+                        x1="0%"
+                        y1="50%"
+                        x2="100%"
+                        y2="50%"
+                        stroke={isDarkMode ? '#b91c1c' : '#eb1900'}
+                        strokeWidth="4"
+                        variants={progressLineVariants(progress)}
+                      />
+                    </svg>
+                  </motion.div>
+                  <div
+                    className="relative flex justify-between"
+                    role="list"
+                    aria-label="Delivery progress timeline"
+                  >
+                    {statusOrder.map((status, index) => {
+                      const isActive = activeOrder.status === status;
+                      const isCompleted = index < statusOrder.indexOf(activeOrder.status);
+                      return (
+                        <motion.div
+                          key={status}
+                          variants={timelineItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          className="flex flex-col items-center relative"
+                          role="listitem"
+                        >
+                          <motion.div
+                            variants={statusCircleVariants}
+                            initial="rest"
+                            whileHover="hover"
+                            className={`relative z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-shadow duration-300 ${
+                              isActive
+                                ? isDarkMode
+                                  ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b] text-white scale-110 ring-2 ring-[#b91c1c]/50'
+                                  : 'bg-gradient-to-r from-[#eb1900] to-[#c71500] text-white scale-110 ring-2 ring-[#eb1900]/50'
+                                : isCompleted
+                                ? 'bg-green-600 text-white ring-2 ring-green-600/50'
+                                : isDarkMode
+                                ? 'bg-gray-700 text-gray-400'
+                                : 'bg-gray-200 text-gray-500'
+                            }`}
+                          >
+                            <span className="text-lg font-semibold">{index + 1}</span>
+                            {isCompleted && (
+                              <motion.svg
+                                className="absolute w-6 h-6 -top-1 -right-1"
+                                fill="none"
+                                stroke={isDarkMode ? '#ffffff' : '#111827'}
+                                viewBox="0 0 24 24"
+                                variants={checkmarkVariants}
+                                initial="hidden"
+                                animate="visible"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </motion.svg>
+                            )}
+                          </motion.div>
+                          <motion.span
+                            variants={labelVariants}
+                            className={`mt-4 text-sm font-medium ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`}
+                          >
+                            {getStatusText(status)}
+                          </motion.span>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </motion.div>
-          </div>
+          </motion.div>
 
-          <div className="py-10 border-t border-gray-200/50">
+          <motion.div
+            className="py-10 border-t"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.4s', borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.5)' }}
+          >
             <motion.div
               variants={infoContainerVariants}
               initial="hidden"
@@ -801,7 +969,7 @@ const Delivery = () => {
               className="w-full"
             >
               <div className="px-4 sm:px-6 lg:px-8">
-                <h4 className={`text-3xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 font-sans tracking-tight`}>
+                <h4 className="text-3xl font-semibold mb-6 font-sans tracking-tight" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
                   Delivery Information
                 </h4>
                 <motion.div
@@ -817,7 +985,7 @@ const Delivery = () => {
                     },
                     {
                       label: 'Distance',
-                      value: activeOrder.distance || 'N/A',
+                      value: activeOrder.distance || 'N/ A',
                       icon: <FaMapMarkerAlt className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
                     },
                     {
@@ -851,9 +1019,11 @@ const Delivery = () => {
                       key={item.label}
                       variants={infoCardVariants}
                       whileHover="hover"
-                      className={`p-8 rounded-xl shadow-md backdrop-blur-md ${
-                        isDarkMode ? 'bg-gray-800/70 border-[#b91c1c]/20' : 'bg-white/70 border-[#eb1900]/20'
-                      } border border-transparent transition-all duration-300`}
+                      className={`p-8 rounded-xl shadow-md backdrop-blur-md border border-transparent transition-all duration-300`}
+                      style={{
+                        background: isDarkMode ? 'rgba(31, 41, 55, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                        borderColor: isDarkMode ? 'rgba(185, 28, 28, 0.2)' : 'rgba(235, 25, 0, 0.2)',
+                      }}
                     >
                       <div className="flex items-center">
                         <motion.div variants={iconVariants} initial="rest" whileHover="hover">
@@ -861,16 +1031,16 @@ const Delivery = () => {
                         </motion.div>
                         <motion.h5
                           variants={infoLabelVariants}
-                          className={`text-sm font-medium uppercase tracking-wider ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                          }`}
+                          className="text-sm font-medium uppercase tracking-wider"
+                          style={{ color: isDarkMode ? '#9ca3af' : '#4b5563' }}
                         >
                           {item.label}
                         </motion.h5>
                       </div>
                       <motion.p
                         variants={infoValueVariants}
-                        className={`mt-2 text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} font-sans`}
+                        className="mt-2 text-xl font-semibold font-sans"
+                        style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}
                       >
                         {item.value}
                       </motion.p>
@@ -879,60 +1049,85 @@ const Delivery = () => {
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
 
-          <div className="px-8 py-10 border-t border-gray-200/50">
-            <h4 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+          <motion.div
+            className="px-8 py-10 border-t"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.5s', borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.5)' }}
+          >
+            <h4 className="text-xl font-semibold mb-8" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
               Delivery Location
             </h4>
             <div>
               <DeliveryMap location={location} driverLocation={driverLocation} isDarkMode={isDarkMode} deliveryId={deliveryId} />
             </div>
-          </div>
+          </motion.div>
 
-          <div className="px-8 py-10 border-t border-gray-200/50">
-            <h4 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-8`}>
+          <motion.div
+            className="px-8 py-10 border-t"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.6s', borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.5)' }}
+          >
+            <h4 className="text-xl font-semibold mb-8" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
               Control Panel
             </h4>
             <div className="border-2 border-transparent rounded-xl overflow-hidden">
               <UpdateDeliveryStatus isDarkMode={isDarkMode} />
             </div>
-          </div>
+          </motion.div>
 
-          <div className="py-10">
+          <motion.div
+            className="py-10"
+            variants={slideUpVariants}
+            style={{ animationDelay: '0.7s' }}
+          >
             <motion.div
               variants={lookupContainerVariants}
               initial="hidden"
               animate="visible"
-              className={`w-full p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl ${
-                isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
-              } border border-transparent backdrop-blur-lg`}
+              className="w-full p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl border border-transparent"
+              style={{
+                background: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                borderColor: isDarkMode ? 'rgba(185, 28, 28, 0.3)' : 'rgba(235, 25, 0, 0.3)',
+                transition: 'background 0.5s ease-out, border-color 0.3s ease-out',
+              }}
             >
               <motion.h4
                 variants={headerVariants}
-                className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 font-sans tracking-tight`}
+                className="text-3xl font-extrabold mb-6 font-sans tracking-tight"
+                style={{
+                  color: isDarkMode ? '#ffffff' : '#111827',
+                  textRendering: 'optimizeLegibility',
+                  WebkitFontSmoothing: 'antialiased',
+                }}
               >
                 Delivery Details Lookup
               </motion.h4>
               <motion.div
                 variants={underlineVariants}
-                className={`h-1 bg-gradient-to-r from-[#eb1900] to-[#c71500] mb-8 rounded-full`}
+                className="h-1 bg-gradient-to-r from-[#eb1900] to-[#c71500] mb-8 rounded-full"
               />
               <motion.div
                 variants={inputContainerVariants}
                 initial="hidden"
                 animate="visible"
-                className={`p-8 rounded-2xl shadow-lg ${
-                  isDarkMode ? 'bg-gray-900/30 border-[#b91c1c]/30' : 'bg-gray-50/30 border-[#eb1900]/30'
-                } border border-transparent mb-8 backdrop-blur-sm`}
+                className="p-8 rounded-2xl shadow-lg border border-transparent mb-8 backdrop-blur-sm"
+                style={{
+                  background: isDarkMode ? 'rgba(55, 65, 81, 0.3)' : 'rgba(249, 250, 251, 0.3)',
+                  borderColor: isDarkMode ? 'rgba(185, 28, 28, 0.3)' : 'rgba(235, 25, 0, 0.3)',
+                }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                   <div className="relative sm:col-span-4">
                     <motion.label
-                      className={`absolute left-0 top-[-1.5rem] text-sm font-medium uppercase tracking-wider ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}
+                      className="absolute left-0 top-[-1.5rem] text-sm font-semibold uppercase tracking-wider"
                       htmlFor="deliveryIdLookup"
+                      style={{
+                        color: isDarkMode ? '#d1d5db' : '#374151',
+                        textRendering: 'optimizeLegibility',
+                        WebkitFontSmoothing: 'antialiased',
+                      }}
                     >
                       Delivery ID
                     </motion.label>
@@ -946,14 +1141,17 @@ const Delivery = () => {
                       type="text"
                       value={lookupDeliveryId}
                       onChange={(e) => setLookupDeliveryId(e.target.value)}
-                      className={`w-full pl-12 pr-4 py-4 ${
-                        isDarkMode
-                          ? 'bg-gray-900/50 text-white border-gray-700 placeholder-gray-400'
-                          : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
-                      } border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#eb1900] transition-all duration-300 font-sans text-base`}
+                      className="w-full pl-12 pr-4 py-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#eb1900] transition-all duration-300 font-sans text-base selection:bg-[#b91c1c] selection:text-white"
+                      style={{
+                        background: isDarkMode ? '#374151' : '#ffffff',
+                        color: isDarkMode ? '#ffffff' : '#111827',
+                        borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+                        placeholderColor: isDarkMode ? '#9ca3af' : '#9ca3af',
+                        textRendering: 'optimizeLegibility',
+                        WebkitFontSmoothing: 'antialiased',
+                      }}
                       placeholder="Enter Delivery ID"
                       aria-label="Delivery ID input"
-                      style={{ border: '2px solid rgba(0, 0, 0, 0)' }} // Fix animation warning
                     />
                   </div>
                   <motion.button
@@ -967,7 +1165,7 @@ const Delivery = () => {
                       isDarkMode
                         ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]'
                         : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'
-                    } text-white rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 transition-all duration-300 flex items-center justify-center text-base overflow-hidden border-2 border-transparent`}
+                    } text-white rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#eb1900] focus:ring-offset-2 transition-all duration-300 flex items-center justify-center text-base overflow-hidden border-2 border-transparent animate-pulse-on-hover`}
                     data-tooltip-id="fetch-details-tooltip"
                     data-tooltip-content="Fetch delivery details"
                     aria-label="Fetch delivery details"
@@ -988,6 +1186,31 @@ const Delivery = () => {
                     />
                   </motion.button>
                 </div>
+                <AnimatePresence>
+                  {isLookupLoading && (
+                    <motion.div
+                      variants={timelineSpinnerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="flex justify-center mt-6"
+                    >
+                      <div className="relative h-12 w-12">
+                        <motion.div
+                          variants={spinnerRingVariants}
+                          animate="animate"
+                          className={`absolute inset-0 rounded-full border-4 ${isDarkMode ? 'border-[#b91c1c]' : 'border-[#eb1900]'} border-opacity-70`}
+                          style={{ boxShadow: `0 0 10px ${isDarkMode ? 'rgba(185, 28, 28, 0.5)' : 'rgba(235, 25, 0, 0.5)'}` }}
+                        />
+                        <motion.div
+                          variants={spinnerInnerVariants}
+                          animate="animate"
+                          className={`absolute inset-2 rounded-full border-2 ${isDarkMode ? 'border-[#991b1b]' : 'border-[#c71500]'}`}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
 
               <AnimatePresence>
@@ -997,9 +1220,12 @@ const Delivery = () => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className={`flex items-center ${
-                      isDarkMode ? 'bg-red-900/50 text-red-100 border-red-800/50' : 'bg-red-100/80 text-red-800 border-red-400/50'
-                    } p-6 rounded-lg mb-8 shadow-lg backdrop-blur-lg border border-transparent`}
+                    className="flex items-center p-6 rounded-lg mb-8 shadow-lg backdrop-blur-lg border border-transparent"
+                    style={{
+                      background: isDarkMode ? 'rgba(153, 27, 27, 0.5)' : 'rgba(254, 226, 226, 0.8)',
+                      color: isDarkMode ? '#fecaca' : '#991b1b',
+                      borderColor: isDarkMode ? 'rgba(153, 27, 27, 0.5)' : 'rgba(248, 113, 113, 0.5)',
+                    }}
                   >
                     <FaInfoCircle className="mr-3 text-xl" />
                     <span className="flex-1 text-base">{error}</span>
@@ -1009,9 +1235,8 @@ const Delivery = () => {
                       whileHover="hover"
                       whileTap="tap"
                       onClick={() => setError(null)}
-                      className={`p-2 rounded-full ${
-                        isDarkMode ? 'text-red-300 hover:text-red-100' : 'text-red-600 hover:text-red-800'
-                      } hover:bg-red-500/20 transition-all duration-200`}
+                      className="p-2 rounded-full transition-all duration-200"
+                      style={{ color: isDarkMode ? '#fecaca' : '#b91c1c' }}
                       aria-label="Dismiss error"
                     >
                       <FaTimes />
@@ -1027,11 +1252,18 @@ const Delivery = () => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className={`p-8 rounded-2xl shadow-lg ${
-                      isDarkMode ? 'bg-gray-800/80 border-[#b91c1c]/30' : 'bg-white/80 border-[#eb1900]/30'
-                    } backdrop-blur-lg border border-transparent relative overflow-hidden`}
+                    className="p-8 rounded-2xl shadow-lg backdrop-blur-lg border border-transparent relative overflow-hidden"
+                    style={{
+                      background: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                      borderColor: isDarkMode ? 'rgba(185, 28, 28, 0.3)' : 'rgba(235, 25, 0, 0.3)',
+                    }}
                   >
-                    <h5 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 pb-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h5 className="text-xl font-semibold mb-6 pb-3 border-b"
+                      style={{
+                        color: isDarkMode ? '#f9fafb' : '#1f2937',
+                        borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+                      }}
+                    >
                       Delivery Information
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1094,20 +1326,30 @@ const Delivery = () => {
                           key={item.label}
                           variants={detailsItemVariants}
                           whileHover="hover"
-                          className={`p-6 rounded-lg ${
-                            isDarkMode ? 'bg-gray-900/30' : 'bg-gray-50/30'
-                          } shadow-sm transition-all duration-300 flex items-start space-x-3`}
+                          className="p-6 rounded-lg shadow-sm transition-all duration-300 flex items-start space-x-3"
+                          style={{
+                            background: isDarkMode ? 'rgba(55, 65, 81, 0.3)' : 'rgba(249, 250, 251, 0.3)',
+                            border: isDarkMode ? '1px solid rgba(185, 28, 28, 0.2)' : '1px solid rgba(235, 25, 0, 0.2)',
+                          }}
                         >
                           <motion.div variants={iconVariants} initial="rest" whileHover="hover">
                             {item.icon}
                           </motion.div>
                           <div>
-                            <p className={`text-sm font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <motion.h6
+                              variants={infoLabelVariants}
+                              className="text-sm font-medium uppercase tracking-wider"
+                              style={{ color: isDarkMode ? '#9ca3af' : '#4b5563' }}
+                            >
                               {item.label}
-                            </p>
-                            <p className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            </motion.h6>
+                            <motion.p
+                              variants={infoValueVariants}
+                              className="text-base font-semibold"
+                              style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}
+                            >
                               {item.value}
-                            </p>
+                            </motion.p>
                           </div>
                         </motion.div>
                       ))}
@@ -1115,34 +1357,11 @@ const Delivery = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {lookupDeliveryId && !deliveryDetails && !error && (
-                <motion.div
-                  variants={spinnerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="mt-8 flex justify-center"
-                >
-                  <div className="relative h-16 w-16">
-                    <motion.div
-                      variants={spinnerRingVariants}
-                      animate="animate"
-                      className="absolute inset-0 rounded-full border-4 border-[#eb1900] border-opacity-70"
-                      style={{ boxShadow: '0 0 10px rgba(235, 25, 0, 0.5)' }}
-                    />
-                    <motion.div
-                      variants={spinnerInnerVariants}
-                      animate="animate"
-                      className="absolute inset-2 rounded-full border-2 border-[#c71500]"
-                    />
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
