@@ -1,7 +1,7 @@
 // Services\PaymentService\routes\stripeRouter.js
 const express = require('express');
 const router = express.Router();
-const stripeController = require('../controllers/stripeController');
+const stripeController = require('../controllers/stripecontroller');
 
 // Create checkout session
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
