@@ -25,7 +25,7 @@ export const OrderProvider = ({ children }) => {
       
       // Find active order if exists
       const active = response.data.find(order => 
-        ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'].includes(order.status)
+        ['Pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'].includes(order.status)
       );
       setActiveOrder(active);
     } catch (error) {
