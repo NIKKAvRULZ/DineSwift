@@ -1,8 +1,18 @@
-const express = require("express");
-const { createCheckoutSession } = require("../controllers/stripecontroller");
+// Services\PaymentService\routes\stripeRouter.js
+const express = require('express');
 const router = express.Router();
+const stripeController = require('../controllers/stripeController');
 
-// POST request to create a new checkout session
-router.post("/create-checkout-session", createCheckoutSession);
+// Create checkout session
+router.post('/create-checkout-session', stripeController.createCheckoutSession);
+
+// Stripe webhook
+router.post('/webhook', express.raw({ type: 'application/json' }), stripeController.handleWebhook);
+
+// Get payment status
+router.get('/payment-status/:sessionId', stripeController.getPaymentStatus);
+
+// Refund payment
+router.post('/refund/:id', stripeController.refundPayment);
 
 module.exports = router;
