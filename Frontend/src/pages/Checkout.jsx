@@ -45,8 +45,8 @@ const Checkout = () => {
           quantity: item.quantity
         })),
         totalAmount: total,
-        paymentMethod,
-        deliveryAddress: address
+        payment_method: paymentMethod,
+        delivery_address: address
       };
       
 
@@ -79,7 +79,7 @@ const Checkout = () => {
           {/* Restaurant Header */}
           <div className="flex items-center mb-8">
             <img 
-              src={restaurantDetails?.image || {restaurantPlaceholder}}
+              src={restaurantDetails?.image || restaurantPlaceholder}
               alt={restaurantDetails?.name}
               className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-200"
             />

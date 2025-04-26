@@ -24,10 +24,11 @@ exports.createOrder = async (req, res) => {
             restaurantId,
             items,
             totalAmount,
-            status: status || "pending",
-            paymentMethod,
-            deliveryAddress
-        });
+            paymentMethod,    
+            deliveryAddress,  
+            status: status || 'Pending', // <-- use status from body if given, else 'Pending'
+          });
+          
 
         const savedOrder = await newOrder.save();
         res.status(201).json(savedOrder);
@@ -78,8 +79,8 @@ exports.updateOrder = async (req, res) => {
         order.items = items;
         order.totalAmount = totalAmount;
         order.status = status;
-
-        await order.save();
+        order.paymentMethod = paymentMethod;       
+        order.deliveryAddress = deliveryAddress;           
         res.json(order);
     } catch (error) {
         res.status(500).json({ error: error.message });
