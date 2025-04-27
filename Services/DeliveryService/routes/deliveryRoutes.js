@@ -115,4 +115,7 @@ router.get('/available-drivers', validateRequest(availableDriversSchema, 'query'
 router.get('/track/:deliveryId', validateRequest(deliveryIdSchema, 'params'), trackDelivery);
 router.get('/active', getActiveDelivery);
 
+// Add new route for available orders
+router.get('/available-orders', getAvailableOrders);
+
 module.exports = router;

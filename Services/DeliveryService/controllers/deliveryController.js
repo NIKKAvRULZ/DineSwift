@@ -229,6 +229,47 @@ const getActiveDelivery = async (req, res) => {
   }
 };
 
+const getAvailableOrders = async (req, res) => {
+  try {
+    // Fetch all pending deliveries without assigned drivers
+    const deliveries = await Delivery.find({
+      status: 'pending',
+      driverId: null
+    }).sort({ createdAt: -1 });
+
+    // Map delivery IDs to fetch corresponding orders
+    const deliveryOrders = await Promise.all(deliveries.map(async (delivery) => {
+      try {
+        // Fetch order details from OrderService
+        const orderResponse = await axios.get(`http://localhost:5003/api/orders/${delivery.orderId}`);
+        const order = orderResponse.data;
+
+        return {
+          deliveryId: delivery._id,
+          orderId: delivery.orderId,
+          status: delivery.status,
+          location: delivery.location,
+          estimatedDeliveryTime: delivery.estimatedDeliveryTime,
+          restaurantName: order.restaurantId || delivery.restaurantName,
+          orderTotal: order.totalAmount || delivery.orderTotal,
+          address: order.deliveryAddress || '123 Main St, Colombo'
+        };
+      } catch (err) {
+        console.error(`Error fetching order ${delivery.orderId}:`, err);
+        return null;
+      }
+    }));
+
+    // Filter out any failed order fetches
+    const validOrders = deliveryOrders.filter(order => order !== null);
+
+    res.json(validOrders);
+  } catch (error) {
+    console.error('Error getting available orders:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   assignDelivery,
   getDeliveryStatus,
@@ -236,4 +277,5 @@ module.exports = {
   getAvailableDrivers,
   trackDelivery,
   getActiveDelivery,
+  getAvailableOrders,
 };
