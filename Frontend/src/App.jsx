@@ -41,21 +41,27 @@ function App() {
                 
                 {/* Protected Routes */}
                 <Route
-                  path="/restaurants"
-                  element={
-                    <ProtectedRoute element={<Restaurants />} />
-                  }
-                />
+                 path="/restaurants"
+                 element={
+                   <ProtectedRoute>
+                     <Restaurants />
+                   </ProtectedRoute>
+                 }
+               />
                 <Route
                   path="/restaurants/:id/menu"
                   element={
-                    <ProtectedRoute element={<Menu />} />
+                    <ProtectedRoute>
+                      <Menu />
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/cart"
                   element={
-                    <ProtectedRoute element={<Cart />} />
+                    <ProtectedRoute>
+                      <Cart />
+                    </ProtectedRoute>
                   }
                 />
                 
@@ -63,7 +69,9 @@ function App() {
                 <Route
                   path="/orders"
                   element={
-                    <ProtectedRoute element={<Orders />} />
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
                   }
                 />
                 <Route path="/delivery" element={<Delivery />} /> {/* Unprotected */}
@@ -74,8 +82,10 @@ function App() {
                 <Route
                   path="/tracking/:orderId"
                   element={
-                    <ProtectedRoute element={<OrderTracking />} />
-                  }
+                    <ProtectedRoute>
+                      <OrderTracking />
+                    </ProtectedRoute>
+                  } 
                 />
                 <Route path="/tracking" element={<OrderTracking />} /> {/* Unprotected */}
                 <Route
