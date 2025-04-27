@@ -82,10 +82,14 @@ function App() {
                 <Route
                   path="/tracking/:orderId"
                   element={
-                    <ProtectedRoute element={<OrderTracking />} />
+                    <ProtectedRoute>
+                      <OrderTracking />
+                    </ProtectedRoute>
                   }
                 />
-                <Route path="/tracking" element={<OrderTracking />} /> {/* Unprotected */}
+                <Route 
+                path="/tracking" 
+                element={<OrderTracking />} /> {/* Unprotected */}
                 <Route
                   path="/checkout"
                   element={
