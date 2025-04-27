@@ -10,7 +10,7 @@ import Orders from "./pages/Orders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
-  // import Delivery from "./pages/Delivery";
+// import Delivery from "./pages/Delivery";
 import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
