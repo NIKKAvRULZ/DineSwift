@@ -258,8 +258,8 @@ const EditMenuItem = () => {
                                 required
                                 disabled={loading}
                                 InputProps={{
-                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                    inputProps: { step: "0.01", min: "0" }
+                                    startAdornment: <InputAdornment position="start">Rs.</InputAdornment>,
+                                    inputProps: { step: "1", min: "0" }
                                 }}
                             />
                         </Grid>

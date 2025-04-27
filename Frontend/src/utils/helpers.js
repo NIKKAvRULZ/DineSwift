@@ -1,8 +1,6 @@
 export const formatPrice = (price) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(price);
+  if (!price) return 'Rs. 0';
+  return `Rs. ${Math.round(price)}`;
 };
 
 export const formatDate = (date) => {
