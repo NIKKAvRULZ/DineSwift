@@ -10,7 +10,7 @@ import Orders from "./pages/Orders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Restaurants from "./pages/Restaurants";
-import Delivery from "./pages/Delivery";
+  // import Delivery from "./pages/Delivery";
 import Payment from "./pages/Payment";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
@@ -74,7 +74,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/delivery" element={<Delivery />} />
+                {/* <Route path="/delivery" element={<Delivery />} /> */}
                 <Route path="/payment" element={<Payment />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/notifications" element={<Notifications />} />
