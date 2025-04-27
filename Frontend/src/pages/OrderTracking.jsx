@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import orderService from '../services/orderService';
+import restaurantService from "../services/restaurantService";
 
 const stageAnimations = {
-    pending: {
+    Pending: {
       scale: [1, 1.1, 1],  
       rotate: [0, -5, 5, -5, 0],  
       opacity: [1, 0.7, 1],  // Flickering effect like waiting status
@@ -130,59 +131,53 @@ const triggerConfetti = () => {
 
 const stages = [
   {
-    key: 'pending',
+    key: 'Pending',
     label: 'Order Placed',
     icon: '📝',
-    animation: stageAnimations.pending,
-    bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
-    activeColor: 'bg-blue-500'
+    animation: stageAnimations.Pending   ,
+    bgColor: 'bg-gradient-to-br from-amber-100 to-amber-200',
+    activeColor: 'bg-amber-500'
   },
   {
-    key: 'confirmed',
-    label: 'Confirmed',
+    key: 'Accepted',
+    label: 'Accepted',
     icon: '✅',
     animation: stageAnimations.confirmed,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-sky-100 to-sky-200',
+    activeColor: 'bg-sky-500'
   },
   {
-    key: 'preparing',
+    key: 'Preparing',
     label: 'Preparing',
     icon: '👨‍🍳',
     animation: stageAnimations.preparing,
-    bgColor: 'bg-gradient-to-br from-yellow-100 to-yellow-200',
-    activeColor: 'bg-yellow-500'
+    bgColor: 'bg-gradient-to-br from-indigo-100 to-indigo-200',
+    activeColor: 'bg-indigo-500'
   },
   {
-    key: 'ready',
-    label: 'Ready',
-    icon: '🍽️',
-    animation: stageAnimations.ready,
-    bgColor: 'bg-gradient-to-br from-purple-100 to-purple-200',
-    activeColor: 'bg-purple-500'
-  },
-  {
-    key: 'delivering',
+    key: 'On the Way',
     label: 'On the Way',
     icon: '🚗',
     animation: stageAnimations.delivering,
-    bgColor: 'bg-gradient-to-br from-orange-100 to-orange-200',
-    activeColor: 'bg-orange-500'
+    bgColor: 'bg-gradient-to-br from-teal-100 to-teal-200',
+    activeColor: 'bg-teal-500'
   },
   {
-    key: 'delivered',
+    key: 'Delivered',
     label: 'Delivered',
     icon: '🎉',
     animation: stageAnimations.delivered,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-lime-100 to-lime-200',
+    activeColor: 'bg-lime-500'
   }
 ];
 
 const OrderTracking = () => {
   const { orderId } = useParams();
+  const { restaurantId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -212,7 +207,7 @@ const OrderTracking = () => {
   }, [orderId, navigate]);
 
   useEffect(() => {
-    if (order?.status === 'delivered') {
+    if (order?.status === 'Delivered') {
       triggerConfetti();
     }
   }, [order?.status]);
@@ -329,9 +324,9 @@ const OrderTracking = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-600">Restaurant</p>
-                    <p className="font-medium">{order?.restaurantName}</p>
+                    <p className="font-medium">{order?.restaurant?.name || 'Not available'}</p>
                   </div>
-                  <div>
+                  <div> 
                     <p className="text-gray-600">Order Date</p>
                     <p className="font-medium">
                       {new Date(order?.createdAt).toLocaleString()}
@@ -339,11 +334,11 @@ const OrderTracking = () => {
                   </div>
                   <div>
                     <p className="text-gray-600">Total Amount</p>
-                    <p className="font-medium">${order?.total?.toFixed(2)}</p>
+                    <p className="font-medium">${Number(order?.totalAmount).toFixed(2) || '0.00'}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Items</p>
-                    <p className="font-medium">{order?.items?.length} items</p>
+                    <p className="font-medium">{order?.items?.length || 0} items</p>
                   </div>
                 </div>
               </div>

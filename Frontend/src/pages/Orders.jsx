@@ -38,23 +38,22 @@ const Orders = () => {
 
   const getStatusBadgeColor = (status) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      preparing: 'bg-purple-100 text-purple-800',
-      ready: 'bg-indigo-100 text-indigo-800',
-      delivering: 'bg-orange-100 text-orange-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+    'Pending': 'bg-amber-200 text-amber-900',     // soft orange
+    'Accepted': 'bg-sky-200 text-sky-900',        // light blue
+    'Preparing': 'bg-indigo-200 text-indigo-900', // medium indigo
+    'On the Way': 'bg-teal-200 text-teal-900',    // calm teal
+    'Delivered': 'bg-lime-200 text-lime-900',     // fresh lime green
+    'Cancelled': 'bg-rose-200 text-rose-900'      // soft red
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const filteredOrders = orders.filter((order) => {
     if (filter === 'active') {
-      return ['pending', 'confirmed', 'preparing', 'ready', 'delivering'].includes(order.status);
+      return ['Pending', 'Accepted', 'Preparing', 'On the Way'].includes(order.status);
     }
     if (filter === 'completed') {
-      return ['delivered', 'cancelled'].includes(order.status);
+      return ['Delivered', 'Cancelled'].includes(order.status);
     }
     return true;
   });
@@ -131,7 +130,7 @@ const Orders = () => {
               className="bg-white p-6 rounded-lg shadow-md transform hover:scale-105 transition-all duration-300 ease-in-out"
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Order #{order._id}</h3>
+                <h3 className="text-lg font-semibold">Order #{order._id.slice(-6) }</h3>
                 <Link
                   to={`/tracking/${order._id}`}
                   className="text-orange-500 hover:text-orange-600"
