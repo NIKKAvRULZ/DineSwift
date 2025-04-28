@@ -45,9 +45,8 @@ const Checkout = () => {
           quantity: item.quantity
         })),
         totalAmount: total,
-        status: 'Pending',
-        paymentMethod,
-        deliveryAddress: address
+        payment_method: paymentMethod,
+        delivery_address: address
       };
 
       const response = await orderService.createOrder(orderData, user.token);
@@ -148,7 +147,7 @@ const Checkout = () => {
           {/* Restaurant Header */}
           <div className="flex items-center mb-8">
             <img 
-              src={restaurantDetails?.image || "https://via.placeholder.com/100"}
+              src={restaurantDetails?.image || restaurantPlaceholder}
               alt={restaurantDetails?.name}
               className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-200"
             />
