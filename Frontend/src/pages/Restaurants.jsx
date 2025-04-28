@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // import useLocation
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import RestaurantCard from '../components/RestaurantCard';
 
 const Restaurants = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // get location
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,13 +16,37 @@ const Restaurants = () => {
   const [selectedCuisine, setSelectedCuisine] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
 
+  console.log("User in Restaurants:", user);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: '/restaurants' } });
       return;
     }
+    
+    const queryParams = new URLSearchParams(location.search);
+    const sessionId = queryParams.get('session_id');
+
+    if (sessionId && user?.email) {
+      sendSuccessEmail(user.email);
+    }
+
     fetchRestaurants();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.search, user]);
+
+  const sendSuccessEmail = async (email) => {
+    try {
+      await axios.post('http://localhost:5006/api/notifications/send', {
+        to: email,
+        subject: "DineSwift",
+        message: "Payment is successful..",
+        type: "email"
+      });
+      console.log('Success email sent!');
+    } catch (err) {
+      console.error('Failed to send success email:', err);
+    }
+  };
 
   const fetchRestaurants = async () => {
     try {
@@ -55,6 +80,7 @@ const Restaurants = () => {
       if (sortBy === 'price') return a.minOrder - b.minOrder;
       return 0;
     });
+
   const cuisines = ['all', ...new Set(restaurants.map(r => r.cuisine))];
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
