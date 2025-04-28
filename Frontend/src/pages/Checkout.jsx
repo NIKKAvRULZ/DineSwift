@@ -21,6 +21,8 @@ const Checkout = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { items, total, restaurantDetails } = location.state || {};
+  console.log("user", user);
+  
 
   if (!items || !items.length) {
     navigate('/cart');
