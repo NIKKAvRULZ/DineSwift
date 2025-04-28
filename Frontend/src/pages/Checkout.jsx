@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import orderService from '../api/orderService';
 import paymentService from '../api/paymentService';
 import { MapPin, ShoppingCart, CreditCard, Clock, Check, X } from 'lucide-react';
+import restaurantPlaceholder from '../assets/placeholder-restaurant.png'; 
 
 const Checkout = () => {
   const location = useLocation();
