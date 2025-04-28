@@ -15,7 +15,7 @@ const driverSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['available', 'busy'],
+    enum: ['available', 'busy', 'offline', 'assigned', 'in_progress'],
     default: 'available',
   },
   location: {

@@ -5,11 +5,13 @@ const axios = require('axios');
 
 // Assign a delivery
 const assignDelivery = async (req, res) => {
-  const { orderId, driverId, location } = req.body;
+  const { orderId, location } = req.body;
+  console.log('assignDelivery Input:', { orderId, location }); // Log input
   try {
     // Fetch order details from OrderService
     const orderResponse = await axios.get(`http://localhost:5003/api/orders/${orderId}`);
     const order = orderResponse.data;
+    console.log('OrderService Response:', order); // Log OrderService response
     
     // Validate order existence
     if (!order) {
@@ -17,23 +19,75 @@ const assignDelivery = async (req, res) => {
     }
 
     // Validate order status
-    if (!['pending', 'confirmed', 'preparing', 'ready'].includes(order.status)) {
+    if (!['Pending', 'Accepted', 'Preparing'].includes(order.status)) {
       return res.status(400).json({ message: `Cannot assign delivery for order in status: ${order.status}` });
     }
 
-    const delivery = new Delivery({
-      orderId,
-      driverId: driverId ? new mongoose.Types.ObjectId(driverId) : null,
-      location, // Use location directly as GeoJSON
-      status: driverId ? 'assigned' : 'pending',
-      estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
-      restaurantName: order.restaurantId, // Use restaurantId as placeholder
-      orderTotal: order.totalAmount, // Use actual order total
-    });
-    await delivery.save();
-    if (driverId) {
-      await Driver.findByIdAndUpdate(driverId, { status: 'busy' });
+    // Validate location
+    if (!location || !location.type || location.type !== 'Point' || !location.coordinates || location.coordinates.length !== 2) {
+      return res.status(400).json({ message: 'Valid GeoJSON Point location is required' });
     }
+
+    // Check available drivers
+    const availableDrivers = await Driver.find({ status: 'available' });
+    console.log('Available Drivers:', availableDrivers); // Log all available drivers
+
+    // Find the nearest available driver
+    let driver = null;
+    try {
+      driver = await Driver.findOne({
+        status: 'available',
+        location: {
+          $near: {
+            $geometry: { type: 'Point', coordinates: location.coordinates },
+            $maxDistance: 10000, // 10km radius
+          },
+        },
+      });
+      console.log('Nearest Driver Found:', driver); // Log driver result
+    } catch (err) {
+      console.error('Error finding nearest driver:', err.message);
+    }
+
+    let delivery;
+    if (driver) {
+      // Update driver status to busy
+      driver.status = 'busy';
+      await driver.save();
+
+      // Create delivery with assigned driver
+      delivery = new Delivery({
+        orderId,
+        driverId: driver._id,
+        location, // Use location directly as GeoJSON
+        status: 'Accepted',
+        estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
+        restaurantName: order.restaurantId, // Use restaurantId as placeholder
+        orderTotal: order.totalAmount, // Use actual order total
+      });
+
+      // Emit driverLocationUpdate event
+      req.io.emit('driverLocationUpdate', {
+        deliveryId: delivery._id.toString(),
+        driverId: driver._id.toString(),
+        location: driver.location,
+      });
+    } else {
+      // Create delivery without driver
+      delivery = new Delivery({
+        orderId,
+        driverId: null,
+        location, // Use location directly as GeoJSON
+        status: 'Pending',
+        estimatedDeliveryTime: new Date(Date.now() + 30 * 60000), // 30 minutes from now
+        restaurantName: order.restaurantId, // Use restaurantId as placeholder
+        orderTotal: order.totalAmount, // Use actual order total
+      });
+    }
+
+    await delivery.save();
+    console.log('Delivery Saved:', delivery); // Log saved delivery
+
     res.status(201).json({
       deliveryId: delivery._id.toString(),
       orderId: delivery.orderId,
@@ -101,7 +155,7 @@ const updateDeliveryStatus = async (req, res) => {
       return res.status(404).json({ message: 'Delivery not found' });
     }
     delivery.status = status;
-    if (status === 'delivered' || status === 'cancelled') {
+    if (status === 'Delivered') {
       if (delivery.driverId) {
         await Driver.findByIdAndUpdate(delivery.driverId, { status: 'available' });
       }
@@ -140,7 +194,18 @@ const getAvailableDrivers = async (req, res) => {
   const { longitude, latitude } = req.query;
   console.log('Query parameters:', { longitude, latitude });
   try {
-    const query = { status: 'available' };
+    // Find drivers who are available and not assigned to active deliveries
+    const activeDeliveries = await Delivery.find({
+      status: { $in: ['Pending', 'Accepted', 'Preparing', 'On the Way'] },
+    }).select('driverId');
+    const busyDriverIds = activeDeliveries
+      .filter(delivery => delivery.driverId)
+      .map(delivery => delivery.driverId.toString());
+
+    const query = {
+      status: 'available',
+      _id: { $nin: busyDriverIds }, // Exclude drivers with active deliveries
+    };
     if (longitude && latitude) {
       query.location = {
         $near: {
@@ -177,7 +242,7 @@ const trackDelivery = async (req, res) => {
     res.json({
       deliveryId: delivery._id.toString(),
       orderId: delivery.orderId,
-      status: delivery.status,
+      status: delivery.status, // Fixed: driver.status -> delivery.status
       location: delivery.location,
       driver: delivery.driverId ? {
         _id: delivery.driverId._id.toString(),
@@ -201,7 +266,7 @@ const trackDelivery = async (req, res) => {
 const getActiveDelivery = async (req, res) => {
   try {
     const delivery = await Delivery.findOne({
-      status: { $in: ['pending', 'assigned', 'in_progress'] },
+      status: { $in: ['Pending', 'Accepted', 'On the Way'] },
     }).populate('driverId');
     if (!delivery) {
       return res.status(404).json({ message: 'No active delivery found' });
@@ -229,11 +294,12 @@ const getActiveDelivery = async (req, res) => {
   }
 };
 
+// Get available orders
 const getAvailableOrders = async (req, res) => {
   try {
     // Fetch all pending deliveries without assigned drivers
     const deliveries = await Delivery.find({
-      status: 'pending',
+      status: 'Pending',
       driverId: null
     }).sort({ createdAt: -1 });
 
@@ -270,6 +336,26 @@ const getAvailableOrders = async (req, res) => {
   }
 };
 
+// Delete a delivery
+const deleteDelivery = async (req, res) => {
+  const { deliveryId } = req.params;
+  try {
+    const delivery = await Delivery.findByIdAndDelete(deliveryId);
+    if (!delivery) {
+      return res.status(404).json({ message: 'Delivery not found' });
+    }
+    // If a driver was assigned, update their status to available
+    if (delivery.driverId) {
+      await Driver.findByIdAndUpdate(delivery.driverId, { status: 'available' });
+    }
+    res.status(200).json({ message: 'Delivery deleted successfully' });
+    console.log(`Deleted delivery ${deliveryId}`);
+  } catch (error) {
+    console.error('Error deleting delivery:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   assignDelivery,
   getDeliveryStatus,
@@ -278,4 +364,5 @@ module.exports = {
   trackDelivery,
   getActiveDelivery,
   getAvailableOrders,
+  deleteDelivery,
 };

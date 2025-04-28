@@ -34,7 +34,7 @@ setInterval(async () => {
     const Delivery = require('./models/Delivery'); // Import here to avoid loading before DB connection
     const Driver = require('./models/Driver');
     const delivery = await Delivery.findOne({
-      status: { $in: ['assigned', 'in_progress'] },
+      status: { $in: ['Accepted', 'On the Way'] }, // Updated status values
     }).populate('driverId');
     if (delivery && delivery.driverId) {
       const newCoords = [
@@ -56,7 +56,7 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error emitting driverLocationUpdate:', error.message);
   }
-}, 10000);
+}, 5000);
 
 // MongoDB connection with retry logic
 const connectWithRetry = () => {

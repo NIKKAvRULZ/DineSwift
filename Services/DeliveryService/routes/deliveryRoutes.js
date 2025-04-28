@@ -7,6 +7,8 @@ const {
   getAvailableDrivers,
   trackDelivery,
   getActiveDelivery,
+  getAvailableOrders,
+  deleteDelivery,
 } = require('../controllers/deliveryController');
 
 const router = express.Router();
@@ -81,7 +83,7 @@ const deliveryIdSchema = Joi.object({
 
 const updateDeliveryStatusSchema = Joi.object({
   status: Joi.string()
-    .valid('pending', 'assigned', 'in_progress', 'delivered', 'cancelled')
+    .valid('Pending', 'Accepted', 'Preparing', 'On the Way', 'Delivered')
     .required()
     .messages({
       'any.only': 'Invalid status value',
@@ -114,8 +116,9 @@ router.put('/status/:deliveryId', validateRequest(updateDeliveryStatusSchema, 'b
 router.get('/available-drivers', validateRequest(availableDriversSchema, 'query'), getAvailableDrivers);
 router.get('/track/:deliveryId', validateRequest(deliveryIdSchema, 'params'), trackDelivery);
 router.get('/active', getActiveDelivery);
-
-// Add new route for available orders
 router.get('/available-orders', getAvailableOrders);
+
+// Updated DELETE route to use :deliveryId
+router.delete('/:deliveryId', validateRequest(deliveryIdSchema, 'params'), deleteDelivery);
 
 module.exports = router;

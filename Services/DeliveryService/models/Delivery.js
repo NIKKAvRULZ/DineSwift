@@ -5,15 +5,15 @@ const deliverySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  driverId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Driver',
-    default: null,
+  restaurantName: {
+    type: String,
+    required: true,
+    default: 'DineSwift Restaurant',
   },
   status: {
     type: String,
-    enum: ['pending', 'assigned', 'in_progress', 'delivered', 'cancelled'],
-    default: 'pending',
+    enum: ['Pending', 'Accepted', 'Preparing', 'On the Way', 'Delivered'],
+    default: 'Pending',
   },
   location: {
     type: {
@@ -26,17 +26,16 @@ const deliverySchema = new mongoose.Schema({
       required: true,
     },
   },
+  driverId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Driver',
+    default: null,
+  },
   estimatedDeliveryTime: {
     type: Date,
-    default: () => new Date(Date.now() + 30 * 60000), // 30 minutes from now
-  },
-  restaurantName: {
-    type: String,
-    default: 'DineSwift Restaurant',
   },
   orderTotal: {
     type: Number,
-    default: 32.59,
   },
 }, {
   timestamps: true,

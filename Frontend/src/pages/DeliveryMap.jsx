@@ -59,7 +59,7 @@ const markerVariants = {
   },
   pulse: {
     scale: [1, 1.2, 1],
-    transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+    transition: { repeat: Infinity, duration: 2, ease: "easeInOut" },
   },
 };
 

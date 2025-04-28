@@ -69,15 +69,18 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const statusSequence = ['pending', 'assigned', 'in_progress', 'delivered'];
+  const statusSequence = ['Pending', 'Accepted', 'Preparing', 'On the Way', 'Delivered'];
 
   const getAvailableStatuses = (current) => {
-    if (!current || current === 'cancelled' || current === 'delivered') {
-      return ['cancelled'];
+    if (!current || current === 'Delivered') {
+      return [];
     }
     const currentIndex = statusSequence.indexOf(current);
+    if (currentIndex === -1) {
+      return [];
+    }
     const nextStatus = currentIndex < statusSequence.length - 1 ? statusSequence[currentIndex + 1] : null;
-    return nextStatus ? [nextStatus, 'cancelled'] : ['cancelled'];
+    return nextStatus ? [nextStatus] : [];
   };
 
   useEffect(() => {
@@ -96,7 +99,7 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
       }
       try {
         const response = await axios.get(`http://localhost:5004/api/delivery/track/${deliveryId}`);
-        setCurrentStatus(response.data.status || 'pending');
+        setCurrentStatus(response.data.status || 'Pending');
         setStatus('');
         setError(null);
       } catch (err) {
@@ -136,11 +139,11 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
 
   const getStatusText = (status) =>
     ({
-      pending: 'Pending',
-      assigned: 'Assigned',
-      in_progress: 'In Progress',
-      delivered: 'Delivered',
-      cancelled: 'Cancelled',
+      Pending: 'Pending',
+      Accepted: 'Accepted',
+      Preparing: 'Preparing',
+      'On the Way': 'On the Way',
+      Delivered: 'Delivered',
     }[status] || status);
 
   return (
@@ -314,7 +317,7 @@ const UpdateDeliveryStatus = ({ isDarkMode }) => {
               </option>
               {availableStatuses.map((statusOption) => (
                 <option key={statusOption} value={statusOption}>
-                  {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                  {getStatusText(statusOption)}
                 </option>
               ))}
             </motion.select>

@@ -436,11 +436,11 @@ const Delivery = () => {
 
   const mapStatus = (backendStatus) => {
     const statusMap = {
-      pending: 'confirmed',
-      assigned: 'preparing',
-      in_progress: 'picked_up',
-      delivered: 'delivered',
-      cancelled: 'cancelled',
+      Pending: 'confirmed',
+      Accepted: 'preparing',
+      Preparing: 'preparing',
+      'On the Way': 'on_the_way',
+      Delivered: 'delivered',
     };
     return statusMap[backendStatus] || 'confirmed';
   };
@@ -448,7 +448,7 @@ const Delivery = () => {
   const mapToActiveOrder = (delivery, order = {}) => {
     console.log('Mapping delivery:', delivery);
     console.log('Mapping order:', order);
-    const mappedStatus = mapStatus(delivery.status || 'pending');
+    const mappedStatus = mapStatus(delivery.status || 'Pending');
     const defaultLocation = { coordinates: [79.8612, 6.9271] };
     let deliveryLocation = defaultLocation;
 
@@ -692,35 +692,33 @@ const Delivery = () => {
   }
 
   const getStatusColor = (status) => ({
-    pending: 'bg-gray-100 text-gray-800 border-gray-300',
-    assigned: 'bg-blue-100 text-blue-800 border-blue-300',
-    in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    confirmed: 'bg-gray-100 text-gray-800 border-gray-300',
+    preparing: 'bg-blue-100 text-blue-800 border-blue-300',
+    on_the_way: 'bg-yellow-100 text-yellow-800 border-yellow-300',
     delivered: 'bg-green-100 text-green-800 border-gray-300',
-    cancelled: 'bg-red-100 text-red-800 border-red-300',
   }[status] || 'bg-gray-100 text-gray-800 border-gray-300');
 
   const getStatusText = (status) => ({
-    pending: 'Pending',
-    assigned: 'Assigned',
-    in_progress: 'In Progress',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
     confirmed: 'Order Confirmed',
     preparing: 'Preparing Order',
-    picked_up: 'Picked Up',
+    on_the_way: 'On the Way',
     delivered: 'Delivered',
+    Pending: 'Pending',
+    Accepted: 'Accepted',
+    Preparing: 'Preparing',
+    'On the Way': 'On the Way',
+    Delivered: 'Delivered',
   }[status] || status);
 
   const statusDescriptions = {
     confirmed: 'Your order has been received and confirmed by the restaurant.',
     preparing: 'The restaurant is currently preparing your delicious meal.',
-    picked_up: 'The driver has picked up your order and is on the way.',
+    on_the_way: 'The driver has picked up your order and is on the way.',
     delivered: 'Your order has been successfully delivered to you.',
-    cancelled: 'The order has been cancelled.',
   };
 
   // Calculate progress for the animated line
-  const statusOrder = ['confirmed', 'preparing', 'picked_up', 'delivered'];
+  const statusOrder = ['confirmed', 'preparing', 'on_the_way', 'delivered'];
   const currentStatusIndex = statusOrder.indexOf(activeOrder.status);
   const progress = (currentStatusIndex + 1) / statusOrder.length;
 
@@ -958,10 +956,13 @@ const Delivery = () => {
           </motion.div>
 
           <motion.div
-            className="py-10 border-t"
+            className="px-8 py-10 border-t"
             variants={slideUpVariants}
             style={{ animationDelay: '0.4s', borderColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.5)' }}
           >
+            <h4 className="text-xl font-semibold mb-8" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
+              Delivery Information
+            </h4>
             <motion.div
               variants={infoContainerVariants}
               initial="hidden"
@@ -969,9 +970,6 @@ const Delivery = () => {
               className="w-full"
             >
               <div className="px-4 sm:px-6 lg:px-8">
-                <h4 className="text-3xl font-semibold mb-6 font-sans tracking-tight" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
-                  Delivery Information
-                </h4>
                 <motion.div
                   variants={dividerVariants}
                   className="h-0.5 bg-gradient-to-r from-transparent via-[#eb1900] to-transparent mb-8"
@@ -981,27 +979,27 @@ const Delivery = () => {
                     {
                       label: 'Estimated Delivery Time',
                       value: activeOrder.estimatedDeliveryTime || 'N/A',
-                      icon: <FaClock className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      icon: <FaClock className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                     {
                       label: 'Distance',
-                      value: activeOrder.distance || 'N/ A',
-                      icon: <FaMapMarkerAlt className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      value: activeOrder.distance || 'N/A',
+                      icon: <FaMapMarkerAlt className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                     {
                       label: 'Restaurant',
                       value: activeOrder.restaurantName || 'N/A',
-                      icon: <FaUtensils className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      icon: <FaUtensils className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                     {
                       label: 'Delivery Address',
                       value: activeOrder.address || 'N/A',
-                      icon: <FaMapPin className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      icon: <FaMapPin className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                     {
                       label: 'Order Total',
                       value: activeOrder.orderTotal || 'N/A',
-                      icon: <FaDollarSign className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      icon: <FaDollarSign className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                     {
                       label: 'Order Status',
@@ -1012,7 +1010,7 @@ const Delivery = () => {
                           {getStatusText(activeOrder.status)}
                         </span>
                       ),
-                      icon: <FaInfoCircle className={`text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2`} />,
+                      icon: <FaInfoCircle className="text-2xl ${isDarkMode ? 'text-[#b91c1c]' : 'text-[#eb1900]'} mr-2" />,
                     },
                   ].map((item, idx) => (
                     <motion.div
@@ -1072,6 +1070,48 @@ const Delivery = () => {
             <h4 className="text-xl font-semibold mb-8" style={{ color: isDarkMode ? '#f9fafb' : '#1f2937' }}>
               Control Panel
             </h4>
+            <div className="flex justify-end mb-4">
+              <motion.button
+                variants={buttonVariants}
+                initial="rest"
+                animate="rest"
+                whileHover="hover"
+                whileTap="tap"
+                onClick={async () => {
+                  try {
+                    await axios.delete(`http://localhost:5004/api/delivery/${deliveryId}`);
+                    setActiveOrder(null);
+                    setDeliveryId('');
+                    setLocation(null);
+                    setDriverLocation(null);
+                    setDeliveryDetails(null);
+                    setError(null);
+                    alert('Delivery deleted successfully');
+                  } catch (err) {
+                    setError(err.response?.data?.message || 'Failed to delete delivery');
+                  }
+                }}
+                className={`px-8 py-4 ${isDarkMode ? 'bg-gradient-to-r from-[#b91c1c] to-[#991b1b]' : 'bg-gradient-to-r from-[#eb1900] to-[#c71500]'} text-white rounded-xl shadow-lg focus:ring-4 focus:ring-[#eb1900]/50 font-semibold flex items-center justify-center relative overflow-hidden border-2 border-transparent animate-pulse-on-hover`}
+                data-tooltip-id="delete-delivery-tooltip"
+                data-tooltip-content="Delete this delivery"
+                aria-label="Delete delivery"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-white/40"
+                  variants={rippleVariants}
+                  initial="initial"
+                  animate="initial"
+                  whileTap="animate"
+                />
+                <FaTimes className="mr-2" />
+                Delete Delivery
+                <Tooltip
+                  id="delete-delivery-tooltip"
+                  place="top"
+                  className={`bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl ${isDarkMode ? '!bg-gray-700' : ''}`}
+                />
+              </motion.button>
+            </div>
             <div className="border-2 border-transparent rounded-xl overflow-hidden">
               <UpdateDeliveryStatus isDarkMode={isDarkMode} />
             </div>
@@ -1297,10 +1337,7 @@ const Delivery = () => {
                           label: 'Status',
                           value: deliveryDetails?.status ? (
                             <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(deliveryDetails.status).replace(
-                                'bg-blue-100 text-blue-800',
-                                isDarkMode ? 'bg-[#b91c1c]/20 text-[#b91c1c]' : 'bg-[#eb1900]/20 text-[#eb1900]'
-                              )}`}
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(mapStatus(deliveryDetails.status))}`}
                             >
                               {getStatusText(deliveryDetails.status)}
                             </span>
