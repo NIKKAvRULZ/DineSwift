@@ -1,12 +1,15 @@
 console.log("Loaded from .env:", require('dotenv').config());
 const dotenv = require("dotenv");
 const express = require("express");
+const cors = require('cors');
 const mongoose = require("mongoose");
 const notificationRoutes = require("./routes/notificationRoutes");
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
+
 app.use(express.json());
 
 // Routes
