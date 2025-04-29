@@ -385,9 +385,33 @@ const Menu = () => {
     return 0;
   });
   
-  // Add item to the cart
+  // Add to cart handler
   const handleAddToCart = (item) => {
-    addToCart(item, id); // Use addToCart from CartContext
+    // Create a complete restaurant info object to ensure restaurantId is passed
+    const restaurantInfo = {
+      restaurantId: restaurant?._id || id, // Use _id or fallback to route param id
+      restaurantName: restaurant?.name,
+      deliveryTime: restaurant?.deliveryTime
+    };
+    
+    console.log("Adding to cart with restaurant info:", restaurantInfo);
+    
+    const itemToAdd = {
+      id: item._id || item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image || item.images?.[0],
+      specialInstructions: ''
+    };
+    
+    addToCart(itemToAdd, restaurantInfo);
+    
+    // Show success toast
+    setToast({
+      visible: true,
+      message: `Added ${item.name} to cart`,
+      type: 'success'
+    });
   };
 
   // Handle rating an item - modify to handle offline mode gracefully

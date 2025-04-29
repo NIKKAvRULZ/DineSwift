@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import orderService from '../api/orderService';
 import { MapPin, ShoppingCart, CreditCard, Clock, Check, X } from 'lucide-react';
+import restaurantPlaceholder from '../assets/placeholder-restaurant.png';
 
 const Checkout = () => {
   const location = useLocation();
@@ -35,19 +36,30 @@ const Checkout = () => {
       setLoading(true);
       setError(null);
 
+      // Log the items to help debug
+      console.log("Items being ordered:", items);
+      
+      // Make sure we have a restaurantId
+      if (!items.length || !items[0].restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try again or contact support.");
+      }
+
       const orderData = {
         customerId: user.id,
-        restaurantId: items[0].restaurantId, // Assuming all items are from same restaurant
+        restaurantId: items[0].restaurantId, // Ensure restaurantId is set
         items: items.map(item => ({
           name: item.name,
           price: item.price,
-          quantity: item.quantity
+          quantity: item.quantity,
+          menuItemId: item.id // Include menuItemId if available
         })),
         totalAmount: total,
-        enum: 'pending',
-        paymentMethod,
-        deliveryAddress: address
+        payment_method: paymentMethod,
+        delivery_address: address
       };
+      
+      // Log the orderData to verify restaurantId is present
+      console.log("Order data being sent:", orderData);
 
       const response = await orderService.createOrder(orderData, user.token);
       setIsOrderPlaced(true);
@@ -78,7 +90,7 @@ const Checkout = () => {
           {/* Restaurant Header */}
           <div className="flex items-center mb-8">
             <img 
-              src={restaurantDetails?.image || "https://via.placeholder.com/100"}
+              src={restaurantDetails?.image || restaurantPlaceholder}
               alt={restaurantDetails?.name}
               className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-200"
             />
@@ -128,12 +140,9 @@ const Checkout = () => {
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
                     <p className="text-gray-500 text-sm">Quantity: {item.quantity}</p>
-                    {item.discount > 0 && (
-                      <p className="text-red-500 text-sm">{item.discount}% OFF</p>
-                    )}
                   </div>
                 </div>
-                <span className="text-lg font-semibold">Rs {(item.price * item.quantity).toFixed(2)}</span>
+                <span className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
               </motion.div>
             ))}
           </div>
@@ -146,7 +155,7 @@ const Checkout = () => {
           >
             <div className="border-t pt-2 mt-2 font-bold flex justify-between text-xl">
               <span className="text-gray-800">Total Amount:</span>
-              <span className="text-gray-800">Rs {total.toFixed(2)}</span>
+              <span className="text-gray-800">${total.toFixed(2)}</span>
             </div>
           </motion.div>
         </div>
