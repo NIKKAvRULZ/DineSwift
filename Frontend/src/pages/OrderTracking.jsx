@@ -415,15 +415,29 @@ const RatingComponent = ({ orderId }) => {
     setError(null);
     try {
       console.log(`Submitting rating ${rating} for order ${orderId}`);
+      // Add a more informative log message
+      console.log("Rating data being sent:", { rating: parseInt(rating, 10), feedback });
+      
       await orderService.updateOrderRating(orderId, { 
         rating: parseInt(rating, 10), 
         feedback 
       });
+      
       setSubmitted(true);
       triggerConfetti();
     } catch (error) {
       console.error("Failed to submit rating:", error);
-      const errorMessage = error.message || "Failed to submit your rating. Please try again.";
+      // Improve error message handling
+      let errorMessage;
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Failed to submit your rating. Please try again.";
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);

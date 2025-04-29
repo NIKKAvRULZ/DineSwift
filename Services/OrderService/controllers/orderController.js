@@ -108,13 +108,15 @@ export const deleteOrder = async (req, res) => {
     }
 };
 
-// Update the updateRating method with better debugging
+// Update the updateRating method with better debugging and error handling
 export const updateRating = async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, feedback } = req.body;
     
     console.log(`Received rating request for order ${id}:`, req.body);
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.originalUrl);
     
     // Validate the request
     if (!rating || rating < 1 || rating > 5) {
