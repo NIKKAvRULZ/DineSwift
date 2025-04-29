@@ -49,42 +49,42 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
     const [newComment, setNewComment] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     
-    // Convert single image to images array if needed
-    const images = menuItem.images || (menuItem.image ? [menuItem.image] : []);
-    
-    // Log rating changes for debugging
-    useEffect(() => {
-        console.log('MenuItem rating updated:', {
-            name: menuItem.name,
-            rating: menuItem.rating,
-            ratingCount: menuItem.ratingCount
-        });
-    }, [menuItem.rating, menuItem.ratingCount]);
-
-    // Load comments when component mounts
-    useEffect(() => {
-        loadComments();
-    }, [menuItem._id]);
-
-    const loadComments = async () => {
-        try {
-            const response = await axios.get(`${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`);
-            setComments(response.data.comments);
-        } catch (error) {
-            console.error('Error loading comments:', error);
+    // Properly normalize images from different sources
+    const getProcessedImages = () => {
+        // First check for images array
+        if (menuItem.images && Array.isArray(menuItem.images) && menuItem.images.length > 0) {
+            return menuItem.images.filter(img => Boolean(img));
         }
+        // Then fallback to single image if no array or empty array
+        if (menuItem.image && typeof menuItem.image === 'string' && menuItem.image.trim() !== '') {
+            return [menuItem.image];
+        }
+        // Return empty array if no images found
+        return [];
+    };
+    
+    const images = getProcessedImages();
+    
+    // Reset currentImageIndex when images change
+    useEffect(() => {
+        setCurrentImageIndex(0);
+    }, [menuItem._id]);
+    
+    // Log images for debugging
+    useEffect(() => {
+        console.log(`Menu item "${menuItem.name}" has ${images.length} images:`, images);
+    }, [menuItem.name, images]);
+
+    const handleNextImage = (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        if (images.length <= 1) return;
+        setCurrentImageIndex(prev => (prev + 1) % images.length);
     };
 
-    const handleNextImage = () => {
-        setCurrentImageIndex((prev) => 
-            prev === (images.length - 1 || 0) ? 0 : prev + 1
-        );
-    };
-
-    const handlePrevImage = () => {
-        setCurrentImageIndex((prev) => 
-            prev === 0 ? (images.length - 1 || 0) : prev - 1
-        );
+    const handlePrevImage = (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        if (images.length <= 1) return;
+        setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
     };
 
     const handleRatingChange = async (event, newValue) => {
@@ -242,96 +242,150 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                         {`${menuItem.discount}% OFF`}
                     </Box>
                 )}
-                {images.length > 0 && (
-                    <Box sx={{
-                        position: 'relative',
-                        paddingTop: '75%', // 4:3 aspect ratio
-                        width: '100%'
-                    }}>
-                        <CardMedia
-                            component="img"
-                            image={images[currentImageIndex]}
-                            alt={menuItem.name}
-                            sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'contain',
-                                borderTopLeftRadius: theme.shape.borderRadius,
-                                borderTopRightRadius: theme.shape.borderRadius,
-                                bgcolor: 'background.default'
-                            }}
-                        />
-                        {images.length > 1 && (
-                            <>
-                                <IconButton
-                                    onClick={handlePrevImage}
-                                    sx={{
-                                        position: 'absolute',
-                                        left: 8,
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                        },
-                                    }}
-                                >
-                                    <NavigateBeforeIcon />
-                                </IconButton>
-                                <IconButton
-                                    onClick={handleNextImage}
-                                    sx={{
-                                        position: 'absolute',
-                                        right: 8,
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                        },
-                                    }}
-                                >
-                                    <NavigateNextIcon />
-                                </IconButton>
+                
+                {/* Image Slideshow */}
+                <Box sx={{
+                    position: 'relative',
+                    paddingTop: '75%', // 4:3 aspect ratio
+                    width: '100%',
+                    backgroundColor: 'rgba(0,0,0,0.05)'
+                }}>
+                    {images.length > 0 ? (
+                        <>
+                            <CardMedia
+                                component="img"
+                                image={images[currentImageIndex]}
+                                alt={menuItem.name}
+                                sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    borderTopLeftRadius: theme.shape.borderRadius,
+                                    borderTopRightRadius: theme.shape.borderRadius
+                                }}
+                                onError={(e) => {
+                                    console.error('Image failed to load:', images[currentImageIndex]);
+                                    e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+                                }}
+                            />
+                            
+                            {/* Navigation arrows - only show when multiple images */}
+                            {images.length > 1 && (
+                                <>
+                                    <IconButton
+                                        onClick={handlePrevImage}
+                                        sx={{
+                                            position: 'absolute',
+                                            left: 8,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                            },
+                                            zIndex: 2
+                                        }}
+                                        size="small"
+                                    >
+                                        <NavigateBeforeIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        onClick={handleNextImage}
+                                        sx={{
+                                            position: 'absolute',
+                                            right: 8,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                            },
+                                            zIndex: 2
+                                        }}
+                                        size="small"
+                                    >
+                                        <NavigateNextIcon />
+                                    </IconButton>
+                                    
+                                    {/* Dots indicator for images */}
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 8,
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            display: 'flex',
+                                            gap: 1,
+                                            zIndex: 2
+                                        }}
+                                    >
+                                        {images.map((_, index) => (
+                                            <Box
+                                                key={index}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setCurrentImageIndex(index);
+                                                }}
+                                                sx={{
+                                                    width: 8,
+                                                    height: 8,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: index === currentImageIndex 
+                                                        ? theme.palette.primary.main 
+                                                        : 'rgba(255, 255, 255, 0.7)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    '&:hover': {
+                                                        transform: 'scale(1.2)',
+                                                    },
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                </>
+                            )}
+                            
+                            {/* Image counter */}
+                            {images.length > 1 && (
                                 <Box
                                     sx={{
                                         position: 'absolute',
-                                        bottom: 8,
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        display: 'flex',
-                                        gap: 1,
+                                        top: 8,
+                                        right: 8,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                        color: 'white',
+                                        borderRadius: '4px',
+                                        padding: '2px 6px',
+                                        fontSize: '0.75rem',
+                                        zIndex: 2
                                     }}
                                 >
-                                    {images.map((_, index) => (
-                                        <Paper
-                                            key={index}
-                                            sx={{
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                backgroundColor: index === currentImageIndex 
-                                                    ? theme.palette.primary.main 
-                                                    : 'rgba(255, 255, 255, 0.5)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                '&:hover': {
-                                                    backgroundColor: index === currentImageIndex 
-                                                        ? theme.palette.primary.dark 
-                                                        : 'rgba(255, 255, 255, 0.8)',
-                                                },
-                                            }}
-                                            onClick={() => setCurrentImageIndex(index)}
-                                        />
-                                    ))}
+                                    {currentImageIndex + 1} / {images.length}
                                 </Box>
-                            </>
-                        )}
-                    </Box>
-                )}
+                            )}
+                        </>
+                    ) : (
+                        <Box sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'text.secondary',
+                            borderTopLeftRadius: theme.shape.borderRadius,
+                            borderTopRightRadius: theme.shape.borderRadius
+                        }}>
+                            <Typography variant="body2">No image available</Typography>
+                        </Box>
+                    )}
+                </Box>
+                
                 <CardContent sx={{ flexGrow: 1 }}>
                     <Typography
                         variant="h6"

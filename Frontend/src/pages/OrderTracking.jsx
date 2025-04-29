@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import orderService from '../services/orderService';
+import restaurantService from "../services/restaurantService";
 
 const stageAnimations = {
-    pending: {
+    Pending: {
       scale: [1, 1.1, 1],  
       rotate: [0, -5, 5, -5, 0],  
       opacity: [1, 0.7, 1],  // Flickering effect like waiting status
@@ -130,59 +131,53 @@ const triggerConfetti = () => {
 
 const stages = [
   {
-    key: 'pending',
+    key: 'Pending',
     label: 'Order Placed',
     icon: '📝',
-    animation: stageAnimations.pending,
-    bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
-    activeColor: 'bg-blue-500'
+    animation: stageAnimations.Pending   ,
+    bgColor: 'bg-gradient-to-br from-amber-100 to-amber-200',
+    activeColor: 'bg-amber-500'
   },
   {
-    key: 'confirmed',
-    label: 'Confirmed',
+    key: 'Accepted',
+    label: 'Accepted',
     icon: '✅',
     animation: stageAnimations.confirmed,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-sky-100 to-sky-200',
+    activeColor: 'bg-sky-500'
   },
   {
-    key: 'preparing',
+    key: 'Preparing',
     label: 'Preparing',
     icon: '👨‍🍳',
     animation: stageAnimations.preparing,
-    bgColor: 'bg-gradient-to-br from-yellow-100 to-yellow-200',
-    activeColor: 'bg-yellow-500'
+    bgColor: 'bg-gradient-to-br from-indigo-100 to-indigo-200',
+    activeColor: 'bg-indigo-500'
   },
   {
-    key: 'ready',
-    label: 'Ready',
-    icon: '🍽️',
-    animation: stageAnimations.ready,
-    bgColor: 'bg-gradient-to-br from-purple-100 to-purple-200',
-    activeColor: 'bg-purple-500'
-  },
-  {
-    key: 'delivering',
+    key: 'On the Way',
     label: 'On the Way',
     icon: '🚗',
     animation: stageAnimations.delivering,
-    bgColor: 'bg-gradient-to-br from-orange-100 to-orange-200',
-    activeColor: 'bg-orange-500'
+    bgColor: 'bg-gradient-to-br from-teal-100 to-teal-200',
+    activeColor: 'bg-teal-500'
   },
   {
-    key: 'delivered',
+    key: 'Delivered',
     label: 'Delivered',
     icon: '🎉',
     animation: stageAnimations.delivered,
-    bgColor: 'bg-gradient-to-br from-green-100 to-green-200',
-    activeColor: 'bg-green-500'
+    bgColor: 'bg-gradient-to-br from-lime-100 to-lime-200',
+    activeColor: 'bg-lime-500'
   }
 ];
 
 const OrderTracking = () => {
   const { orderId } = useParams();
+  const { restaurantId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -212,7 +207,7 @@ const OrderTracking = () => {
   }, [orderId, navigate]);
 
   useEffect(() => {
-    if (order?.status === 'delivered') {
+    if (order?.status === 'Delivered') {
       triggerConfetti();
     }
   }, [order?.status]);
@@ -329,21 +324,21 @@ const OrderTracking = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-gray-600">Restaurant</p>
-                    <p className="font-medium">{order?.restaurantName}</p>
+                    <p className="font-medium">{order?.restaurant?.name || 'Not available'}</p>
                   </div>
-                  <div>
+                  <div> 
                     <p className="text-gray-600">Order Date</p>
                     <p className="font-medium">
                       {new Date(order?.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-lg">Total</h3>
-                    <p className="font-medium">Rs {order?.total?.toFixed(2)}</p>
+                  <div>
+                    <p className="text-gray-600">Total Amount</p>
+                    <p className="font-medium">${Number(order?.totalAmount).toFixed(2) || '0.00'}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Items</p>
-                    <p className="font-medium">{order?.items?.length} items</p>
+                    <p className="font-medium">{order?.items?.length || 0} items</p>
                   </div>
                 </div>
               </div>
@@ -353,7 +348,14 @@ const OrderTracking = () => {
                 <h2 className="text-lg font-semibold mb-4">Order Items</h2>
                 <div className="space-y-4">
                   {order?.items?.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
+                    <motion.div 
+                      key={index} 
+                      className="flex justify-between items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{item.name}</h4>
                         <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
@@ -362,15 +364,143 @@ const OrderTracking = () => {
                         )}
                       </div>
                       <p className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
+              </div>
+
+              {/* Rating and Feedback Section */}
+              {order?.status === 'Delivered' && (
+                <div className="border-t mt-6 pt-6">
+                  <h2 className="text-lg font-semibold mb-4">Rate Your Experience</h2>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <RatingComponent orderId={orderId} />
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Restaurant */}
+              <div className="border-t mt-6 pt-6">  
+                <h2 className="text-lg font-semibold mb-4">Need Help?</h2>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
+                  onClick={() => window.open(`tel:${order?.restaurant?.phone || '+94760394961'}`)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  Contact Restaurant
+                </motion.button>
               </div>
             </div>
           </div>
         </motion.div>
       </div>
     </div>
+  );
+};
+
+// Rating Component
+const RatingComponent = ({ orderId }) => {
+  const [rating, setRating] = useState(0);
+  const [feedback, setFeedback] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`Submitting rating ${rating} for order ${orderId}`);
+      // Add a more informative log message
+      console.log("Rating data being sent:", { rating: parseInt(rating, 10), feedback });
+      
+      await orderService.updateOrderRating(orderId, { 
+        rating: parseInt(rating, 10), 
+        feedback 
+      });
+      
+      setSubmitted(true);
+      triggerConfetti();
+    } catch (error) {
+      console.error("Failed to submit rating:", error);
+      // Improve error message handling
+      let errorMessage;
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Failed to submit your rating. Please try again.";
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-4"
+      >
+        <div className="text-5xl mb-4">🎉</div>
+        <h3 className="text-xl font-semibold">Thanks for your feedback!</h3>
+        <p className="text-gray-600 mt-2">Your rating helps us improve our service.</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-4"
+    >
+      <div className="flex justify-center space-x-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <motion.button
+            key={star}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setRating(star)}
+            className={`text-3xl ${
+              rating >= star ? 'text-yellow-500' : 'text-gray-300'
+            }`}
+          >
+            ★
+          </motion.button>
+        ))}
+      </div>
+      <textarea
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+        rows="3"
+        placeholder="Share your experience with this order..."
+        value={feedback}
+        onChange={(e) => setFeedback(e.target.value)}
+      ></textarea>
+      {error && (
+        <div className="text-red-500 text-sm p-2 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="w-full bg-orange-500 text-white py-2 rounded-lg font-medium shadow-md disabled:opacity-50"
+        onClick={handleSubmit}
+        disabled={!rating || loading}
+      >
+        {loading ? 'Submitting...' : 'Submit Feedback'}
+      </motion.button>
+    </motion.div>
   );
 };
 

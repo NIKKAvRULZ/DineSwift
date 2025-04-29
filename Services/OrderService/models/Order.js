@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
-const OrderSchema = new mongoose.Schema({
+const orderSchema = new mongoose.Schema({
     customerId: { 
         type: String, 
         required: true 
@@ -20,8 +20,8 @@ const OrderSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ["pending", "confirmed", "preparing", "ready", "delivering", "delivered"], 
-        default: "pending" 
+        enum: ["Pending", "Accepted", "Preparing", "On the Way", "Delivered"], 
+        default: "Pending"
     },
     paymentMethod: { 
         type: String, 
@@ -35,7 +35,26 @@ const OrderSchema = new mongoose.Schema({
     createdAt: { 
         type: Date, 
         default: Date.now 
-    }
-});
+    },
 
-module.exports = mongoose.model("Order", OrderSchema);
+    // Add rating fields
+    rating: {
+        score: {
+            type: Number,
+            min: 1,
+            max: 5,
+            default: null
+        },
+        feedback: {
+            type: String,
+            default: ''
+        },
+        createdAt: {
+            type: Date,
+            default: null
+        }
+    }
+}, { timestamps: true });
+
+const Order = mongoose.model('Order', orderSchema);
+export default Order;

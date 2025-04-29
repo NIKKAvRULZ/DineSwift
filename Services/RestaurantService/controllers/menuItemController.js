@@ -76,6 +76,7 @@ const addMenuItem = async (req, res) => {
         const { 
             name,
             description,
+            image,
             images,
             category,
             price,
@@ -83,15 +84,47 @@ const addMenuItem = async (req, res) => {
             discount
         } = req.body;
 
+        // Debug logging for image data
+        console.log('Received image data:');
+        console.log('- image:', image);
+        console.log('- images:', JSON.stringify(images));
+        console.log('- images is array:', Array.isArray(images));
+        console.log('- images length:', images ? images.length : 0);
+        console.log('- raw body images:', JSON.stringify(req.body.images));
+
         const restaurant = await Restaurant.findById(req.params.restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
         
+        // Normalize images handling
+        let imageArray = [];
+        
+        // First, try to use the 'images' array if provided
+        if (images && Array.isArray(images)) {
+            imageArray = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+        }
+        
+        // If no valid images in array but 'image' is provided, use that
+        if (imageArray.length === 0 && image && typeof image === 'string' && image.trim() !== '') {
+            imageArray = [image];
+        }
+        
+        // Get primary image (first one or empty)
+        const primaryImage = imageArray.length > 0 ? imageArray[0] : '';
+        
+        // Limit to maximum 5 images
+        if (imageArray.length > 5) {
+            imageArray = imageArray.slice(0, 5);
+        }
+        
+        console.log(`Creating menu item with ${imageArray.length} images:`, imageArray);
+        
         const menuItem = new MenuItem({
             name,
             description,
-            images: images || [], // Handle multiple images
+            image: primaryImage, // Set primary image
+            images: imageArray,
             category,
             price,
             isSpicy: isSpicy || false,
@@ -118,6 +151,7 @@ const updateMenuItem = async (req, res) => {
         const { 
             name,
             description,
+            image,
             images,
             category,
             price,
@@ -137,14 +171,48 @@ const updateMenuItem = async (req, res) => {
             return res.status(404).json({ message: 'Menu item not found' });
         }
 
+        // Normalize images handling (similar to addMenuItem)
+        let imageArray = [];
+        
+        // First, try to use the 'images' array if provided
+        if (images && Array.isArray(images)) {
+            imageArray = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+        }
+        
+        // If no valid images in array but 'image' is provided, use that
+        if (imageArray.length === 0 && image && typeof image === 'string' && image.trim() !== '') {
+            imageArray = [image];
+        }
+        
+        // If still no images, keep existing ones
+        if (imageArray.length === 0) {
+            imageArray = menuItem.images || [];
+            if (imageArray.length === 0 && menuItem.image) {
+                imageArray = [menuItem.image];
+            }
+        }
+        
+        // Get primary image (first one or existing or empty)
+        const primaryImage = imageArray.length > 0 ? 
+            imageArray[0] : 
+            (menuItem.image || '');
+        
+        // Limit to maximum 5 images
+        if (imageArray.length > 5) {
+            imageArray = imageArray.slice(0, 5);
+        }
+        
+        console.log(`Updating menu item with ${imageArray.length} images:`, imageArray);
+
         const updatedData = {
             name,
             description,
-            images: images || menuItem.images || [], // Handle multiple images
+            image: primaryImage,
+            images: imageArray,
             category,
             price,
-            isSpicy: isSpicy || false,
-            discount: discount || 0,
+            isSpicy: isSpicy !== undefined ? isSpicy : menuItem.isSpicy || false,
+            discount: discount !== undefined ? discount : menuItem.discount || 0,
             rating: menuItem.rating
         };
 

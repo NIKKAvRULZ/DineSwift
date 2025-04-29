@@ -40,6 +40,8 @@ const CATEGORIES = [
     'Specials'
 ];
 
+const MAX_IMAGES = 5;
+
 const AddMenuItem = () => {
     const { restaurantId } = useParams();
     const navigate = useNavigate();
@@ -75,19 +77,49 @@ const AddMenuItem = () => {
 
     const handleAddImage = () => {
         if (newImageUrl.trim()) {
-            setFormData(prev => ({
-                ...prev,
-                images: [...prev.images, newImageUrl.trim()]
-            }));
-            setNewImageUrl('');
+            // Check if already at max images
+            if (formData.images.length >= MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. Remove an image to add a new one.`);
+                return;
+            }
+            
+            // Check if image URL is valid
+            try {
+                // More permissive URL validation
+                let url = newImageUrl.trim();
+                // Add https:// if missing protocol
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                
+                new URL(url);
+                
+                // Create a new array with the new image to ensure state update
+                const updatedImages = [...formData.images, url];
+                
+                setFormData(prev => ({
+                    ...prev,
+                    images: updatedImages
+                }));
+                setNewImageUrl('');
+                setErrorMessage('');
+                
+                console.log('Updated images array:', updatedImages);
+            } catch (e) {
+                setErrorMessage('Please enter a valid URL for the image');
+                return;
+            }
         }
     };
 
     const handleRemoveImage = (index) => {
+        // Create a new array without the image at the specified index
+        const updatedImages = formData.images.filter((_, i) => i !== index);
         setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index)
+            images: updatedImages
         }));
+        console.log('After removal, images array:', updatedImages);
     };
     
     const handleSubmit = async (e) => {
@@ -96,13 +128,54 @@ const AddMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
+            // Validate that we have at least one image
+            if (formData.images.length === 0 && !newImageUrl.trim()) {
+                setErrorMessage('Please add at least one image for the menu item');
+                setLoading(false);
+                return;
+            }
+            
+            // Add the current image URL if it's filled but not yet added to the array
+            let finalImages = [...formData.images];
+            if (newImageUrl.trim()) {
+                try {
+                    let url = newImageUrl.trim();
+                    // Add https:// if missing protocol
+                    if (!/^https?:\/\//i.test(url)) {
+                        url = 'https://' + url;
+                    }
+                    new URL(url);
+                    finalImages.push(url);
+                } catch (e) {
+                    setErrorMessage('Please enter a valid URL for the image or clear the field');
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            // Check max images again
+            if (finalImages.length > MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. You have ${finalImages.length}`);
+                setLoading(false);
+                return;
+            }
+
+            // Log image data to console for debugging
+            console.log('Images to be submitted:', finalImages);
+            
+            // Create a new object explicitly with an images array
             const submitData = {
-                ...formData,
+                name: formData.name,
+                description: formData.description,
+                category: formData.category,
                 price: parseFloat(formData.price),
-                images: formData.images
+                isSpicy: formData.isSpicy,
+                discount: formData.discount,
+                images: finalImages,
+                image: finalImages.length > 0 ? finalImages[0] : ''
             };
 
-            console.log('Submitting menu item:', submitData);
+            console.log('Submitting menu item data:', JSON.stringify(submitData));
             const response = await axios.post(`${apiUrl}/api/restaurants/${restaurantId}/menu-items`, submitData);
             console.log('Menu item added:', response.data);
             setSuccessMessage('Menu item added successfully!');
@@ -115,7 +188,7 @@ const AddMenuItem = () => {
             setLoading(false);
             console.error('Error adding menu item:', error);
             const errorMsg = error.response 
-                ? `Error ${error.response.status}: ${error.response.data.message || error.message}` 
+                ? `Error ${error.response.status}: ${error.response.data.message || error.response.data.error || error.message}` 
                 : error.message;
             setErrorMessage(errorMsg);
         }
@@ -189,7 +262,7 @@ const AddMenuItem = () => {
                         <Grid item xs={12}>
                             <Box sx={{ mb: 2 }}>
                                 <Typography variant="subtitle1" gutterBottom>
-                                    Images
+                                    Images (Max {MAX_IMAGES})
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                                     <TextField
@@ -197,22 +270,76 @@ const AddMenuItem = () => {
                                         label="Image URL"
                                         value={newImageUrl}
                                         onChange={(e) => setNewImageUrl(e.target.value)}
-                                        disabled={loading}
+                                        disabled={loading || formData.images.length >= MAX_IMAGES}
                                         placeholder="https://example.com/image.jpg"
+                                        helperText={formData.images.length >= MAX_IMAGES ? 
+                                            `Maximum of ${MAX_IMAGES} images reached` : 
+                                            `${formData.images.length}/${MAX_IMAGES} images added`}
                                     />
                                     <IconButton 
                                         onClick={handleAddImage}
-                                        disabled={loading || !newImageUrl.trim()}
+                                        disabled={loading || !newImageUrl.trim() || formData.images.length >= MAX_IMAGES}
                                         color="primary"
                                     >
                                         <AddIcon />
                                     </IconButton>
                                 </Box>
+                                
+                                {/* Preview of all images added */}
+                                {formData.images.length > 0 && (
+                                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                                        {formData.images.map((img, index) => (
+                                            <Box 
+                                                key={index}
+                                                sx={{ 
+                                                    position: 'relative',
+                                                    width: 100,
+                                                    height: 100,
+                                                    borderRadius: 1,
+                                                    overflow: 'hidden'
+                                                }}
+                                            >
+                                                <img 
+                                                    src={img} 
+                                                    alt={`Preview ${index}`}
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%', 
+                                                        objectFit: 'cover' 
+                                                    }}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://via.placeholder.com/100?text=Error';
+                                                    }}
+                                                />
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleRemoveImage(index)}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        right: 0,
+                                                        bgcolor: 'rgba(0,0,0,0.5)',
+                                                        color: 'white',
+                                                        p: 0.5,
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0,0,0,0.7)',
+                                                        }
+                                                    }}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
+                                
                                 <List>
                                     {formData.images.map((image, index) => (
                                         <ListItem key={index}>
                                             <ListItemText 
                                                 primary={image}
+                                                secondary={index === 0 ? "Primary image" : `Image ${index + 1}`}
                                                 sx={{
                                                     wordBreak: 'break-all',
                                                     pr: 2
