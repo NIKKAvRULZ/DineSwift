@@ -9,14 +9,14 @@ const MenuItem = ({ item }) => {
       <img 
         src={item.imageUrl} 
         alt={item.name}
-        className="w-full h-48 object-cover"
+        className="w-full h-60 object-contain bg-gray-50 p-2"
       />
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
         <p className="mt-1 text-gray-500">{item.description}</p>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-lg font-bold text-gray-900">
-            ${item.price.toFixed(2)}
+            Rs. {Math.round(item.price)}
           </span>
           <button
             onClick={() => addToCart(item)}

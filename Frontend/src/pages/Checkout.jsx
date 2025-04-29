@@ -36,19 +36,30 @@ const Checkout = () => {
       setLoading(true);
       setError(null);
 
+      // Log the items to help debug
+      console.log("Items being ordered:", items);
+      
+      // Make sure we have a restaurantId
+      if (!items.length || !items[0].restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try again or contact support.");
+      }
+
       const orderData = {
         customerId: user.id,
-        restaurantId: items[0].restaurantId,
+        restaurantId: items[0].restaurantId, // Ensure restaurantId is set
         items: items.map(item => ({
           name: item.name,
           price: item.price,
-          quantity: item.quantity
+          quantity: item.quantity,
+          menuItemId: item.id // Include menuItemId if available
         })),
         totalAmount: total,
         payment_method: paymentMethod,
         delivery_address: address
       };
       
+      // Log the orderData to verify restaurantId is present
+      console.log("Order data being sent:", orderData);
 
       const response = await orderService.createOrder(orderData, user.token);
       setIsOrderPlaced(true);

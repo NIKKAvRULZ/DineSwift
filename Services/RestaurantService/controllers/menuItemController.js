@@ -4,7 +4,13 @@ const Restaurant = require('../models/Restaurant');
 // Get all menu items
 const getAllMenuItems = async (req, res) => {
     try {
-        const menuItems = await MenuItem.find().populate('restaurantId');
+        // Only return menu items with at least one image
+        const menuItems = await MenuItem.find({ 
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
+        }).populate('restaurantId');
         res.json(menuItems);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -14,9 +20,39 @@ const getAllMenuItems = async (req, res) => {
 // Get all menu items for a specific restaurant
 const getRestaurantMenuItems = async (req, res) => {
     try {
-        const menuItems = await MenuItem.find({ restaurantId: req.params.restaurantId });
+        console.log('Fetching menu items for restaurant:', req.params.restaurantId);
+        
+        const menuItems = await MenuItem.find({ 
+            restaurantId: req.params.restaurantId,
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
+        });
+        
+        // Log each menu item's rating data
+        menuItems.forEach(item => {
+            console.log('Menu item rating data:', {
+                id: item._id,
+                name: item.name,
+                rating: item.rating,
+                ratingCount: item.ratingCount,
+                ratings: item.ratings
+            });
+        });
+        
+        console.log(`Found ${menuItems.length} menu items with ratings:`, 
+            menuItems.map(item => ({
+                id: item._id,
+                name: item.name,
+                rating: item.rating,
+                ratingCount: item.ratingCount
+            }))
+        );
+        
         res.json(menuItems);
     } catch (error) {
+        console.error('Error fetching restaurant menu items:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -40,7 +76,7 @@ const addMenuItem = async (req, res) => {
         const { 
             name,
             description,
-            image,
+            images,
             category,
             price,
             isSpicy,
@@ -55,7 +91,7 @@ const addMenuItem = async (req, res) => {
         const menuItem = new MenuItem({
             name,
             description,
-            image,
+            images: images || [], // Handle multiple images
             category,
             price,
             isSpicy: isSpicy || false,
@@ -82,7 +118,7 @@ const updateMenuItem = async (req, res) => {
         const { 
             name,
             description,
-            image,
+            images,
             category,
             price,
             isSpicy,
@@ -104,12 +140,12 @@ const updateMenuItem = async (req, res) => {
         const updatedData = {
             name,
             description,
-            image,
+            images: images || menuItem.images || [], // Handle multiple images
             category,
             price,
             isSpicy: isSpicy || false,
             discount: discount || 0,
-            rating: menuItem.rating // ✅ Now menuItem is already fetched
+            rating: menuItem.rating
         };
 
         // Update the menu item
@@ -152,6 +188,164 @@ const deleteMenuItem = async (req, res) => {
     }
 };
 
+// Rate a menu item
+const rateMenuItem = async (req, res) => {
+    try {
+        const { restaurantId, id } = req.params;
+        const { rating, userId = 'anonymous' } = req.body;
+        
+        // Log parameters to help debug
+        console.log('Rating request received:', {
+            menuItemId: id,
+            restaurantId,
+            rating: typeof rating === 'number' ? rating : parseFloat(rating),
+            userId,
+            body: JSON.stringify(req.body)
+        });
+
+        // Validate rating - make sure it's a number between 1-5
+        const numericRating = typeof rating === 'number' ? rating : parseFloat(rating);
+        if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+            console.log('Invalid rating value:', rating, 'Type:', typeof rating);
+            return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
+        }
+
+        // Find the menu item
+        const menuItem = await MenuItem.findById(id);
+        if (!menuItem) {
+            console.log('Menu item not found:', id);
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+
+        // Make sure restaurant IDs match
+        if (menuItem.restaurantId.toString() !== restaurantId) {
+            console.log('Restaurant ID mismatch:', {
+                expectedId: menuItem.restaurantId.toString(),
+                providedId: restaurantId
+            });
+            return res.status(400).json({ message: 'Menu item does not belong to this restaurant' });
+        }
+
+        console.log('Current menu item state before rating:', {
+            id: menuItem._id,
+            name: menuItem.name,
+            currentRating: menuItem.rating || 0,
+            ratingCount: menuItem.ratingCount || 0,
+            hasRatingsArray: !!menuItem.ratings,
+            ratingsCount: menuItem.ratings ? menuItem.ratings.length : 0
+        });
+
+        // Initialize ratings array if it doesn't exist
+        if (!menuItem.ratings) {
+            console.log('Initializing empty ratings array');
+            menuItem.ratings = [];
+        }
+
+        // Find existing rating by this user if userId exists
+        let existingRatingIndex = -1;
+        if (userId) {
+            existingRatingIndex = menuItem.ratings.findIndex(r => {
+                return r.user && r.user.toString && r.user.toString() === userId.toString();
+            });
+        }
+
+        let ratingUpdated = false;
+        if (existingRatingIndex >= 0) {
+            // Update existing rating
+            console.log('Updating existing rating:', {
+                oldRating: menuItem.ratings[existingRatingIndex].value,
+                newRating: numericRating
+            });
+            menuItem.ratings[existingRatingIndex].value = numericRating;
+            menuItem.ratings[existingRatingIndex].timestamp = new Date();
+            ratingUpdated = true;
+        } else {
+            // Add new rating
+            console.log('Adding new rating:', numericRating);
+            menuItem.ratings.push({ 
+                user: userId, 
+                value: numericRating,
+                timestamp: new Date()
+            });
+        }
+
+        // Calculate new average rating with safeguards
+        let totalRating = 0;
+        try {
+            totalRating = menuItem.ratings.reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
+        } catch (e) {
+            console.error('Error calculating total rating:', e);
+            totalRating = numericRating; // Fallback if reduce fails
+        }
+        
+        const newAverageRating = menuItem.ratings.length > 0 
+            ? totalRating / menuItem.ratings.length 
+            : 0;
+        
+        console.log('Rating calculation:', {
+            totalRating,
+            ratingCount: menuItem.ratings.length,
+            newAverageRating
+        });
+
+        // Update menu item with safeguards
+        try {
+            menuItem.rating = parseFloat(newAverageRating.toFixed(1)); // Round to 1 decimal place
+            menuItem.ratingCount = menuItem.ratings.length;
+
+            // Save changes
+            await menuItem.save();
+
+            console.log('Menu item updated successfully:', {
+                id: menuItem._id,
+                name: menuItem.name,
+                newRating: menuItem.rating,
+                newRatingCount: menuItem.ratingCount,
+                action: ratingUpdated ? 'updated' : 'added'
+            });
+
+            res.json({
+                message: ratingUpdated ? 'Rating updated successfully' : 'Rating added successfully',
+                menuItem: {
+                    _id: menuItem._id,
+                    name: menuItem.name,
+                    rating: menuItem.rating,
+                    ratingCount: menuItem.ratingCount
+                }
+            });
+        } catch (saveError) {
+            console.error('Error saving menuItem:', saveError);
+            
+            // Fallback: If save fails, try updating directly without ratings array
+            try {
+                await MenuItem.findByIdAndUpdate(id, {
+                    $set: {
+                        rating: parseFloat(newAverageRating.toFixed(1)),
+                        ratingCount: menuItem.ratings ? menuItem.ratings.length : 1
+                    }
+                });
+                
+                return res.json({
+                    message: 'Rating saved (fallback method)',
+                    menuItem: {
+                        _id: menuItem._id,
+                        name: menuItem.name,
+                        rating: parseFloat(newAverageRating.toFixed(1)),
+                        ratingCount: menuItem.ratings ? menuItem.ratings.length : 1
+                    }
+                });
+            } catch (fallbackError) {
+                console.error('Fallback update also failed:', fallbackError);
+                throw fallbackError; // Re-throw to be caught by outer catch
+            }
+        }
+    } catch (error) {
+        console.error('Error in rateMenuItem:', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ message: 'Error updating rating', error: error.message });
+    }
+};
+
 module.exports = {
     getAllMenuItems,
     getRestaurantMenuItems,
@@ -159,4 +353,5 @@ module.exports = {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
+    rateMenuItem
 };

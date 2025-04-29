@@ -17,10 +17,17 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Select
+    Select,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
@@ -40,13 +47,14 @@ const EditMenuItem = () => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        image: '',
+        images: [],
         category: '',
         price: '',
         isSpicy: false,
         discount: 0
     });
     
+    const [newImageUrl, setNewImageUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [successMessage, setSuccessMessage] = useState('');
@@ -75,7 +83,7 @@ const EditMenuItem = () => {
                 setFormData({
                     name: menuItem.name || '',
                     description: menuItem.description || '',
-                    image: menuItem.image || '',
+                    images: menuItem.images || [],
                     category: menuItem.category || '',
                     price: menuItem.price?.toString() || '',
                     isSpicy: Boolean(menuItem.isSpicy),
@@ -110,6 +118,23 @@ const EditMenuItem = () => {
             [e.target.name]: e.target.checked
         }));
     };
+
+    const handleAddImage = () => {
+        if (newImageUrl.trim()) {
+            setFormData(prev => ({
+                ...prev,
+                images: [...prev.images, newImageUrl.trim()]
+            }));
+            setNewImageUrl('');
+        }
+    };
+
+    const handleRemoveImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
     
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -117,32 +142,20 @@ const EditMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
-            // Validate required fields
-            if (!formData.name || !formData.category || !formData.price) {
-                setErrorMessage('Name, category, and price are required');
-                setLoading(false);
-                return;
-            }
-
             const submitData = {
                 ...formData,
                 price: parseFloat(formData.price),
-                isSpicy: Boolean(formData.isSpicy)
+                images: formData.images
             };
 
-            console.log('Updating menu item:', submitData);
+            console.log('Submitting menu item:', submitData);
             const response = await axios.put(`${apiUrl}/api/menu-items/${id}`, submitData);
             console.log('Menu item updated:', response.data);
             setSuccessMessage('Menu item updated successfully!');
             setLoading(false);
             
-            // Navigate back to restaurant details after 2 seconds
             setTimeout(() => {
-                if (restaurantId) {
-                    navigate(`/restaurant/${restaurantId}`);
-                } else {
-                    navigate('/');
-                }
+                navigate(`/restaurant/${restaurantId}`);
             }, 2000);
         } catch (error) {
             setLoading(false);
@@ -155,19 +168,13 @@ const EditMenuItem = () => {
     };
     
     const handleBack = () => {
-        if (restaurantId) {
-            console.log('Navigating back to restaurant:', restaurantId);
-            navigate(`/restaurant/${restaurantId}`);
-        } else {
-            console.log('No restaurant ID found, navigating to home');
-            navigate('/');
-        }
+        navigate(`/restaurant/${restaurantId}`);
     };
-
+    
     if (fetchLoading) {
         return (
-            <Container>
-                <Box display="flex" justifyContent="center" my={4}>
+            <Container maxWidth="md">
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
                     <CircularProgress />
                 </Box>
             </Container>
@@ -187,14 +194,12 @@ const EditMenuItem = () => {
             </Box>
             
             <Paper elevation={3} sx={{ p: 3, my: 2 }}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <EditIcon sx={{ mr: 1 }} />
+                <Typography variant="h5" component="h2" gutterBottom>
                     Edit Menu Item
                 </Typography>
                 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
                     <Grid container spacing={3}>
-                        {/* Basic Information */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -237,17 +242,52 @@ const EditMenuItem = () => {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Image URL"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="https://example.com/image.jpg"
-                            />
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    Images
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Image URL"
+                                        value={newImageUrl}
+                                        onChange={(e) => setNewImageUrl(e.target.value)}
+                                        disabled={loading}
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <IconButton 
+                                        onClick={handleAddImage}
+                                        disabled={loading || !newImageUrl.trim()}
+                                        color="primary"
+                                    >
+                                        <AddIcon />
+                                    </IconButton>
+                                </Box>
+                                <List>
+                                    {formData.images.map((image, index) => (
+                                        <ListItem key={index}>
+                                            <ListItemText 
+                                                primary={image}
+                                                sx={{
+                                                    wordBreak: 'break-all',
+                                                    pr: 2
+                                                }}
+                                            />
+                                            <ListItemSecondaryAction>
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleRemoveImage(index)}
+                                                    disabled={loading}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            </Box>
                         </Grid>
-                        <Grid item xs={12} md={3}>
+                        <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 label="Price"
@@ -258,8 +298,8 @@ const EditMenuItem = () => {
                                 required
                                 disabled={loading}
                                 InputProps={{
-                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                    inputProps: { step: "0.01", min: "0" }
+                                    startAdornment: <InputAdornment position="start">Rs.</InputAdornment>,
+                                    inputProps: { step: "1", min: "0" }
                                 }}
                             />
                         </Grid>
@@ -281,21 +321,19 @@ const EditMenuItem = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={formData.isSpicy}
-                                            onChange={handleSwitchChange}
-                                            name="isSpicy"
-                                            disabled={loading}
-                                            color="error"
-                                        />
-                                    }
-                                    label="Spicy Item"
-                                />
-                            </Box>
+                        <Grid item xs={12} md={3}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.isSpicy}
+                                        onChange={handleSwitchChange}
+                                        name="isSpicy"
+                                        disabled={loading}
+                                        color="error"
+                                    />
+                                }
+                                label="Spicy Item"
+                            />
                         </Grid>
                     </Grid>
                     

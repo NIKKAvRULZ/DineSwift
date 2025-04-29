@@ -349,11 +349,14 @@ const OrderTracking = () => {
                 <div className="space-y-4">
                   {order?.items?.map((item, index) => (
                     <div key={index} className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                        {item.discount > 0 && (
+                          <p className="text-sm text-red-500">{item.discount}% OFF</p>
+                        )}
                       </div>
-                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
