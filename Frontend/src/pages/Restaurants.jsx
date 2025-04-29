@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // import useLocation
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -30,8 +30,9 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 const Restaurants = ({ isClientView = false }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // get location
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,14 +64,38 @@ const Restaurants = ({ isClientView = false }) => {
     };
   }, []);
 
+  console.log("User in Restaurants:", user);
+
   useEffect(() => {
     // Only require authentication if not in client view mode
     if (!isClientView && !isAuthenticated) {
       navigate('/login', { state: { from: '/restaurants' } });
       return;
     }
+    
+    const queryParams = new URLSearchParams(location.search);
+    const sessionId = queryParams.get('session_id');
+    const sendSuccessEmail = async (email) => {
+      try {
+        await axios.post('http://localhost:5006/api/notifications/send', {
+          to: email,
+          subject: "DineSwift",
+          message: "Payment is successful..",
+          type: "email"
+        });
+        console.log('Success email sent!');
+      } catch (err) {
+        console.error('Failed to send success email:', err);
+      }
+    };
+    if (sessionId && user?.email) {
+      sendSuccessEmail(user.email);
+    }
+
     fetchRestaurants();
-  }, [isAuthenticated, navigate, isClientView]);
+
+  
+  }, [isClientView, isAuthenticated, navigate, location.search, user]);
 
   const fetchRestaurants = async () => {
     try {
@@ -128,6 +153,7 @@ const Restaurants = ({ isClientView = false }) => {
       if (sortBy === 'price') return a.minOrder - b.minOrder;
       return 0;
     });
+
   const cuisines = ['all', ...new Set(restaurants.map(r => r.cuisine))];
 
   if (loading) return (
