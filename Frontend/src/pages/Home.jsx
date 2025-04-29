@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Typewriter } from 'react-simple-typewriter';  // Import typewriter effect
 import axios from 'axios';
+import { useRef } from 'react';
+
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
@@ -132,6 +134,7 @@ const Home = () => {
   // Component for the top-rated menu items section
   const ExploreMenuSection = () => (
     <motion.div 
+    
       initial="initial" 
       animate="animate" 
       variants={fadeIn}
