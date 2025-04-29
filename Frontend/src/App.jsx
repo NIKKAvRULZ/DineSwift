@@ -18,10 +18,11 @@ import Notifications from "./pages/Notifications";
 import OrderTracking from "./pages/OrderTracking";
 import Cart from "./pages/Cart";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AboutUs from "./pages/AboutUs"; // Added for /about-us route
-import FAQ from "./pages/FAQ"; // Added for /faq route
-import Contact from "./pages/Contact"; // Added for /contact route
-import Checkout from "./pages/Checkout"; // Updated import
+import Checkout from "./pages/Checkout"; // Import Checkout page
+import AboutUs from "./pages/AboutUs";
+import FAQ from "./pages/FAQ";
+import Contact from "./pages/Contact";
+import ClientMenu from "./pages/ClientMenu"; // Import ClientMenu page
 
 function App() {
   return (
@@ -96,6 +97,9 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                {/* New route for client restaurant view */}
+                <Route path="/restaurant-menu" element={<Restaurants isClientView={true} />} />
+                <Route path="/restaurant-menu/:id" element={<ClientMenu />} />
               </Routes>
             </main>
             <Footer />

@@ -17,10 +17,17 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Select
+    Select,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
 const apiUrl = 'http://localhost:5002';
@@ -40,13 +47,14 @@ const EditMenuItem = () => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        image: '',
+        images: [],
         category: '',
         price: '',
         isSpicy: false,
         discount: 0
     });
     
+    const [newImageUrl, setNewImageUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [successMessage, setSuccessMessage] = useState('');
@@ -71,11 +79,19 @@ const EditMenuItem = () => {
                 setRestaurantId(restId);
                 console.log('Restaurant ID set to:', restId);
 
+                // Normalize images
+                let imageArray = [];
+                if (menuItem.images && Array.isArray(menuItem.images) && menuItem.images.length > 0) {
+                    imageArray = menuItem.images;
+                } else if (menuItem.image) {
+                    imageArray = [menuItem.image];
+                }
+
                 // Set form data with proper handling of null/undefined values
                 setFormData({
                     name: menuItem.name || '',
                     description: menuItem.description || '',
-                    image: menuItem.image || '',
+                    images: imageArray,
                     category: menuItem.category || '',
                     price: menuItem.price?.toString() || '',
                     isSpicy: Boolean(menuItem.isSpicy),
@@ -110,6 +126,54 @@ const EditMenuItem = () => {
             [e.target.name]: e.target.checked
         }));
     };
+
+    const handleAddImage = () => {
+        if (newImageUrl.trim()) {
+            // Check if already at max images (reuse MAX_IMAGES constant from AddMenuItem)
+            const MAX_IMAGES = 5;
+            if (formData.images.length >= MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. Remove an image to add a new one.`);
+                return;
+            }
+            
+            // Check if image URL is valid
+            try {
+                // More permissive URL validation
+                let url = newImageUrl.trim();
+                // Add https:// if missing protocol
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                
+                new URL(url);
+                
+                // Create a new array with the new image
+                const updatedImages = [...formData.images, url];
+                
+                setFormData(prev => ({
+                    ...prev,
+                    images: updatedImages
+                }));
+                setNewImageUrl('');
+                setErrorMessage('');
+                
+                console.log('Updated images array:', updatedImages);
+            } catch (e) {
+                setErrorMessage('Please enter a valid URL for the image');
+                return;
+            }
+        }
+    };
+
+    const handleRemoveImage = (index) => {
+        // Create a new array without the image at the specified index
+        const updatedImages = formData.images.filter((_, i) => i !== index);
+        setFormData(prev => ({
+            ...prev,
+            images: updatedImages
+        }));
+        console.log('After removal, images array:', updatedImages);
+    };
     
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -117,57 +181,82 @@ const EditMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
-            // Validate required fields
-            if (!formData.name || !formData.category || !formData.price) {
-                setErrorMessage('Name, category, and price are required');
+            // Validate that we have at least one image
+            if (formData.images.length === 0 && !newImageUrl.trim()) {
+                setErrorMessage('Please add at least one image for the menu item');
+                setLoading(false);
+                return;
+            }
+            
+            // Add the current image URL if it's filled but not yet added to the array
+            let finalImages = [...formData.images];
+            if (newImageUrl.trim()) {
+                try {
+                    let url = newImageUrl.trim();
+                    // Add https:// if missing protocol
+                    if (!/^https?:\/\//i.test(url)) {
+                        url = 'https://' + url;
+                    }
+                    new URL(url);
+                    finalImages.push(url);
+                } catch (e) {
+                    setErrorMessage('Please enter a valid URL for the image or clear the field');
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            // Check max images again
+            const MAX_IMAGES = 5;
+            if (finalImages.length > MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. You have ${finalImages.length}`);
                 setLoading(false);
                 return;
             }
 
-            const submitData = {
-                ...formData,
-                price: parseFloat(formData.price),
-                isSpicy: Boolean(formData.isSpicy)
-            };
+            // Log image data to console for debugging
+            console.log('Images to be submitted:', finalImages);
+            console.log('Images array type:', Array.isArray(finalImages) ? 'Array' : typeof finalImages);
 
-            console.log('Updating menu item:', submitData);
+            // Create a new object explicitly with an images array
+            const submitData = {
+                name: formData.name,
+                description: formData.description,
+                category: formData.category,
+                price: parseFloat(formData.price),
+                isSpicy: formData.isSpicy,
+                discount: formData.discount,
+                images: finalImages,
+                image: finalImages.length > 0 ? finalImages[0] : ''
+            };
+            
+            console.log('Submitting menu item update:', JSON.stringify(submitData));
             const response = await axios.put(`${apiUrl}/api/menu-items/${id}`, submitData);
             console.log('Menu item updated:', response.data);
             setSuccessMessage('Menu item updated successfully!');
             setLoading(false);
             
-            // Navigate back to restaurant details after 2 seconds
             setTimeout(() => {
-                if (restaurantId) {
-                    navigate(`/restaurant/${restaurantId}`);
-                } else {
-                    navigate('/');
-                }
+                navigate(`/restaurant/${restaurantId}`);
             }, 2000);
         } catch (error) {
             setLoading(false);
             console.error('Error updating menu item:', error);
             const errorMsg = error.response 
-                ? `Error ${error.response.status}: ${error.response.data.message || error.message}` 
+                ? `Error ${error.response.status}: ${error.response.data.message || error.response.data.error || error.message}` 
                 : error.message;
             setErrorMessage(errorMsg);
         }
     };
     
     const handleBack = () => {
-        if (restaurantId) {
-            console.log('Navigating back to restaurant:', restaurantId);
-            navigate(`/restaurant/${restaurantId}`);
-        } else {
-            console.log('No restaurant ID found, navigating to home');
-            navigate('/');
-        }
+        navigate(`/restaurant/${restaurantId}`);
     };
-
+    
     if (fetchLoading) {
         return (
-            <Container>
-                <Box display="flex" justifyContent="center" my={4}>
+            <Container maxWidth="md">
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
                     <CircularProgress />
                 </Box>
             </Container>
@@ -187,14 +276,12 @@ const EditMenuItem = () => {
             </Box>
             
             <Paper elevation={3} sx={{ p: 3, my: 2 }}>
-                <Typography variant="h5" component="h2" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <EditIcon sx={{ mr: 1 }} />
+                <Typography variant="h5" component="h2" gutterBottom>
                     Edit Menu Item
                 </Typography>
                 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
                     <Grid container spacing={3}>
-                        {/* Basic Information */}
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -237,17 +324,52 @@ const EditMenuItem = () => {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Image URL"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
-                                disabled={loading}
-                                placeholder="https://example.com/image.jpg"
-                            />
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    Images
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Image URL"
+                                        value={newImageUrl}
+                                        onChange={(e) => setNewImageUrl(e.target.value)}
+                                        disabled={loading}
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <IconButton 
+                                        onClick={handleAddImage}
+                                        disabled={loading || !newImageUrl.trim()}
+                                        color="primary"
+                                    >
+                                        <AddIcon />
+                                    </IconButton>
+                                </Box>
+                                <List>
+                                    {formData.images.map((image, index) => (
+                                        <ListItem key={index}>
+                                            <ListItemText 
+                                                primary={image}
+                                                sx={{
+                                                    wordBreak: 'break-all',
+                                                    pr: 2
+                                                }}
+                                            />
+                                            <ListItemSecondaryAction>
+                                                <IconButton 
+                                                    edge="end" 
+                                                    onClick={() => handleRemoveImage(index)}
+                                                    disabled={loading}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            </Box>
                         </Grid>
-                        <Grid item xs={12} md={3}>
+                        <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 label="Price"
@@ -281,21 +403,19 @@ const EditMenuItem = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={formData.isSpicy}
-                                            onChange={handleSwitchChange}
-                                            name="isSpicy"
-                                            disabled={loading}
-                                            color="error"
-                                        />
-                                    }
-                                    label="Spicy Item"
-                                />
-                            </Box>
+                        <Grid item xs={12} md={3}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.isSpicy}
+                                        onChange={handleSwitchChange}
+                                        name="isSpicy"
+                                        disabled={loading}
+                                        color="error"
+                                    />
+                                }
+                                label="Spicy Item"
+                            />
                         </Grid>
                     </Grid>
                     

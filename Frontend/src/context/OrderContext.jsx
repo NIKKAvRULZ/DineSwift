@@ -84,13 +84,61 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
+  const updateOrderRating = async (orderId, ratingData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `http://localhost:5003/api/orders/${orderId}/rating`,
+        ratingData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setOrders(prev => 
+        prev.map(order => 
+          order.id === orderId ? { ...order, rating: ratingData.rating, feedback: ratingData.feedback } : order
+        )
+      );
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to submit rating' };
+    }
+  };
+
+  const cancelOrder = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `http://localhost:5003/api/orders/${orderId}/status`,
+        { status: 'Cancelled' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setOrders(prev => 
+        prev.map(order => 
+          order.id === orderId ? response.data : order
+        )
+      );
+      
+      if (activeOrder?.id === orderId) {
+        setActiveOrder(null);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to cancel order' };
+    }
+  };
+
   const value = {
     orders,
     activeOrder,
     createOrder,
     updateOrderStatus,
     getOrderDetails,
-    fetchOrders
+    fetchOrders,
+    updateOrderRating,
+    cancelOrder
   };
 
   return (
@@ -106,4 +154,4 @@ export const useOrder = () => {
     throw new Error('useOrder must be used within an OrderProvider');
   }
   return context;
-}; 
+};

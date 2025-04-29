@@ -49,7 +49,12 @@ const OrderConfirmation = () => {
               <h2 className="text-lg font-semibold mb-2">Order Summary</h2>
               {orderDetails.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
-                  <span>{item.name} x {item.quantity}</span>
+                  <div>
+                    <span>{item.name} x {item.quantity}</span>
+                    {item.discount > 0 && (
+                      <span className="ml-2 text-red-500 text-xs">{item.discount}% OFF</span>
+                    )}
+                  </div>
                   <span>Rs {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
