@@ -84,6 +84,14 @@ const addMenuItem = async (req, res) => {
             discount
         } = req.body;
 
+        // Debug logging for image data
+        console.log('Received image data:');
+        console.log('- image:', image);
+        console.log('- images:', JSON.stringify(images));
+        console.log('- images is array:', Array.isArray(images));
+        console.log('- images length:', images ? images.length : 0);
+        console.log('- raw body images:', JSON.stringify(req.body.images));
+
         const restaurant = await Restaurant.findById(req.params.restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });

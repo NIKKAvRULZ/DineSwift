@@ -129,19 +129,50 @@ const EditMenuItem = () => {
 
     const handleAddImage = () => {
         if (newImageUrl.trim()) {
-            setFormData(prev => ({
-                ...prev,
-                images: [...prev.images, newImageUrl.trim()]
-            }));
-            setNewImageUrl('');
+            // Check if already at max images (reuse MAX_IMAGES constant from AddMenuItem)
+            const MAX_IMAGES = 5;
+            if (formData.images.length >= MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. Remove an image to add a new one.`);
+                return;
+            }
+            
+            // Check if image URL is valid
+            try {
+                // More permissive URL validation
+                let url = newImageUrl.trim();
+                // Add https:// if missing protocol
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                
+                new URL(url);
+                
+                // Create a new array with the new image
+                const updatedImages = [...formData.images, url];
+                
+                setFormData(prev => ({
+                    ...prev,
+                    images: updatedImages
+                }));
+                setNewImageUrl('');
+                setErrorMessage('');
+                
+                console.log('Updated images array:', updatedImages);
+            } catch (e) {
+                setErrorMessage('Please enter a valid URL for the image');
+                return;
+            }
         }
     };
 
     const handleRemoveImage = (index) => {
+        // Create a new array without the image at the specified index
+        const updatedImages = formData.images.filter((_, i) => i !== index);
         setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index)
+            images: updatedImages
         }));
+        console.log('After removal, images array:', updatedImages);
     };
     
     const handleSubmit = async (e) => {
@@ -150,18 +181,56 @@ const EditMenuItem = () => {
             setLoading(true);
             setErrorMessage('');
 
-            const submitData = {
-                ...formData,
-                price: parseFloat(formData.price)
-            };
+            // Validate that we have at least one image
+            if (formData.images.length === 0 && !newImageUrl.trim()) {
+                setErrorMessage('Please add at least one image for the menu item');
+                setLoading(false);
+                return;
+            }
             
-            // Handle images
-            if (submitData.images && submitData.images.length > 0) {
-                // Set the first image as the primary image
-                submitData.image = submitData.images[0];
+            // Add the current image URL if it's filled but not yet added to the array
+            let finalImages = [...formData.images];
+            if (newImageUrl.trim()) {
+                try {
+                    let url = newImageUrl.trim();
+                    // Add https:// if missing protocol
+                    if (!/^https?:\/\//i.test(url)) {
+                        url = 'https://' + url;
+                    }
+                    new URL(url);
+                    finalImages.push(url);
+                } catch (e) {
+                    setErrorMessage('Please enter a valid URL for the image or clear the field');
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            // Check max images again
+            const MAX_IMAGES = 5;
+            if (finalImages.length > MAX_IMAGES) {
+                setErrorMessage(`Maximum of ${MAX_IMAGES} images allowed. You have ${finalImages.length}`);
+                setLoading(false);
+                return;
             }
 
-            console.log('Submitting menu item update:', submitData);
+            // Log image data to console for debugging
+            console.log('Images to be submitted:', finalImages);
+            console.log('Images array type:', Array.isArray(finalImages) ? 'Array' : typeof finalImages);
+
+            // Create a new object explicitly with an images array
+            const submitData = {
+                name: formData.name,
+                description: formData.description,
+                category: formData.category,
+                price: parseFloat(formData.price),
+                isSpicy: formData.isSpicy,
+                discount: formData.discount,
+                images: finalImages,
+                image: finalImages.length > 0 ? finalImages[0] : ''
+            };
+            
+            console.log('Submitting menu item update:', JSON.stringify(submitData));
             const response = await axios.put(`${apiUrl}/api/menu-items/${id}`, submitData);
             console.log('Menu item updated:', response.data);
             setSuccessMessage('Menu item updated successfully!');

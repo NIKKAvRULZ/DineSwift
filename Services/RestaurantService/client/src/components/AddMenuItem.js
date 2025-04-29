@@ -94,12 +94,17 @@ const AddMenuItem = () => {
                 
                 new URL(url);
                 
+                // Create a new array with the new image to ensure state update
+                const updatedImages = [...formData.images, url];
+                
                 setFormData(prev => ({
                     ...prev,
-                    images: [...prev.images, url]
+                    images: updatedImages
                 }));
                 setNewImageUrl('');
                 setErrorMessage('');
+                
+                console.log('Updated images array:', updatedImages);
             } catch (e) {
                 setErrorMessage('Please enter a valid URL for the image');
                 return;
@@ -108,10 +113,13 @@ const AddMenuItem = () => {
     };
 
     const handleRemoveImage = (index) => {
+        // Create a new array without the image at the specified index
+        const updatedImages = formData.images.filter((_, i) => i !== index);
         setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index)
+            images: updatedImages
         }));
+        console.log('After removal, images array:', updatedImages);
     };
     
     const handleSubmit = async (e) => {
@@ -154,15 +162,20 @@ const AddMenuItem = () => {
 
             // Log image data to console for debugging
             console.log('Images to be submitted:', finalImages);
-
+            
+            // Create a new object explicitly with an images array
             const submitData = {
-                ...formData,
+                name: formData.name,
+                description: formData.description,
+                category: formData.category,
                 price: parseFloat(formData.price),
+                isSpicy: formData.isSpicy,
+                discount: formData.discount,
                 images: finalImages,
                 image: finalImages.length > 0 ? finalImages[0] : ''
             };
 
-            console.log('Submitting menu item:', submitData);
+            console.log('Submitting menu item data:', JSON.stringify(submitData));
             const response = await axios.post(`${apiUrl}/api/restaurants/${restaurantId}/menu-items`, submitData);
             console.log('Menu item added:', response.data);
             setSuccessMessage('Menu item added successfully!');
