@@ -30,7 +30,7 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 const Restaurants = ({ isClientView = false }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation(); // get location
   const [restaurants, setRestaurants] = useState([]);
@@ -75,26 +75,26 @@ const Restaurants = ({ isClientView = false }) => {
     
     const queryParams = new URLSearchParams(location.search);
     const sessionId = queryParams.get('session_id');
-
+    const sendSuccessEmail = async (email) => {
+      try {
+        await axios.post('http://localhost:5006/api/notifications/send', {
+          to: email,
+          subject: "DineSwift",
+          message: "Payment is successful..",
+          type: "email"
+        });
+        console.log('Success email sent!');
+      } catch (err) {
+        console.error('Failed to send success email:', err);
+      }
+    };
     if (sessionId && user?.email) {
       sendSuccessEmail(user.email);
     }
 
     fetchRestaurants();
 
-  const sendSuccessEmail = async (email) => {
-    try {
-      await axios.post('http://localhost:5006/api/notifications/send', {
-        to: email,
-        subject: "DineSwift",
-        message: "Payment is successful..",
-        type: "email"
-      });
-      console.log('Success email sent!');
-    } catch (err) {
-      console.error('Failed to send success email:', err);
-    }
-  };
+  
   }, [isClientView, isAuthenticated, navigate, location.search, user]);
 
   const fetchRestaurants = async () => {
