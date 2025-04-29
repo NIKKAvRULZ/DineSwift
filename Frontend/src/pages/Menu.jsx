@@ -514,20 +514,20 @@ const Menu = () => {
           API.removePendingRating(itemId);
         }
       } catch (error) {
-        console.error('Error submitting rating:', error);
+        // console.error('Error submitting rating:', error);
         
-        // Generate appropriate error message based on error type
-        let errorMessage = 'Network issue - your rating will be saved when connection is restored';
+        // // Generate appropriate error message based on error type
+        // let errorMessage = 'Network issue - your rating will be saved when connection is restored';
         
-        if (error.type === 'AUTH_ERROR') {
-          errorMessage = 'Authentication error - please log in again';
-        } else if (error.type === 'NOT_FOUND') {
-          errorMessage = 'Menu item not found on server';
-        } else if (error.type === 'SERVER_ERROR') {
-          errorMessage = 'Server error - please try again later';
-        } else if (error.message === 'SERVER_UNREACHABLE') {
-          errorMessage = 'Server is currently unreachable - your rating will be saved for later';
-        }
+        // if (error.type === 'AUTH_ERROR') {
+        //   errorMessage = 'Authentication error - please log in again';
+        // } else if (error.type === 'NOT_FOUND') {
+        //   errorMessage = 'Menu item not found on server';
+        // } else if (error.type === 'SERVER_ERROR') {
+        //   errorMessage = 'Server error - please try again later';
+        // } else if (error.message === 'SERVER_UNREACHABLE') {
+        //   errorMessage = 'Server is currently unreachable - your rating will be saved for later';
+        // }
         
         // Save the rating as pending for later sync
         API.savePendingRating({
@@ -550,12 +550,12 @@ const Menu = () => {
         }, 15000); // Try again after 15 seconds
       }
     } catch (error) {
-      console.error('Error in rating flow:', error);
-      setToast({
-        visible: true,
-        message: 'Something went wrong while saving your rating',
-        type: 'error'
-      });
+      // console.error('Error in rating flow:', error);
+      // setToast({
+      //   visible: true,
+      //   message: 'Something went wrong while saving your rating',
+      //   type: 'error'
+      // });
     } finally {
       // Clear temporary rating status after 1 second
       setTimeout(() => {
