@@ -85,18 +85,25 @@ const AddMenuItem = () => {
             
             // Check if image URL is valid
             try {
-                new URL(newImageUrl.trim());
+                // More permissive URL validation
+                let url = newImageUrl.trim();
+                // Add https:// if missing protocol
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                
+                new URL(url);
+                
+                setFormData(prev => ({
+                    ...prev,
+                    images: [...prev.images, url]
+                }));
+                setNewImageUrl('');
+                setErrorMessage('');
             } catch (e) {
                 setErrorMessage('Please enter a valid URL for the image');
                 return;
             }
-            
-            setFormData(prev => ({
-                ...prev,
-                images: [...prev.images, newImageUrl.trim()]
-            }));
-            setNewImageUrl('');
-            setErrorMessage('');
         }
     };
 
@@ -124,8 +131,13 @@ const AddMenuItem = () => {
             let finalImages = [...formData.images];
             if (newImageUrl.trim()) {
                 try {
-                    new URL(newImageUrl.trim());
-                    finalImages.push(newImageUrl.trim());
+                    let url = newImageUrl.trim();
+                    // Add https:// if missing protocol
+                    if (!/^https?:\/\//i.test(url)) {
+                        url = 'https://' + url;
+                    }
+                    new URL(url);
+                    finalImages.push(url);
                 } catch (e) {
                     setErrorMessage('Please enter a valid URL for the image or clear the field');
                     setLoading(false);
@@ -139,6 +151,9 @@ const AddMenuItem = () => {
                 setLoading(false);
                 return;
             }
+
+            // Log image data to console for debugging
+            console.log('Images to be submitted:', finalImages);
 
             const submitData = {
                 ...formData,
