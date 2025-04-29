@@ -69,7 +69,36 @@ const orderService = {
     } catch (error) {
       throw error.response?.data || { message: 'Failed to cancel order' };
     }
+  },
+
+  // Add this method to your orderService object
+  updateOrderRating: async (orderId, ratingData) => {
+    try {
+      console.log(`Submitting rating for order ${orderId}:`, ratingData);
+      
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${API_URL}/orders/${orderId}/rating`, 
+        ratingData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Rating submitted successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating order rating:', error);
+      if (error.response) {
+        console.error('Response error data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
+      throw error.response?.data || { message: 'Failed to submit rating' };
+    }
   }
 };
 
-export default orderService; 
+export default orderService;

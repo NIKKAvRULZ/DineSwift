@@ -380,13 +380,13 @@ const OrderTracking = () => {
               )}
 
               {/* Contact Restaurant */}
-              <div className="border-t mt-6 pt-6">
+              <div className="border-t mt-6 pt-6">  
                 <h2 className="text-lg font-semibold mb-4">Need Help?</h2>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
-                  onClick={() => window.open(`tel:${order?.restaurant?.phone || '123456789'}`)}
+                  onClick={() => window.open(`tel:${order?.restaurant?.phone || '+94760394961'}`)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
@@ -408,16 +408,23 @@ const RatingComponent = ({ orderId }) => {
   const [feedback, setFeedback] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { updateOrderRating } = useOrder();
+  const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
     setLoading(true);
+    setError(null);
     try {
-      await updateOrderRating(orderId, { rating, feedback });
+      console.log(`Submitting rating ${rating} for order ${orderId}`);
+      await orderService.updateOrderRating(orderId, { 
+        rating: parseInt(rating, 10), 
+        feedback 
+      });
       setSubmitted(true);
       triggerConfetti();
     } catch (error) {
       console.error("Failed to submit rating:", error);
+      const errorMessage = error.message || "Failed to submit your rating. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -465,6 +472,11 @@ const RatingComponent = ({ orderId }) => {
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
       ></textarea>
+      {error && (
+        <div className="text-red-500 text-sm p-2 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
