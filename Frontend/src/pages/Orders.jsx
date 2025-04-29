@@ -18,7 +18,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
-  // Animation variants
+  // Enhanced animation variants
   const pageAnimation = {
     initial: { opacity: 0 },
     animate: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -30,10 +30,22 @@ const Orders = () => {
   };
 
   const modalAnimation = {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.8 }
+    initial: { opacity: 0, scale: 0.8, y: 20 },
+    animate: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 300 } },
+    exit: { opacity: 0, scale: 0.8, y: 20, transition: { duration: 0.2 } }
   };
+  
+  // Background pattern elements
+  const backgroundElements = [
+    { icon: '🍕', size: '4rem', rotate: 15, top: '10%', left: '5%', delay: 0 },
+    { icon: '🍔', size: '3.5rem', rotate: -10, top: '20%', right: '8%', delay: 0.5 },
+    { icon: '🍜', size: '3rem', rotate: 25, bottom: '15%', left: '10%', delay: 1 },
+    { icon: '🍦', size: '3.2rem', rotate: -5, bottom: '25%', right: '15%', delay: 1.5 },
+    { icon: '🥗', size: '2.8rem', rotate: 20, top: '40%', left: '15%', delay: 2 },
+    { icon: '🍷', size: '2.5rem', rotate: -15, top: '60%', right: '10%', delay: 2.5 },
+    { icon: '🍱', size: '3.3rem', rotate: 5, bottom: '40%', left: '8%', delay: 3 },
+    { icon: '🍉', size: '3rem', rotate: -20, top: '75%', right: '18%', delay: 3.5 },
+  ];
 
   useEffect(() => {
     fetchOrders();
@@ -145,36 +157,152 @@ const Orders = () => {
     
     if (order.status === 'Cancelled') {
       return (
-        <div className="flex flex-col items-center">
-          <div className="text-rose-500 text-2xl mb-2">❌</div>
-          <div className="text-rose-600 font-medium">Order Cancelled</div>
-        </div>
+        <motion.div 
+          className="flex flex-col items-center p-6 bg-rose-50 rounded-xl border border-rose-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <motion.div 
+            className="text-rose-500 text-4xl mb-3"
+            animate={{ 
+              rotate: [0, -10, 10, -10, 10, 0],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ duration: 1.5, delay: 0.5 }}
+          >
+            ❌
+          </motion.div>
+          <div className="text-rose-600 font-medium text-lg">Order Cancelled</div>
+          <p className="text-rose-500/70 text-sm mt-2 max-w-md text-center">
+            This order has been cancelled and will not be processed.
+          </p>
+        </motion.div>
       );
     }
     
     return (
-      <div className="flex items-center justify-between w-full mt-4 mb-6">
-        {statuses.map((status, index) => (
-          <div key={status} className="flex flex-col items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              index <= currentIndex 
-                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' 
-                : 'bg-gray-200 text-gray-400'
-            }`}>
-              {index + 1}
-            </div>
-            <div className={`text-xs mt-1 ${
-              index <= currentIndex ? 'text-gray-900 font-medium' : 'text-gray-400'
-            }`}>
-              {status}
-            </div>
-            {index < statuses.length - 1 && (
-              <div className={`absolute h-1 w-[calc(25%-1rem)] left-[calc(${index * 25}%+1rem)] top-4 ${
-                index < currentIndex ? 'bg-gradient-to-r from-orange-500 to-red-500' : 'bg-gray-200'
-              }`} />
-            )}
-          </div>
-        ))}
+      <div className="relative py-8">
+        {/* Progress bar background */}
+        <motion.div 
+          className="absolute h-2 bg-gray-100 rounded-full left-0 right-0 top-[2.8rem]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        />
+        
+        {/* Animated progress fill */}
+        <motion.div 
+          className="absolute h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full left-0 top-[2.8rem]"
+          initial={{ width: 0 }}
+          animate={{ 
+            width: currentIndex === -1 ? "0%" : 
+                  currentIndex === 0 ? "12.5%" : 
+                  currentIndex === 1 ? "37.5%" : 
+                  currentIndex === 2 ? "62.5%" : 
+                  currentIndex === 3 ? "87.5%" : "100%" 
+          }}
+          transition={{ duration: 1, delay: 0.3, type: "spring", stiffness: 100 }}
+        />
+        
+        {/* Status icons */}
+        <div className="flex justify-between relative z-10">
+          {statuses.map((status, index) => (
+            <motion.div 
+              key={status} 
+              className="flex flex-col items-center"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 + (index * 0.1) }}
+            >
+              <motion.div 
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md border-2 ${
+                  index <= currentIndex 
+                    ? 'bg-gradient-to-br from-orange-500 to-red-500 border-white text-white' 
+                    : 'bg-white border-gray-200 text-gray-400'
+                }`}
+                whileHover={index <= currentIndex ? { scale: 1.1, rotate: 5 } : {}}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                {index === 0 && (
+                  <motion.span 
+                    className="text-xl"
+                    animate={index <= currentIndex ? { rotate: [0, 360] } : {}}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    ⏳
+                  </motion.span>
+                )}
+                {index === 1 && (
+                  <motion.span 
+                    className="text-xl"
+                    animate={index <= currentIndex ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+                  >
+                    ✅
+                  </motion.span>
+                )}
+                {index === 2 && (
+                  <motion.span 
+                    className="text-xl"
+                    animate={index <= currentIndex ? { rotate: [0, 15, 0, -15, 0] } : {}}
+                    transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+                  >
+                    👨‍🍳
+                  </motion.span>
+                )}
+                {index === 3 && (
+                  <motion.span 
+                    className="text-xl"
+                    animate={index <= currentIndex ? { x: [0, 5, 0, -5, 0] } : {}}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    🚚
+                  </motion.span>
+                )}
+                {index === 4 && (
+                  <motion.span 
+                    className="text-xl"
+                    animate={index <= currentIndex ? { 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 10, 0, -10, 0]
+                    } : {}}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    🎉
+                  </motion.span>
+                )}
+              </motion.div>
+              
+              <motion.div 
+                className={`text-sm mt-3 font-medium px-3 py-1 rounded-full ${
+                  index <= currentIndex 
+                    ? 'bg-orange-100 text-orange-800' 
+                    : 'text-gray-500'
+                }`}
+                whileHover={index <= currentIndex ? { scale: 1.05 } : {}}
+              >
+                {status}
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {/* Current status message */}
+        <motion.div 
+          className="mt-8 text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+        >
+          <span className="px-4 py-2 rounded-full bg-gradient-to-r from-orange-50 to-red-50 text-orange-700 font-medium">
+            {currentIndex === 0 && "Order received! Waiting for restaurant to accept."}
+            {currentIndex === 1 && "Great news! The restaurant has accepted your order."}
+            {currentIndex === 2 && "Your delicious food is being prepared right now."}
+            {currentIndex === 3 && "Food is on the way to your location!"}
+            {currentIndex === 4 && "Food delivered! Enjoy your meal."}
+          </span>
+        </motion.div>
       </div>
     );
   };
@@ -199,9 +327,63 @@ const Orders = () => {
       initial="initial"
       animate="animate"
       variants={pageAnimation}
-      className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12"
+      className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 relative overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {backgroundElements.map((el, index) => (
+          <motion.div
+            key={index}
+            className="absolute text-gray-200 opacity-20 z-0"
+            style={{
+              fontSize: el.size,
+              top: el.top,
+              left: el.left,
+              right: el.right,
+              bottom: el.bottom,
+              rotate: `${el.rotate}deg`,
+            }}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ 
+              y: 0, 
+              opacity: 0.2,
+              transition: { 
+                delay: el.delay, 
+                duration: 1.5 
+              }
+            }}
+          >
+            {el.icon}
+          </motion.div>
+        ))}
+        
+        {/* Floating bubbles effect */}
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={`bubble-${i}`}
+            className="absolute rounded-full bg-gradient-to-r from-orange-200 to-red-200 opacity-20"
+            style={{
+              width: Math.random() * 100 + 50,
+              height: Math.random() * 100 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -100, 0],
+              x: [0, Math.random() * 50 - 25, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: Math.random() * 15 + 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={itemAnimation}
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden mb-8"
@@ -311,6 +493,7 @@ const Orders = () => {
                   )}
                 </motion.button>
               ))}
+
             </div>
             
             <div className="w-full md:w-auto flex flex-col md:flex-row gap-4">
@@ -361,7 +544,7 @@ const Orders = () => {
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md p-5 flex items-center">
             <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
               <svg className="w-6 h-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m-4 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
@@ -525,7 +708,7 @@ const Orders = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={() => setSelectedOrder(null)}
           >
             <motion.div
@@ -537,56 +720,138 @@ const Orders = () => {
               onClick={e => e.stopPropagation()}
             >
               <div className="relative">
-                <div className="h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-t-2xl"></div>
-                <div className="absolute -bottom-8 left-0 right-0 flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg">
-                    <span className="text-3xl">{getStatusIcon(selectedOrder.status)}</span>
+                {/* Enhanced header with pattern */}
+                <div className="h-24 bg-gradient-to-r from-orange-500 to-red-500 rounded-t-2xl relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-30">
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      <defs>
+                        <pattern id="orderPattern" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
+                          <rect width="100%" height="100%" fill="none"/>
+                          <circle cx="20" cy="20" r="3" fill="white" fillOpacity="0.5" />
+                          <path d="M0 20h40M20 0v40" stroke="white" strokeWidth="1" strokeOpacity="0.3" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#orderPattern)" />
+                    </svg>
+                  </div>
+                  <div className="absolute h-full w-full flex items-center justify-center">
+                    <motion.div
+                      initial={{ x: 100, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.2, type: "spring" }}
+                      className="text-white text-xl font-bold flex items-center"
+                    >
+                      <span className="mr-4 text-3xl opacity-80">
+                        {getStatusIcon(selectedOrder.status)}
+                      </span>
+                      <h2 className="text-2xl font-bold">
+                        Order Details
+                      </h2>
+                    </motion.div>
                   </div>
                 </div>
-                <button
+                
+                <motion.div 
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="absolute -bottom-12 left-0 right-0 flex justify-center"
+                >
+                  <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white">
+                    <motion.span 
+                      className="text-4xl"
+                      animate={{ 
+                        scale: [1, 1.2, 1], 
+                        rotate: [0, 5, -5, 0] 
+                      }}
+                      transition={{ 
+                        duration: 1.5, 
+                        repeat: Infinity, 
+                        repeatType: "reverse" 
+                      }}
+                    >
+                      {getStatusIcon(selectedOrder.status)}
+                    </motion.span>
+                  </div>
+                </motion.div>
+                
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setSelectedOrder(null)}
-                  className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+                  className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full p-2 transition-colors z-10"
                 >
                   <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </button>
+                </motion.button>
               </div>
               
-              <div className="p-8 pt-12">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              <div className="p-8 pt-16">
+                <div className="text-center mb-8">
+                  <motion.h2 
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-2xl font-bold text-gray-900 mb-1"
+                  >
                     Order #{selectedOrder._id.slice(-8).toUpperCase()}
-                  </h2>
-                  <p className="text-gray-600">
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="text-gray-600"
+                  >
                     {new Date(selectedOrder.createdAt).toLocaleString()}
-                  </p>
+                  </motion.p>
                 </div>
                 
-                <div className="relative">
+                <motion.div 
+                  className="relative my-12"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
                   {renderOrderStatus(selectedOrder)}
-                </div>
+                </motion.div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-                  <div>
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                  >
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </motion.div>
                       Order Details
                     </h3>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex justify-between font-medium text-gray-800 mb-2">
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 shadow-sm border border-gray-100"
+                      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <div className="flex justify-between font-medium text-gray-800 mb-3">
                         <span>Restaurant</span>
-                        <span>{selectedOrder.restaurant?.name || 'Restaurant'}</span>
+                        <span className="font-bold text-orange-600">{selectedOrder.restaurant?.name || 'Restaurant'}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600 mb-2">
+                      <div className="flex justify-between text-gray-600 mb-3">
                         <span>Status</span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(selectedOrder.status)}`}>
+                        <motion.span 
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(selectedOrder.status)}`}
+                          whileHover={{ scale: 1.05 }}
+                        >
                           {selectedOrder.status}
-                        </span>
+                        </motion.span>
                       </div>
-                      <div className="flex justify-between text-gray-600 mb-2">
+                      <div className="flex justify-between text-gray-600 mb-3">
                         <span>Date</span>
                         <span>{new Date(selectedOrder.createdAt).toLocaleDateString()}</span>
                       </div>
@@ -594,23 +859,36 @@ const Orders = () => {
                         <span>Time</span>
                         <span>{new Date(selectedOrder.createdAt).toLocaleTimeString()}</span>
                       </div>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                   
-                  <div>
+                  <motion.div
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                  >
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </motion.div>
                       Delivery Information
                     </h3>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex justify-between font-medium text-gray-800 mb-2">
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 shadow-sm border border-gray-100"
+                      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <div className="flex justify-between font-medium text-gray-800 mb-3">
                         <span>Delivery Address</span>
-                        <span className="text-right">{selectedOrder.deliveryAddress || 'N/A'}</span>
+                        <span className="text-right font-bold text-gray-700">{selectedOrder.deliveryAddress || 'N/A'}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600 mb-2">
+                      <div className="flex justify-between text-gray-600 mb-3">
                         <span>Phone</span>
                         <span>{selectedOrder.phone || 'N/A'}</span>
                       </div>
@@ -618,66 +896,104 @@ const Orders = () => {
                         <span>Delivery Notes</span>
                         <span className="text-right">{selectedOrder.deliveryInstructions || 'None'}</span>
                       </div>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                 </div>
                 
-                <div className="mt-8">
+                <motion.div 
+                  className="mt-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                >
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <svg className="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </motion.div>
                     Order Items
                   </h3>
                   
-                  <div className="bg-gray-50 rounded-xl overflow-hidden">
+                  <motion.div 
+                    className="bg-gradient-to-br from-gray-50 to-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
+                    whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                  >
                     <div className="divide-y divide-gray-200">
                       {selectedOrder.items.map((item, index) => (
-                        <div key={index} className="flex justify-between p-4">
+                        <motion.div 
+                          key={index} 
+                          className="flex justify-between p-4 hover:bg-orange-50 transition-colors"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.9 + (index * 0.1) }}
+                          whileHover={{ x: 3 }}
+                        >
                           <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-orange-100 mr-4">
+                            <motion.div 
+                              className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-orange-100 to-orange-200 mr-4 shadow-sm"
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                            >
                               <div className="h-full w-full flex items-center justify-center text-orange-500 font-bold">
                                 {item.quantity}×
                               </div>
-                            </div>
+                            </motion.div>
                             <div>
                               <h4 className="font-medium text-gray-900">{item.name}</h4>
                               <p className="mt-1 text-sm text-gray-500">{item.description || ''}</p>
                             </div>
                           </div>
                           <p className="text-gray-900 font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                     
-                    <div className="bg-gray-100 p-4">
+                    <motion.div 
+                      className="bg-gradient-to-r from-orange-100 to-red-100 p-5"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.1 }}
+                    >
                       <div className="flex justify-between text-gray-600 mb-2">
                         <span>Subtotal</span>
                         <span>${(selectedOrder.totalAmount - (selectedOrder.deliveryFee || 0)).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600 mb-2">
+                      <div className="flex justify-between text-gray-600 mb-3">
                         <span>Delivery Fee</span>
                         <span>${(selectedOrder.deliveryFee || 0).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-gray-900 text-lg">
+                      <motion.div 
+                        className="flex justify-between font-bold text-gray-900 text-xl border-t border-orange-200 pt-3"
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.2, type: "spring" }}
+                      >
                         <span>Total</span>
-                        <span>${selectedOrder.totalAmount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                        <span className="text-orange-600">${selectedOrder.totalAmount.toFixed(2)}</span>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
                 
-                <div className="mt-8 flex justify-end gap-4">
+                <motion.div 
+                  className="mt-10 flex justify-end gap-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.3 }}
+                >
                   {['Pending', 'Accepted'].includes(selectedOrder.status) && (
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.05, backgroundColor: "#FEE2E2" }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         handleCancelOrder(selectedOrder._id);
                         setSelectedOrder(null);
                       }}
                       disabled={cancellingOrderId === selectedOrder._id}
-                      className="px-6 py-3 rounded-full bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors flex items-center gap-2"
+                      className="px-6 py-3 rounded-full bg-rose-100 text-rose-700 transition-all duration-300 flex items-center gap-2 shadow-sm"
                     >
                       {cancellingOrderId === selectedOrder._id ? (
                         <>
@@ -706,17 +1022,17 @@ const Orders = () => {
                   )}
                   
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.05, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedOrder(null)}
-                    className="px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all duration-300 flex items-center gap-2"
+                    className="px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white transition-all duration-300 flex items-center gap-2 shadow-md"
                   >
                     <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span>Close</span>
                   </motion.button>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </motion.div>

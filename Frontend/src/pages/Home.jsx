@@ -540,25 +540,41 @@ const Home = () => {
               <p className="text-gray-600 mb-6">
                 Explore restaurants and place your order instantly
               </p>
-              <motion.div
-                whileHover="hover"
-                variants={buttonHover}
-              >
+              <motion.div>
                 <Link
                   to="/restaurants"
-                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-md"
+                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300 shadow-md"
+                  whileHover={{ 
+                    scale: 1.03,
+                    backgroundImage: "linear-gradient(to right, #ff5f6d, #ff8e53)",
+                    boxShadow: "0px 8px 20px rgba(255, 120, 50, 0.3)"
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 15 
+                  }}
                 >
-                  Order Now
-                  <motion.svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    whileHover={{ x: 5 }}
+                  <motion.span
+                    initial={{ x: 0 }}
+                    whileHover={{ x: -4 }}
                     transition={{ type: "spring", stiffness: 400 }}
+                    className="flex items-center"
                   >
-                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </motion.svg>
+                    Order Now
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 ml-2"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 4 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </motion.svg>
+                  </motion.span>
                 </Link>
               </motion.div>
             </div>
@@ -582,25 +598,41 @@ const Home = () => {
               <p className="text-gray-600 mb-6">
                 Real-time tracking of your current orders
               </p>
-              <motion.div
-                whileHover="hover"
-                variants={buttonHover}
-              >
+              <motion.div>
                 <Link
                   to="/orders"
-                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md"
+                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-300 shadow-md"
+                  whileHover={{ 
+                    scale: 1.03,
+                    backgroundImage: "linear-gradient(to right, #2ecc71, #1abc9c)",
+                    boxShadow: "0px 8px 20px rgba(46, 204, 113, 0.3)"
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 15 
+                  }}
                 >
-                  View Orders
-                  <motion.svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    whileHover={{ x: 5 }}
+                  <motion.span
+                    initial={{ x: 0 }}
+                    whileHover={{ x: -4 }}
                     transition={{ type: "spring", stiffness: 400 }}
+                    className="flex items-center"
                   >
-                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </motion.svg>
+                    View Orders
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 ml-2"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 4 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </motion.svg>
+                  </motion.span>
                 </Link>
               </motion.div>
             </div>
@@ -624,48 +656,229 @@ const Home = () => {
               <p className="text-gray-600 mb-6">
                 Customize your preferences and settings
               </p>
-              <motion.div
-                whileHover="hover"
-                variants={buttonHover}
-              >
+              <motion.div>
                 <Link
                   to="/profile"
-                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md"
+                  className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 shadow-md"
+                  whileHover={{ 
+                    scale: 1.03,
+                    backgroundImage: "linear-gradient(to right, #9b59b6, #8e44ad)",
+                    boxShadow: "0px 8px 20px rgba(155, 89, 182, 0.3)"
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 15 
+                  }}
                 >
-                  View Profile
-                  <motion.svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    whileHover={{ x: 5 }}
+                  <motion.span
+                    initial={{ x: 0 }}
+                    whileHover={{ x: -4 }}
                     transition={{ type: "spring", stiffness: 400 }}
+                    className="flex items-center"
                   >
-                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </motion.svg>
+                    View Profile
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 ml-2"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 4 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </motion.svg>
+                  </motion.span>
                 </Link>
               </motion.div>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Recent Orders Section */}
+        {/* Interactive Food Ordering Components */}
         <motion.div
           variants={revealAnimation}
           initial="initial"
           whileInView="whileInView"
           viewport={{ once: true }}
-          className="mt-20 bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-orange-100"
+          className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8"
         >
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Your Recent Activity</h3>
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            <motion.p
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              Your recent orders and favorite items will appear here
-            </motion.p>
-          </div>
+          {/* Quick Meal Ideas */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-orange-100 overflow-hidden relative"
+          >
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-orange-100 rounded-full opacity-50" />
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Quick Meal Ideas</h3>
+                <motion.div 
+                  className="text-3xl"
+                  animate={{ rotate: [0, 10, 0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  🍳
+                </motion.div>
+              </div>
+              
+              <div className="space-y-4">
+                { [
+                  { emoji: "🍕", meal: "Pizza Night", description: "Perfect for family dinner" },
+                  { emoji: "🥗", meal: "Healthy Bowls", description: "Nutrient-packed options" },
+                  { emoji: "🍜", meal: "Ramen Special", description: "Warm and comforting" }
+                ].map((item, index) => (
+                  <motion.div 
+                    key={index}
+                    initial={{ x: -20, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ x: 5 }}
+                    className="flex items-center p-3 bg-gradient-to-r from-orange-50 to-white rounded-xl cursor-pointer group"
+                  >
+                    <motion.div 
+                      whileHover={{ rotate: 20, scale: 1.2 }}
+                      className="text-2xl mr-3"
+                    >
+                      {item.emoji}
+                    </motion.div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 group-hover:text-orange-500 transition-colors">{item.meal}</h4>
+                      <p className="text-sm text-gray-500">{item.description}</p>
+                    </div>
+                    <motion.div
+                      whileHover={{ scale: 1.2 }}
+                      className="bg-orange-100 hover:bg-orange-200 p-2 rounded-full text-orange-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <motion.button
+                whileHover={{ 
+                  scale: 1.02,
+                  backgroundImage: "linear-gradient(to right, #ff5f6d, #ff8e53)",
+                  boxShadow: "0px 8px 20px rgba(255, 120, 50, 0.3)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 400, 
+                  damping: 15 
+                }}
+                className="mt-6 w-full py-3 bg-gradient-to-r from-orange-400 to-red-400 text-white rounded-xl font-medium flex items-center justify-center shadow-md"
+              >
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: -4 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                  className="flex items-center"
+                >
+                  Explore All Meal Ideas
+                  <motion.svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-5 w-5 ml-2" 
+                    viewBox="0 0 20 20" 
+                    fill="currentColor"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 4 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </motion.svg>
+                </motion.span>
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Food Mood Interactive Component */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-purple-100 overflow-hidden relative"
+          >
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-100 rounded-full opacity-50" />
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">What's Your Food Mood?</h3>
+                <motion.div 
+                  className="text-3xl"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  🍽️
+                </motion.div>
+              </div>
+              
+              <p className="text-gray-600 mb-6">Tap your current mood and get personalized recommendations!</p>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                { [
+                  { emoji: "😋", mood: "Craving", color: "from-orange-400 to-red-400" },
+                  { emoji: "🥗", mood: "Healthy", color: "from-green-400 to-teal-400" },
+                  { emoji: "🎉", mood: "Celebration", color: "from-purple-400 to-pink-400" },
+                  { emoji: "💼", mood: "Quick Lunch", color: "from-blue-400 to-indigo-400" },
+                  { emoji: "😌", mood: "Comfort", color: "from-yellow-400 to-amber-400" },
+                  { emoji: "🌶️", mood: "Spicy", color: "from-red-500 to-pink-500" }
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`bg-gradient-to-r ${item.color} rounded-2xl p-4 text-center cursor-pointer shadow-md text-white`}
+                  >
+                    <motion.div 
+                      className="text-3xl mb-1"
+                      animate={{ rotate: [0, 10, 0, -10, 0] }}
+                      transition={{ duration: 2, delay: index * 0.2, repeat: Infinity }}
+                    >
+                      {item.emoji}
+                    </motion.div>
+                    <p className="font-medium">{item.mood}</p>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                whileInView={{ opacity: 1, height: 'auto' }}
+                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100"
+              >
+                <div className="flex items-center mb-3">
+                  <motion.div 
+                    className="text-2xl mr-3"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  >
+                    ✨
+                  </motion.div>
+                  <h4 className="font-semibold text-purple-700">Today's Special Recommendation</h4>
+                </div>
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  className="flex items-center bg-white rounded-xl p-3 shadow-sm"
+                >
+                  <img 
+                    src="https://images.unsplash.com/photo-1559847844-5315695dadae?q=80&w=100&auto=format&fit=crop" 
+                    alt="Dish" 
+                    className="w-16 h-16 rounded-lg object-cover mr-4"
+                  />
+                  <div>
+                    <h5 className="font-bold text-gray-900">Buddha Bowl</h5>
+                    <p className="text-sm text-gray-500">Perfect blend of flavors & nutrition</p>
+                    <div className="flex items-center mt-1">
+                      <span className="text-yellow-500 mr-1">★★★★★</span>
+                      <span className="text-xs text-gray-500">(4.9)</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>

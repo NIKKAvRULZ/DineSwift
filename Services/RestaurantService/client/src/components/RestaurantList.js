@@ -273,9 +273,29 @@ const RestaurantList = () => {
             <ConfirmDialog
                 open={deleteDialogOpen}
                 title="Delete Restaurant"
-                message={`Are you sure you want to delete "${restaurantToDelete?.name}"? This will also delete all associated menu items and cannot be undone.`}
+                message={
+                    <>
+                        <Box sx={{ mb: 2 }}>
+                            Are you sure you want to delete "<strong>{restaurantToDelete?.name}</strong>"?
+                        </Box>
+                        <Box sx={{ color: 'warning.main', mb: 1 }}>
+                            This action will:
+                        </Box>
+                        <ul>
+                            <li>Remove all restaurant data</li>
+                            <li>Delete all associated menu items</li>
+                            <li>Remove any related reviews</li>
+                        </ul>
+                        <Box sx={{ mt: 2, color: 'error.main', fontWeight: 'bold' }}>
+                            This action cannot be undone.
+                        </Box>
+                    </>
+                }
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setDeleteDialogOpen(false)}
+                confirmButtonText="Delete Restaurant"
+                confirmButtonColor="error"
+                cancelButtonText="Cancel"
             />
 
             <Notification
