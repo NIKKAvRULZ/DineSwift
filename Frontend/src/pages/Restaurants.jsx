@@ -95,11 +95,14 @@ const Restaurants = ({ isClientView = false }) => {
         console.log('Any restaurant has discounted items:', hasDiscounts);
       }
       
-      // Filter out restaurants that have no menu items (which might happen if all items have no images)
-      const restaurantsWithMenuItems = response.data.filter(restaurant => 
-        restaurant.menuItems && restaurant.menuItems.length > 0
-      );
-      setRestaurants(restaurantsWithMenuItems);
+      // Remove this filtering that hides restaurants without menu items
+      // const restaurantsWithMenuItems = response.data.filter(restaurant => 
+      //   restaurant.menuItems && restaurant.menuItems.length > 0
+      // );
+      // setRestaurants(restaurantsWithMenuItems);
+      
+      // Show all restaurants
+      setRestaurants(response.data);
     } catch (err) {
       if (!isClientView && err.response?.status === 401) {
         navigate('/login', { state: { from: '/restaurants' } });

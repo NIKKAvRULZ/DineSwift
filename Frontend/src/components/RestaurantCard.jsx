@@ -82,8 +82,8 @@ const RestaurantCard = ({ restaurant, isClientView = false }) => {
             className="w-full h-full object-cover"
           />
           
-          {/* Today's Offer Badge */}
-          {restaurant.menuItems?.some(item => item.discount > 0) && (
+          {/* Today's Offer Badge - Only show if menuItems exist */}
+          {restaurant.menuItems && restaurant.menuItems.length > 0 && restaurant.menuItems.some(item => item.discount > 0) && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -122,9 +122,9 @@ const RestaurantCard = ({ restaurant, isClientView = false }) => {
           >
             {restaurant.isOpen ? 'Open' : 'Closed'}
           </motion.div>
-          <p className="text-gray-600 mb-4">{restaurant.cuisine}</p>
+          <p className="text-gray-600 mb-4">{restaurant.cuisine || 'Various Cuisines'}</p>
           
-          {/* Add location display */}
+          {/* Add location display - with null checking */}
           <div className="flex items-center mb-4 text-gray-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -134,24 +134,27 @@ const RestaurantCard = ({ restaurant, isClientView = false }) => {
               {restaurant.address?.street && `${restaurant.address.street}, `}
               {restaurant.address?.city && `${restaurant.address.city}, `}
               {restaurant.address?.state && `${restaurant.address.state}`}
+              {!restaurant.address?.street && !restaurant.address?.city && !restaurant.address?.state && 'Address not available'}
             </span>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <span className="text-yellow-400 mr-1">⭐</span>
-              <span className="text-gray-700">{restaurant.rating}</span>
+              <span className="text-gray-700">{restaurant.rating || 'New'}</span>
             </div>
-            <div className="text-gray-600">{restaurant.deliveryTime} min</div>
+            <div className="text-gray-600">{restaurant.deliveryTime || '--'} min</div>
           </div>
           
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <span className="text-sm text-gray-500">Min. order: Rs {restaurant.minOrder}</span>
+            <span className="text-sm text-gray-500">Min. order: Rs {restaurant.minOrder || 0}</span>
           </div>
 
           {isClientView && (
             <div className="mt-4">
-              <p className="text-sm text-orange-500 font-medium">View full menu →</p>
+              <p className="text-sm text-orange-500 font-medium">
+                {restaurant.menuItems && restaurant.menuItems.length > 0 ? 'View full menu →' : 'Menu coming soon'}
+              </p>
             </div>
           )}
         </div>
