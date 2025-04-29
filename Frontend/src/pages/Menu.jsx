@@ -280,12 +280,19 @@ const Menu = () => {
 
         setRestaurant(restaurant.data);
         
-        // Get all menu items regardless of image
-        const allMenuItems = restaurantMenu.data;
+        // Filter out menu items without valid images
+        const menuItemsWithImages = restaurantMenu.data.filter(item => {
+          // Check if there are multiple images
+          if (item.images && item.images.length > 0) {
+            return item.images.some(img => img && img.trim() !== '');
+          }
+          // Check for single image
+          return item.image && item.image.trim() !== '';
+        });
         
         // Apply any user ratings from localStorage to the fetched menu items
         const savedRatings = JSON.parse(localStorage.getItem('userRatings') || '{}');
-        const updatedMenuItems = allMenuItems.map(item => {
+        const updatedMenuItems = menuItemsWithImages.map(item => {
           const itemId = item._id || item.id;
           // If the user has previously rated this item and it's in localStorage,
           // update the display rating
@@ -316,24 +323,6 @@ const Menu = () => {
 
     fetchRestaurantAndMenu();
   }, [id]); // Add id as dependency to refetch when restaurant ID changes
-
-  // Function to reset filters and show all menu items
-  const handleExploreFullMenu = () => {
-    setSelectedCategory('all');
-    setSearchQuery('');
-    // Adding a small scroll animation to menu items section
-    window.scrollTo({
-      top: document.querySelector('.grid').offsetTop - 100,
-      behavior: 'smooth'
-    });
-    
-    // Show toast notification
-    setToast({
-      visible: true,
-      message: `Exploring all items from ${restaurant?.name}`,
-      type: 'success'
-    });
-  };
 
   // Toggle favorite status for a restaurant
   const toggleFavoriteRestaurant = (restaurantId) => {
@@ -693,15 +682,6 @@ const Menu = () => {
               </div>
             </div>
           </div>
-          {/* Explore Menu Button */}
-          <div className="mt-4">
-            <button
-              onClick={handleExploreFullMenu}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition-all duration-300"
-            >
-              Explore Menu
-            </button>
-          </div>
         </motion.div>
 
         {/* Search Bar */}
@@ -958,3 +938,4 @@ const Menu = () => {
 };
 
 export default Menu;
+
