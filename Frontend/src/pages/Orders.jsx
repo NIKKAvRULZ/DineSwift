@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import orderService from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
+import OrderCard from '../components/OrderCard';
 
 const Orders = () => {
   const { isAuthenticated } = useAuth();
@@ -10,6 +11,9 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('date-desc');
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -48,15 +52,48 @@ const Orders = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredOrders = orders.filter((order) => {
-    if (filter === 'active') {
-      return ['Pending', 'Accepted', 'Preparing', 'On the Way'].includes(order.status);
+  const filterOrders = (orders) => {
+    // First apply status filter
+    let result = orders.filter((order) => {
+      if (filter === 'active') {
+        return ['Pending', 'Accepted', 'Preparing', 'On the Way'].includes(order.status);
+      }
+      if (filter === 'completed') {
+        return ['Delivered', 'Cancelled'].includes(order.status);
+      }
+      return true;
+    });
+    
+    // Then apply search filter if there's a query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(order => 
+        order._id.toLowerCase().includes(query) ||
+        order.restaurant?.name?.toLowerCase().includes(query) ||
+        order.items.some(item => item.name.toLowerCase().includes(query))
+      );
     }
-    if (filter === 'completed') {
-      return ['Delivered', 'Cancelled'].includes(order.status);
-    }
-    return true;
-  });
+    
+    // Finally sort the results
+    result.sort((a, b) => {
+      switch (sortOption) {
+        case 'date-asc':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'date-desc':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'price-asc':
+          return a.totalAmount - b.totalAmount;
+        case 'price-desc':
+          return b.totalAmount - a.totalAmount;
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+    
+    return result;
+  };
+
+  const filteredOrders = filterOrders(orders);
 
   if (loading) {
     return (
@@ -99,53 +136,63 @@ const Orders = () => {
           </motion.div>
         )}
 
+        {/* Search and Sort Controls */}
         <motion.div
           variants={itemAnimation}
           className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8"
         >
-          <div className="flex gap-4">
-            {['all', 'active', 'completed'].map((filterType) => (
-              <motion.button
-                key={filterType}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setFilter(filterType)}
-                className={`px-6 py-2 rounded-full text-sm font-medium ${
-                  filter === filterType
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-orange-50'
-                } transition-all duration-300 shadow-sm`}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="w-full md:w-auto flex gap-4">
+              {['all', 'active', 'completed'].map((filterType) => (
+                <motion.button
+                  key={filterType}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setFilter(filterType)}
+                  className={`px-6 py-2 rounded-full text-sm font-medium ${
+                    filter === filterType
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                      : 'bg-white text-gray-700 hover:bg-orange-50'
+                  } transition-all duration-300 shadow-sm`}
+                >
+                  {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+                </motion.button>
+              ))}
+            </div>
+            
+            <div className="w-full md:w-auto flex flex-col md:flex-row gap-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full md:w-64 pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="px-4 py-2 rounded-full border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
-                {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-              </motion.button>
-            ))}
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="price-asc">Price: Low to High</option>
+              </select>
+            </div>
           </div>
         </motion.div>
 
         <motion.div variants={itemAnimation} className="space-y-6">
           {filteredOrders.map((order) => (
-            <motion.div
-              key={order._id}
-              variants={itemAnimation}
-              className="bg-white p-6 rounded-lg shadow-md transform hover:scale-105 transition-all duration-300 ease-in-out"
-            >
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Order #{order._id.slice(-6) }</h3>
-                <Link
-                  to={`/tracking/${order._id}`}
-                  className="text-orange-500 hover:text-orange-600"
-                >
-                  Track Order →
-                </Link>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(order.status)}`}
-                >
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </span>
-              </div>
-            </motion.div>
+            <OrderCard key={order._id} order={order} />
           ))}
 
           {filteredOrders.length === 0 && (
@@ -165,7 +212,9 @@ const Orders = () => {
                   No orders found
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {filter === 'all'
+                  {searchQuery 
+                    ? "No orders match your search criteria."
+                    : filter === 'all'
                     ? "You haven't placed any orders yet."
                     : filter === 'active'
                     ? "You don't have any active orders."
