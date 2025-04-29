@@ -404,12 +404,7 @@ const Home = () => {
             variants={fadeIn}
             className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
-            <Link
-              to="/explore"
-              className="w-full sm:w-auto px-8 py-4 rounded-full text-white bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
-            >
-              Explore Menu
-            </Link>
+            
             <Link
               to="/signup"
               className="w-full sm:w-auto px-8 py-4 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
