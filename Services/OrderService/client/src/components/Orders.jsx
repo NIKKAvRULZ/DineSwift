@@ -40,11 +40,12 @@ const Orders = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'Pending': 'bg-yellow-100 text-yellow-800',
-      'Accepted': 'bg-blue-100 text-blue-800',
-      'Preparing': 'bg-purple-100 text-purple-800',
-      'On the Way': 'bg-green-100 text-green-800',
-      'Delivered': 'bg-gray-100 text-gray-800'
+      'Pending': 'bg-amber-200 text-amber-900',     // soft orange
+      'Accepted': 'bg-sky-200 text-sky-900',        // light blue
+      'Preparing': 'bg-indigo-200 text-indigo-900', // medium indigo
+      'On the Way': 'bg-teal-200 text-teal-900',    // calm teal
+      'Delivered': 'bg-lime-200 text-lime-900',     // fresh lime green
+      'Cancelled': 'bg-rose-200 text-rose-900'      // soft red
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
