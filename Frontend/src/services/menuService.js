@@ -37,6 +37,33 @@ const menuService = {
       console.error('Error submitting rating:', error);
       throw error;
     }
+  },
+
+  // Add a comment to a menu item
+  addComment: async (restaurantId, menuItemId, comment) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`,
+        comment
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  },
+
+  // Get comments for a menu item
+  getComments: async (restaurantId, menuItemId) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      throw error;
+    }
   }
 };
 

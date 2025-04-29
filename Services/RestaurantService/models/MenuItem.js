@@ -18,6 +18,23 @@ const RatingSchema = new mongoose.Schema({
     }
 });
 
+// Define a schema for comments
+const CommentSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.Mixed, // Allow both ObjectId and string for anonymous users
+        required: true
+    },
+    text: {
+        type: String,
+        required: true,
+        maxlength: 500
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const MenuItemSchema = new mongoose.Schema({
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
     name: { type: String, required: true },
@@ -31,6 +48,10 @@ const MenuItemSchema = new mongoose.Schema({
     ratingCount: { type: Number, default: 0 }, // Track number of ratings
     ratings: {
         type: [RatingSchema],
+        default: []
+    },
+    comments: {
+        type: [CommentSchema],
         default: []
     }
 });

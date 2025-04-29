@@ -346,6 +346,67 @@ const rateMenuItem = async (req, res) => {
     }
 };
 
+// Add a comment to a menu item
+const addComment = async (req, res) => {
+    try {
+        const { restaurantId, id } = req.params;
+        const { text, userId } = req.body;
+
+        if (!text || !userId) {
+            return res.status(400).json({ message: 'Comment text and user ID are required' });
+        }
+
+        const menuItem = await MenuItem.findOne({ 
+            _id: id,
+            restaurantId: restaurantId
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+
+        // Add the new comment
+        menuItem.comments.push({
+            user: userId,
+            text: text,
+            timestamp: new Date()
+        });
+
+        await menuItem.save();
+
+        res.status(200).json({
+            message: 'Comment added successfully',
+            menuItem: menuItem
+        });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ message: 'Error adding comment', error: error.message });
+    }
+};
+
+// Get comments for a menu item
+const getComments = async (req, res) => {
+    try {
+        const { restaurantId, id } = req.params;
+
+        const menuItem = await MenuItem.findOne({ 
+            _id: id,
+            restaurantId: restaurantId
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ message: 'Menu item not found' });
+        }
+
+        res.status(200).json({
+            comments: menuItem.comments
+        });
+    } catch (error) {
+        console.error('Error getting comments:', error);
+        res.status(500).json({ message: 'Error getting comments', error: error.message });
+    }
+};
+
 module.exports = {
     getAllMenuItems,
     getRestaurantMenuItems,
@@ -353,5 +414,7 @@ module.exports = {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
-    rateMenuItem
+    rateMenuItem,
+    addComment,
+    getComments
 };

@@ -22,6 +22,9 @@ const ClientMenu = () => {
   const [userRatings, setUserRatings] = useState({}); // Track user's ratings
   const [isRating, setIsRating] = useState({}); // Track items being rated
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' }); // Toast notifications
+  const [comments, setComments] = useState({});
+  const [newComments, setNewComments] = useState({}); // Changed to object to store comments for each item
+  const [isSubmittingComment, setIsSubmittingComment] = useState({}); // Changed to object to track submission state for each item
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -292,6 +295,75 @@ const ClientMenu = () => {
     return 0;
   });
 
+  // Load comments for a menu item
+  const loadComments = useCallback(async (itemId) => {
+    try {
+      const response = await menuService.getComments(id, itemId);
+      setComments(prev => ({
+        ...prev,
+        [itemId]: response.comments
+      }));
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    }
+  }, [id]);
+
+  // Load comments for all menu items when component mounts
+  useEffect(() => {
+    if (menuItems.length > 0) {
+      menuItems.forEach(item => {
+        loadComments(item._id || item.id);
+      });
+    }
+  }, [menuItems, loadComments]);
+
+  // Handle adding a comment
+  const handleAddComment = useCallback(async (itemId) => {
+    const commentText = newComments[itemId]?.trim();
+    if (!commentText) return;
+
+    try {
+      setIsSubmittingComment(prev => ({ ...prev, [itemId]: true }));
+      const userId = localStorage.getItem('userId') || 'anonymous';
+      
+      const response = await menuService.addComment(id, itemId, {
+        text: commentText,
+        userId
+      });
+
+      // Update comments in state
+      setComments(prev => ({
+        ...prev,
+        [itemId]: [...(prev[itemId] || []), response.menuItem.comments[response.menuItem.comments.length - 1]]
+      }));
+
+      // Clear comment input for this item
+      setNewComments(prev => ({ ...prev, [itemId]: '' }));
+
+      // Show success toast
+      setToast({
+        visible: true,
+        message: 'Comment added successfully!',
+        type: 'success'
+      });
+
+      // Auto-hide toast after 3 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setToast({
+        visible: true,
+        message: 'Error adding comment. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setIsSubmittingComment(prev => ({ ...prev, [itemId]: false }));
+    }
+  }, [id, newComments]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
@@ -513,6 +585,58 @@ const ClientMenu = () => {
                         Rs {item.price.toFixed(2)}
                       </span>
                     )}
+                  </div>
+                </div>
+
+                {/* Comments Section */}
+                <div className="mt-4 border-t border-orange-100 pt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold">
+                      Comments ({comments[item._id || item.id]?.length || 0})
+                    </h4>
+                  </div>
+                  
+                  {/* Comments List */}
+                  <div className="space-y-4 mb-4 max-h-40 overflow-y-auto">
+                    {comments[item._id || item.id]?.map((comment, index) => (
+                      <div key={index} className="bg-orange-50 p-3 rounded-lg">
+                        <p className="text-sm text-gray-600">{comment.text}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-400">
+                            {new Date(comment.timestamp).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {comment.user === 'anonymous' ? 'Anonymous User' : `User ${comment.user}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {(!comments[item._id || item.id] || comments[item._id || item.id].length === 0) && (
+                      <p className="text-sm text-gray-500 italic text-center py-2">
+                        No comments yet. Be the first to comment!
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add Comment Form */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newComments[item._id || item.id] || ''}
+                      onChange={(e) => setNewComments(prev => ({
+                        ...prev,
+                        [item._id || item.id]: e.target.value
+                      }))}
+                      placeholder="Add a comment..."
+                      className="flex-1 px-3 py-2 border border-orange-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    <button
+                      onClick={() => handleAddComment(item._id || item.id)}
+                      disabled={isSubmittingComment[item._id || item.id] || !newComments[item._id || item.id]?.trim()}
+                      className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmittingComment[item._id || item.id] ? 'Posting...' : 'Post'}
+                    </button>
                   </div>
                 </div>
               </div>

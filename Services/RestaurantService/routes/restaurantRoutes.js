@@ -17,7 +17,9 @@ const {
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
-    rateMenuItem
+    rateMenuItem,
+    addComment,
+    getComments
 } = require('../controllers/menuItemController');
 
 const mongoose = require('mongoose');
@@ -68,5 +70,7 @@ router.post('/restaurants/:restaurantId/menu-items', addMenuItem);
 router.put('/menu-items/:id', updateMenuItem);
 router.delete('/menu-items/:id', deleteMenuItem);
 router.post('/restaurants/:restaurantId/menu-items/:id/rate', rateMenuItem);
+router.post('/restaurants/:restaurantId/menu-items/:id/comments', addComment);
+router.get('/restaurants/:restaurantId/menu-items/:id/comments', getComments);
 
 module.exports = router;

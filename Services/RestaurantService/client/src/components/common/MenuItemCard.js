@@ -12,7 +12,12 @@ import {
     Grid,
     useTheme,
     Rating,
-    Paper
+    Paper,
+    TextField,
+    List,
+    ListItem,
+    ListItemText,
+    Divider
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,6 +29,8 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import axios from 'axios';
 import Notification from './Notification';
+import CommentIcon from '@mui/icons-material/Comment';
+import SendIcon from '@mui/icons-material/Send';
 
 const apiUrl = 'http://localhost:5002';
 
@@ -38,6 +45,9 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
         message: '',
         severity: 'success'
     });
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     
     // Convert single image to images array if needed
     const images = menuItem.images || (menuItem.image ? [menuItem.image] : []);
@@ -50,6 +60,20 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
             ratingCount: menuItem.ratingCount
         });
     }, [menuItem.rating, menuItem.ratingCount]);
+
+    // Load comments when component mounts
+    useEffect(() => {
+        loadComments();
+    }, [menuItem._id]);
+
+    const loadComments = async () => {
+        try {
+            const response = await axios.get(`${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`);
+            setComments(response.data.comments);
+        } catch (error) {
+            console.error('Error loading comments:', error);
+        }
+    };
 
     const handleNextImage = () => {
         setCurrentImageIndex((prev) => 
@@ -142,6 +166,30 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
             }
         } finally {
             setIsRating(false);
+        }
+    };
+
+    const handleAddComment = async () => {
+        if (!newComment.trim()) return;
+
+        try {
+            setIsSubmittingComment(true);
+            const response = await axios.post(
+                `${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`,
+                {
+                    text: newComment.trim(),
+                    userId: 'admin' // Since this is the admin view
+                }
+            );
+
+            setComments(prev => [...prev, response.data.menuItem.comments[response.data.menuItem.comments.length - 1]]);
+            setNewComment('');
+            showNotification('Comment added successfully', 'success');
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            showNotification('Error adding comment', 'error');
+        } finally {
+            setIsSubmittingComment(false);
         }
     };
 
@@ -305,21 +353,39 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                         >
                             {convertToLKR(menuItem.price)}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Rating
-                                value={menuItem.rating}
-                                precision={0.5}
-                                size="small"
-                                onChange={handleRatingChange}
-                                disabled={isRating}
-                                emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
-                            />
-                            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                ({menuItem.rating ? menuItem.rating.toFixed(1) : '0.0'})
-                                {menuItem.ratingCount > 0 && 
-                                    <span> · {menuItem.ratingCount} {menuItem.ratingCount === 1 ? 'rating' : 'ratings'}</span>
-                                }
-                            </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {/* Rating Section */}
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Rating
+                                    value={menuItem.rating}
+                                    precision={0.5}
+                                    size="small"
+                                    onChange={handleRatingChange}
+                                    disabled={isRating}
+                                    emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+                                />
+                                <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                                    ({menuItem.rating ? menuItem.rating.toFixed(1) : '0.0'})
+                                    {menuItem.ratingCount > 0 && 
+                                        <span> · {menuItem.ratingCount} {menuItem.ratingCount === 1 ? 'rating' : 'ratings'}</span>
+                                    }
+                                </Typography>
+                            </Box>
+
+                            {/* Comment Count Section */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <CommentIcon 
+                                    fontSize="small" 
+                                    color="action"
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        '&:hover': { color: 'primary.main' }
+                                    }}
+                                />
+                                <Typography variant="body2" color="text.secondary">
+                                    {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+                                </Typography>
+                            </Box>
                         </Box>
                     </Box>
                     <Typography 
@@ -344,6 +410,43 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                             variant="outlined"
                             sx={{ borderRadius: '6px' }}
                         />
+                    </Box>
+
+                    {/* Comments Section */}
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Comments ({comments.length})
+                        </Typography>
+                        <List sx={{ maxHeight: 200, overflow: 'auto' }}>
+                            {comments.map((comment, index) => (
+                                <React.Fragment key={index}>
+                                    <ListItem>
+                                        <ListItemText
+                                            primary={comment.text}
+                                            secondary={
+                                                <>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {new Date(comment.timestamp).toLocaleString()}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                                        User: {comment.user}
+                                                    </Typography>
+                                                </>
+                                            }
+                                        />
+                                    </ListItem>
+                                    {index < comments.length - 1 && <Divider />}
+                                </React.Fragment>
+                            ))}
+                            {comments.length === 0 && (
+                                <ListItem>
+                                    <ListItemText
+                                        primary="No comments yet"
+                                        sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                                    />
+                                </ListItem>
+                            )}
+                        </List>
                     </Box>
                 </CardContent>
                 <Box sx={{ p: 2, pt: 0, mt: 'auto' }}>
