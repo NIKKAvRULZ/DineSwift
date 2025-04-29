@@ -336,6 +336,7 @@ const rateMenuItem = async (req, res) => {
                 timestamp: new Date()
             });
         }
+        
 
         // Calculate new average rating with safeguards
         let totalRating = 0;
