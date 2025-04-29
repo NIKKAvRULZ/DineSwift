@@ -79,11 +79,19 @@ const EditMenuItem = () => {
                 setRestaurantId(restId);
                 console.log('Restaurant ID set to:', restId);
 
+                // Normalize images
+                let imageArray = [];
+                if (menuItem.images && Array.isArray(menuItem.images) && menuItem.images.length > 0) {
+                    imageArray = menuItem.images;
+                } else if (menuItem.image) {
+                    imageArray = [menuItem.image];
+                }
+
                 // Set form data with proper handling of null/undefined values
                 setFormData({
                     name: menuItem.name || '',
                     description: menuItem.description || '',
-                    images: menuItem.images || [],
+                    images: imageArray,
                     category: menuItem.category || '',
                     price: menuItem.price?.toString() || '',
                     isSpicy: Boolean(menuItem.isSpicy),
@@ -144,11 +152,16 @@ const EditMenuItem = () => {
 
             const submitData = {
                 ...formData,
-                price: parseFloat(formData.price),
-                images: formData.images
+                price: parseFloat(formData.price)
             };
+            
+            // Handle images
+            if (submitData.images && submitData.images.length > 0) {
+                // Set the first image as the primary image
+                submitData.image = submitData.images[0];
+            }
 
-            console.log('Submitting menu item:', submitData);
+            console.log('Submitting menu item update:', submitData);
             const response = await axios.put(`${apiUrl}/api/menu-items/${id}`, submitData);
             console.log('Menu item updated:', response.data);
             setSuccessMessage('Menu item updated successfully!');
@@ -161,7 +174,7 @@ const EditMenuItem = () => {
             setLoading(false);
             console.error('Error updating menu item:', error);
             const errorMsg = error.response 
-                ? `Error ${error.response.status}: ${error.response.data.message || error.message}` 
+                ? `Error ${error.response.status}: ${error.response.data.message || error.response.data.error || error.message}` 
                 : error.message;
             setErrorMessage(errorMsg);
         }

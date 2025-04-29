@@ -22,18 +22,24 @@ const MenuItemSchema = new mongoose.Schema({
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
     name: { type: String, required: true },
     description: { type: String },
-    images: [{ type: String }], // Changed from single image to array of images
+    image: { type: String }, // Keep single image field for backward compatibility
+    images: [{ type: String }], // Array of up to 5 images for slideshow
     category: { type: String, required: true },
     price: { type: Number, required: true },
     isSpicy: { type: Boolean, default: false },
-    discount: { type: Number, min: 0, max: 100, default: 0 }, // Percentage discount
+    discount: { type: Number, min: 0, max: 100, default: 0 },
     rating: { type: Number, min: 0, max: 5, default: 0 },
-    ratingCount: { type: Number, default: 0 }, // Track number of ratings
+    ratingCount: { type: Number, default: 0 },
     ratings: {
         type: [RatingSchema],
         default: []
     }
 });
+
+// Add a validation to limit the number of images to 5
+MenuItemSchema.path('images').validate(function(value) {
+    return value.length <= 5;
+}, 'A maximum of 5 images is allowed.');
 
 const MenuItem = mongoose.model('MenuItem', MenuItemSchema);
 

@@ -60,11 +60,41 @@ router.get('/restaurants/:id', getRestaurant);
 router.put('/restaurants/:id', updateRestaurant);
 router.delete('/restaurants/:id', deleteRestaurant);
 
+// Error handling middleware specifically for image URL issues
+const handleImageUrlErrors = (err, req, res, next) => {
+    if (err.message && err.message.includes('Invalid URL')) {
+        return res.status(400).json({ 
+            error: 'Invalid image URL provided. Please check the URL format.' 
+        });
+    }
+    next(err);
+};
+
+router.use(handleImageUrlErrors);
+
+// Menu item routes with proper error catching
+router.post('/restaurants/:restaurantId/menu-items', (req, res, next) => {
+    try {
+        // Validate image URLs if present
+        if (req.body.image) {
+            // Basic URL validation
+            new URL(req.body.image);
+        }
+        if (req.body.images && Array.isArray(req.body.images)) {
+            req.body.images.forEach(url => {
+                if (url) new URL(url);
+            });
+        }
+        addMenuItem(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Menu item routes
 router.get('/menu-items', getAllMenuItems);
 router.get('/restaurants/:restaurantId/menu-items', getRestaurantMenuItems);
 router.get('/menu-items/:id', getMenuItem);
-router.post('/restaurants/:restaurantId/menu-items', addMenuItem);
 router.put('/menu-items/:id', updateMenuItem);
 router.delete('/menu-items/:id', deleteMenuItem);
 router.post('/restaurants/:restaurantId/menu-items/:id/rate', rateMenuItem);
