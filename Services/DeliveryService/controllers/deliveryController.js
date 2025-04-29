@@ -51,8 +51,9 @@ const assignDelivery = async (req, res) => {
 
     let delivery;
     if (driver) {
-      // Update driver status to busy
+      // Update driver status and location
       driver.status = 'busy';
+      driver.location = location; // Use delivery location as initial driver location
       await driver.save();
 
       // Create delivery with assigned driver
@@ -66,12 +67,15 @@ const assignDelivery = async (req, res) => {
         orderTotal: order.totalAmount, // Use actual order total
       });
 
-      // Emit driverLocationUpdate event
+      await delivery.save();
+
+      // Emit driverLocationUpdate
       req.io.emit('driverLocationUpdate', {
         deliveryId: delivery._id.toString(),
         driverId: driver._id.toString(),
-        location: driver.location,
+        location: location, // Use delivery location
       });
+      console.log(`Emitted driverLocationUpdate for delivery ${delivery._id}`);
     } else {
       // Create delivery without driver
       delivery = new Delivery({
@@ -83,9 +87,9 @@ const assignDelivery = async (req, res) => {
         restaurantName: order.restaurantId, // Use restaurantId as placeholder
         orderTotal: order.totalAmount, // Use actual order total
       });
+      await delivery.save();
     }
 
-    await delivery.save();
     console.log('Delivery Saved:', delivery); // Log saved delivery
 
     res.status(201).json({

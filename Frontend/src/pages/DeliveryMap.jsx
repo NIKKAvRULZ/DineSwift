@@ -59,7 +59,7 @@ const markerVariants = {
   },
   pulse: {
     scale: [1, 1.2, 1],
-    transition: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+    transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
   },
 };
 
@@ -95,21 +95,22 @@ const DeliveryMap = ({ location, driverLocation: initialDriverLocation, isDarkMo
   console.log('Driver Location State:', driverLocation);
   const defaultPosition = [6.9271, 79.8612]; // Colombo, Sri Lanka
 
-  // Validate location and driverLocation
+  // Memoize mapCenter to prevent re-computation
   const mapCenter = useMemo(() => {
     if (location?.coordinates && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
       return [location.coordinates[1], location.coordinates[0]]; // [lat, lon]
     }
     return defaultPosition;
-  }, [location]);
+  }, [location?.coordinates?.[0], location?.coordinates?.[1]]); // Depend on coordinates only
 
   const driverPosition = useMemo(() => {
     if (driverLocation?.coordinates && Array.isArray(driverLocation.coordinates) && driverLocation.coordinates.length === 2) {
-      const [lon, lat] = driverLocation.coordinates; // [lon, lat]
+      const [lon, lat] = driverLocation.coordinates;
       const pos = [lat, lon]; // [lat, lon] for Leaflet
       console.log('Driver Position:', pos);
       return pos;
     }
+    console.log('No valid driver position:', driverLocation);
     return null;
   }, [driverLocation]);
 
@@ -117,31 +118,29 @@ const DeliveryMap = ({ location, driverLocation: initialDriverLocation, isDarkMo
   useEffect(() => {
     socket.on('connect', () => console.log('Socket.IO connected'));
     socket.on('connect_error', (err) => console.error('Socket.IO error:', err));
+
     if (deliveryId) {
       socket.on('driverLocationUpdate', (data) => {
         console.log('Received driverLocationUpdate:', data);
-        // Convert ObjectId to string for comparison
         const eventDeliveryId = data.deliveryId?.toString ? data.deliveryId.toString() : data.deliveryId;
-        console.log('Comparing deliveryId:', { eventDeliveryId, propDeliveryId: deliveryId });
-        if (eventDeliveryId === deliveryId) {
+        if (eventDeliveryId === deliveryId.toString()) {
           let coords;
           if (data.location?.coordinates) {
             coords = data.location.coordinates; // [lon, lat]
-          } else if (data.location?.lat && data.location?.lng) {
-            coords = [data.location.lng, data.location.lat]; // Convert [lng, lat] to [lon, lat]
           } else {
             console.warn('Invalid location format:', data.location);
             return;
           }
-          console.log('Updating driverLocation with coords:', coords);
-          setDriverLocation({ coordinates: coords });
+          console.log('Updating driverLocation:', coords);
+          setDriverLocation({ type: 'Point', coordinates: coords });
         } else {
-          console.log('DeliveryId mismatch, ignoring update');
+          console.log('DeliveryId mismatch:', { eventDeliveryId, propDeliveryId: deliveryId });
         }
       });
     } else {
-      console.warn('No deliveryId provided, cannot listen for updates');
+      console.warn('No deliveryId provided');
     }
+
     return () => {
       socket.off('connect');
       socket.off('connect_error');

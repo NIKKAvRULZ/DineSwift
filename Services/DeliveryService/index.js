@@ -31,27 +31,33 @@ app.use('/api/delivery', deliveryRoutes);
 // Simulated driver location updates
 setInterval(async () => {
   try {
-    const Delivery = require('./models/Delivery'); // Import here to avoid loading before DB connection
+    const Delivery = require('./models/Delivery');
     const Driver = require('./models/Driver');
-    const delivery = await Delivery.findOne({
-      status: { $in: ['Accepted', 'On the Way'] }, // Updated status values
+    const deliveries = await Delivery.find({
+      status: { $in: ['Accepted', 'On the Way'] },
+      driverId: { $ne: null }, // Ensure driver is assigned
     }).populate('driverId');
-    if (delivery && delivery.driverId) {
-      const newCoords = [
-        delivery.driverId.location.coordinates[0] + (Math.random() - 0.5) * 0.001,
-        delivery.driverId.location.coordinates[1] + (Math.random() - 0.5) * 0.001,
-      ];
-      await Driver.findByIdAndUpdate(delivery.driverId._id, {
-        location: { type: 'Point', coordinates: newCoords },
-      });
-      io.emit('driverLocationUpdate', {
-        deliveryId: delivery._id.toString(),
-        driverId: delivery.driverId._id.toString(),
-        location: { type: 'Point', coordinates: newCoords },
-      });
-      console.log(`Emitting driverLocationUpdate for delivery ${delivery._id}`);
-    } else {
-      console.log('No active delivery with assigned driver found');
+    
+    for (const delivery of deliveries) {
+      const driver = delivery.driverId;
+      if (driver) {
+        const newCoords = [
+          driver.location.coordinates[0] + (Math.random() - 0.5) * 0.001,
+          driver.location.coordinates[1] + (Math.random() - 0.5) * 0.001,
+        ];
+        await Driver.findByIdAndUpdate(driver._id, {
+          location: { type: 'Point', coordinates: newCoords },
+        });
+        io.emit('driverLocationUpdate', {
+          deliveryId: delivery._id.toString(),
+          driverId: driver._id.toString(),
+          location: { type: 'Point', coordinates: newCoords },
+        });
+        console.log(`Emitting driverLocationUpdate for delivery ${delivery._id}`);
+      }
+    }
+    if (deliveries.length === 0) {
+      console.log('No active deliveries with assigned drivers found');
     }
   } catch (error) {
     console.error('Error emitting driverLocationUpdate:', error.message);
