@@ -175,104 +175,23 @@ const Restaurants = ({ isClientView = false }) => {
           </div>
         </div>
 
-        {/* Background pattern - decorative food icons */}
-        <div className="fixed inset-0 z-0 opacity-5 pointer-events-none">
-          <div className="absolute inset-0 bg-repeat" style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z' fill='%23FF5722' fill-opacity='0.4'/%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundSize: '80px 80px'
-          }}></div>
+        {/* Restaurants Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredRestaurants.map(restaurant => (
+            <RestaurantCard 
+              key={restaurant._id} 
+              restaurant={restaurant} 
+              isClientView={isClientView} 
+            />
+          ))}
         </div>
 
-        {/* Restaurants Grid with animations */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10"
-          variants={{
-            animate: {
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-        >
-          {filteredRestaurants.map((restaurant, index) => (
-            <motion.div
-              key={restaurant._id}
-              variants={{
-                initial: { opacity: 0, y: 50 },
-                animate: { opacity: 1, y: 0, 
-                  transition: { 
-                    type: "spring", 
-                    stiffness: 100,
-                    damping: 12
-                  } 
-                }
-              }}
-              whileHover={{ 
-                scale: 1.03, 
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="transform-gpu"
-            >
-              <RestaurantCard 
-                restaurant={restaurant} 
-                isClientView={isClientView} 
-              />
-            </motion.div>
-          ))}
-        </motion.div>
-
         {filteredRestaurants.length === 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-center py-12 bg-white bg-opacity-80 backdrop-blur-sm rounded-xl shadow-lg my-8"
-          >
+          <div className="text-center py-12">
             <h3 className="text-xl font-medium text-gray-900 mb-2">No restaurants found</h3>
             <p className="text-gray-600">Try adjusting your search or filters</p>
-            <motion.div 
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity,
-                repeatType: "reverse" 
-              }}
-              className="mt-4 text-5xl"
-            >
-              🍽️
-            </motion.div>
-          </motion.div>
+          </div>
         )}
-      </div>
-
-      {/* Floating food emojis for fun visual effect */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {['🍔', '🍕', '🍣', '🍜', '🍦', '🍩', '🥗', '🍱'].map((emoji, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: -100 
-            }}
-            animate={{ 
-              y: window.innerHeight + 100,
-              rotate: Math.random() * 360
-            }}
-            transition={{ 
-              duration: 20 + Math.random() * 30, 
-              repeat: Infinity, 
-              delay: Math.random() * 20,
-              ease: "linear" 
-            }}
-            className="absolute text-3xl opacity-20"
-          >
-            {emoji}
-          </motion.div>
-        ))}
       </div>
     </motion.div>
   );
