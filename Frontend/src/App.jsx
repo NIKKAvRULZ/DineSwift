@@ -21,6 +21,7 @@ import Checkout from "./pages/Checkout"; // Import Checkout page
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import Admin from "./pages/Admin";
 import ClientMenu from "./pages/ClientMenu"; // Import ClientMenu page
 
 function App() {
@@ -38,7 +39,7 @@ function App() {
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/contact" element={<Contact />} />
-             
+                <Route path="/admin" element={<Admin />} />
                 
                 {/* Protected Routes */}
                 <Route

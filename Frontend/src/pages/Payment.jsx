@@ -47,13 +47,33 @@ const PremiumFoodDeliveryCheckout = () => {
     };
   };
 
-  const handlePayNow = () => {
-    setIsOrderPlaced(true);
-    setTimeout(() => {
-      setIsPaymentModalOpen(false);
-      setIsOrderPlaced(false);
-    }, 2000);
+  const handlePayNow = async () => {
+    try {
+      const response = await fetch("http://localhost:5002/api/payments/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: orderItems[0].name, // Use first item’s name
+          price: calculateTotal().total, // Total amount
+          quantity: 1, // Hardcoded, modify if needed
+          image: orderItems[0].image, // First item’s image
+          id: "ORDER123", // Replace with actual order ID
+          userId: "USER456", // Replace with actual user ID
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.url) {
+        window.location.href = data.url; // Redirect to Stripe Checkout
+      } else {
+        console.error("Error processing payment:", data.error);
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+    }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
@@ -141,12 +161,12 @@ const PremiumFoodDeliveryCheckout = () => {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsPaymentModalOpen(true)}
+              onClick={handlePayNow} // Updated function
               className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
-            >
+>
               <CreditCard className="mr-3" /> Proceed to Payment
             </motion.button>
-          </div>
+            </div>
         </div>
 
         {/* Payment Modal */}
