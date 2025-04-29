@@ -14,7 +14,7 @@ const LoadingState = ({ message = 'Loading...' }) => {
                 minHeight: '300px',
                 gap: 2,
                 backgroundColor: theme.palette.background.paper,
-                borderRadius: theme.shape.borderRadius * 2,
+                borderRadius: theme.shape.borderRadius ,
                 p: 4,
                 boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)',
             }}
