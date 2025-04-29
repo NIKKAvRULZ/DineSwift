@@ -7,12 +7,16 @@ const getAllRestaurants = async (req, res) => {
         const { search, cuisine, minRating } = req.query;
         let query = {};
 
+        console.log('Filtering restaurants with params:', { search, cuisine, minRating });
+
         if (search) {
             query.name = { $regex: search, $options: 'i' };
         }
 
         if (cuisine) {
-            query.cuisine = cuisine;
+            // Use case-insensitive regex for cuisine to match regardless of case
+            query.cuisine = { $regex: `^${cuisine}$`, $options: 'i' };
+            console.log('Added cuisine filter:', cuisine);
         }
 
         // Handle rating filter
@@ -20,9 +24,33 @@ const getAllRestaurants = async (req, res) => {
             query.rating = { $gte: parseFloat(minRating) };
         }
 
-        const restaurants = await Restaurant.find(query).populate('menuItems');
-        res.json(restaurants);
+        console.log('MongoDB query:', JSON.stringify(query));
+
+        // Get all restaurants first
+        const restaurants = await Restaurant.find(query);
+        console.log(`Found ${restaurants.length} restaurants matching criteria`);
+        
+        // For each restaurant, populate only menu items with images
+        const populatedRestaurants = await Promise.all(
+            restaurants.map(async (restaurant) => {
+                const menuItems = await MenuItem.find({
+                    restaurantId: restaurant._id,
+                    $or: [
+                        { images: { $exists: true, $ne: [] } },
+                        { image: { $exists: true, $ne: '' } }
+                    ]
+                });
+                
+                // Convert to plain object to be able to modify
+                const restaurantObj = restaurant.toObject();
+                restaurantObj.menuItems = menuItems;
+                return restaurantObj;
+            })
+        );
+        
+        res.json(populatedRestaurants);
     } catch (error) {
+        console.error('Error in getAllRestaurants:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -40,11 +68,25 @@ const getCuisineTypes = async (req, res) => {
 // Get a single restaurant
 const getRestaurant = async (req, res) => {
     try {
-        const restaurant = await Restaurant.findById(req.params.id).populate('menuItems');
+        const restaurant = await Restaurant.findById(req.params.id);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
-        res.json(restaurant);
+        
+        // Populate only menu items with images
+        const menuItems = await MenuItem.find({
+            restaurantId: restaurant._id,
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
+        });
+        
+        // Convert to plain object to be able to modify
+        const restaurantObj = restaurant.toObject();
+        restaurantObj.menuItems = menuItems;
+        
+        res.json(restaurantObj);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -80,14 +122,27 @@ const updateRestaurant = async (req, res) => {
             req.params.id,
             updateData,
             { new: true, runValidators: true }
-        ).populate('menuItems');
+        );
         
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
+        
+        // Populate only menu items with images
+        const menuItems = await MenuItem.find({
+            restaurantId: restaurant._id,
+            $or: [
+                { images: { $exists: true, $ne: [] } },
+                { image: { $exists: true, $ne: '' } }
+            ]
+        });
+        
+        // Convert to plain object to be able to modify
+        const restaurantObj = restaurant.toObject();
+        restaurantObj.menuItems = menuItems;
 
-        console.log('Updated restaurant:', restaurant);
-        res.json(restaurant);
+        console.log('Updated restaurant:', restaurantObj);
+        res.json(restaurantObj);
     } catch (error) {
         console.error('Error updating restaurant:', error);
         res.status(500).json({ error: error.message });
@@ -134,9 +189,27 @@ const findNearbyRestaurants = async (req, res) => {
                     $maxDistance: parseInt(maxDistance)
                 }
             }
-        }).populate('menuItems');
-
-        res.json(restaurants);
+        });
+        
+        // For each restaurant, populate only menu items with images
+        const populatedRestaurants = await Promise.all(
+            restaurants.map(async (restaurant) => {
+                const menuItems = await MenuItem.find({
+                    restaurantId: restaurant._id,
+                    $or: [
+                        { images: { $exists: true, $ne: [] } },
+                        { image: { $exists: true, $ne: '' } }
+                    ]
+                });
+                
+                // Convert to plain object to be able to modify
+                const restaurantObj = restaurant.toObject();
+                restaurantObj.menuItems = menuItems;
+                return restaurantObj;
+            })
+        );
+        
+        res.json(populatedRestaurants);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

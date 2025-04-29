@@ -1,7 +1,7 @@
-const Order = require("../models/Order");
+import Order from '../models/Order.js';
 
 // Create a new order
-exports.createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
     try {
         const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
         console.log("Incoming order payload:", req.body);
@@ -42,7 +42,7 @@ exports.createOrder = async (req, res) => {
 };
 
 // Get all orders
-exports.getOrders = async (req, res) => {
+export const getOrders = async (req, res) => {
     try {
         const orders = await Order.find().sort({ createdAt: -1 });
         res.json(orders);
@@ -52,7 +52,7 @@ exports.getOrders = async (req, res) => {
 };
 
 // Get order by ID
-exports.getOrderById = async (req, res) => {
+export const getOrderById = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         if (!order) {
@@ -65,9 +65,9 @@ exports.getOrderById = async (req, res) => {
 };
 
 // Update order
-exports.updateOrder = async (req, res) => {
+export const updateOrder = async (req, res) => {
     try {
-        const { customerId, restaurantId, items, totalAmount, status } = req.body;
+        const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
         const order = await Order.findById(req.params.id);
         
         if (!order) {
@@ -79,16 +79,23 @@ exports.updateOrder = async (req, res) => {
         order.items = items;
         order.totalAmount = totalAmount;
         order.status = status;
-        order.paymentMethod = paymentMethod;       
-        order.deliveryAddress = deliveryAddress;           
-        res.json(order);
+        
+        // Check if these fields are in the request body before updating
+        if (paymentMethod) order.paymentMethod = paymentMethod;       
+        if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+        
+        // Save the updated order
+        const updatedOrder = await order.save();
+           
+        res.json(updatedOrder);
     } catch (error) {
+        console.error("Error updating order:", error);
         res.status(500).json({ error: error.message });
     }
 };
 
 // Delete order
-exports.deleteOrder = async (req, res) => {
+export const deleteOrder = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         if (!order) {
@@ -99,4 +106,54 @@ exports.deleteOrder = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+
+// Update the updateRating method with better debugging and error handling
+export const updateRating = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, feedback } = req.body;
+    
+    console.log(`Received rating request for order ${id}:`, req.body);
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.originalUrl);
+    
+    // Validate the request
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+    
+    // Find the order
+    const order = await Order.findById(id);
+    
+    // Check if order exists
+    if (!order) {
+      console.log(`Order not found with ID: ${id}`);
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    console.log(`Found order: ${order._id}`);
+    
+    // Update the rating
+    order.rating = {
+      score: rating,
+      feedback: feedback || '',
+      createdAt: new Date()
+    };
+    
+    // Save the updated order
+    await order.save();
+    console.log(`Rating saved for order ${id}`);
+    
+    res.status(200).json({ 
+      message: 'Rating updated successfully',
+      order: {
+        id: order._id,
+        rating: order.rating
+      }
+    });
+  } catch (error) {
+    console.error('Error updating order rating:', error);
+    res.status(500).json({ message: 'Failed to update rating', error: error.message });
+  }
 };

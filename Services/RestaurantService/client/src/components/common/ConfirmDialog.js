@@ -27,7 +27,7 @@ export const ConfirmDialog = ({
             onClose={onCancel}
             PaperProps={{
                 sx: {
-                    borderRadius: theme.shape.borderRadius * 1.5,
+                    borderRadius: theme.shape.borderRadius * 0.5,
                     minWidth: '320px'
                 }
             }}

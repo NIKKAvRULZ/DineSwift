@@ -14,10 +14,38 @@ app.use(cors());  // Allow all origins
 app.use(bodyParser.json());
 app.use(express.json());
 
+// Add this near the top, after your imports but before app initialization
+const runStartupChecks = async () => {
+  try {
+    console.log('Running startup checks...');
+    
+    // Check if any menu items don't have a ratings array
+    const MenuItem = require('./models/MenuItem');
+    const menuItemsWithoutRatings = await MenuItem.find({ ratings: { $exists: false } });
+    
+    if (menuItemsWithoutRatings.length > 0) {
+      console.log(`Found ${menuItemsWithoutRatings.length} menu items without ratings array, updating...`);
+      
+      // Update all of them to have an empty ratings array
+      const updateResult = await MenuItem.updateMany(
+        { ratings: { $exists: false } },
+        { $set: { ratings: [] } }
+      );
+      
+      console.log(`Updated ${updateResult.modifiedCount} menu items with empty ratings array`);
+    } else {
+      console.log('All menu items have a ratings array, no updates needed');
+    }
+  } catch (error) {
+    console.error('Error during startup checks:', error);
+  }
+};
+
 // Database connection
 connectDB()
   .then(() => {
     console.log('MongoDB connected successfully');
+    return runStartupChecks();
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
@@ -58,4 +86,12 @@ app.use((req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Restaurant Service is running on port ${PORT}`);
+});
+
+// Add this after your database connection is established
+mongoose.connection.once('open', () => {
+  console.log('MongoDB connected');
+  runStartupChecks().catch(err => {
+    console.error('Error during startup checks:', err);
+  });
 });

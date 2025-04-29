@@ -45,13 +45,28 @@ const RestaurantList = () => {
         severity: 'success'
     });
 
-    // Debounce search term changes
+    // Update restaurants when filters change
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            fetchRestaurants();
-        }, 300);
-        return () => clearTimeout(timeoutId);
+        fetchRestaurants();
     }, [searchTerm, selectedCuisine, selectedRating]);
+
+    // Initial data fetch
+    useEffect(() => {
+        fetchCuisines();
+    }, []);
+
+    // Handle filter changes - just update state, useEffect will trigger the fetch
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const handleCuisineChange = (e) => {
+        setSelectedCuisine(e.target.value);
+    };
+
+    const handleRatingChange = (e) => {
+        setSelectedRating(e.target.value);
+    };
 
     const handleCloseNotification = (event, reason) => {
         if (reason === 'clickaway') {
@@ -68,11 +83,6 @@ const RestaurantList = () => {
         });
     };
 
-    useEffect(() => {
-        fetchRestaurants();
-        fetchCuisines();
-    }, []);
-    
     const fetchCuisines = async () => {
         try {
             const response = await axios.get(`${apiUrl}/api/restaurants/cuisines`);
@@ -96,6 +106,7 @@ const RestaurantList = () => {
             }
             if (selectedCuisine) {
                 params.append('cuisine', selectedCuisine);
+                console.log('Filtering by cuisine:', selectedCuisine);
             }
             if (selectedRating) {
                 params.append('minRating', selectedRating);
@@ -105,8 +116,25 @@ const RestaurantList = () => {
                 url += `?${queryString}`;
             }
 
+            console.log('Fetching restaurants with URL:', url);
             const response = await axios.get(url);
-            setRestaurants(response.data);
+            
+            // Case-sensitive filter validation on client side to double-check
+            let filteredRestaurants = response.data;
+            if (selectedCuisine) {
+                // Apply strict filtering to ensure exact cuisine match
+                filteredRestaurants = response.data.filter(r => 
+                    r.cuisine && r.cuisine.trim() === selectedCuisine.trim()
+                );
+                console.log(`Client-side filter: Found ${filteredRestaurants.length} restaurants with cuisine "${selectedCuisine}"`);
+                
+                // Only show notification if we got results from API but filtered them out
+                if (filteredRestaurants.length === 0 && response.data.length > 0) {
+                    showNotification(`No restaurants found with cuisine: ${selectedCuisine}`, 'info');
+                }
+            }
+            
+            setRestaurants(filteredRestaurants);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching restaurants:', error);
@@ -185,7 +213,7 @@ const RestaurantList = () => {
                         label="Search restaurants"
                         variant="outlined"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={handleSearchChange}
                         placeholder="Type to search..."
                         size="small"
                     />
@@ -193,7 +221,7 @@ const RestaurantList = () => {
                         select
                         label="Filter by cuisine"
                         value={selectedCuisine}
-                        onChange={(e) => setSelectedCuisine(e.target.value)}
+                        onChange={handleCuisineChange}
                         variant="outlined"
                         size="small"
                         sx={{ minWidth: 160 }}
@@ -209,7 +237,7 @@ const RestaurantList = () => {
                         select
                         label="Filter by rating"
                         value={selectedRating}
-                        onChange={(e) => setSelectedRating(e.target.value)}
+                        onChange={handleRatingChange}
                         variant="outlined"
                         size="small"
                         sx={{ minWidth: 160 }}
@@ -245,9 +273,29 @@ const RestaurantList = () => {
             <ConfirmDialog
                 open={deleteDialogOpen}
                 title="Delete Restaurant"
-                message={`Are you sure you want to delete "${restaurantToDelete?.name}"? This will also delete all associated menu items and cannot be undone.`}
+                message={
+                    <>
+                        <Box sx={{ mb: 2 }}>
+                            Are you sure you want to delete "<strong>{restaurantToDelete?.name}</strong>"?
+                        </Box>
+                        <Box sx={{ color: 'warning.main', mb: 1 }}>
+                            This action will:
+                        </Box>
+                        <ul>
+                            <li>Remove all restaurant data</li>
+                            <li>Delete all associated menu items</li>
+                            <li>Remove any related reviews</li>
+                        </ul>
+                        <Box sx={{ mt: 2, color: 'error.main', fontWeight: 'bold' }}>
+                            This action cannot be undone.
+                        </Box>
+                    </>
+                }
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setDeleteDialogOpen(false)}
+                confirmButtonText="Delete Restaurant"
+                confirmButtonColor="error"
+                cancelButtonText="Cancel"
             />
 
             <Notification

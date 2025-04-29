@@ -348,21 +348,159 @@ const OrderTracking = () => {
                 <h2 className="text-lg font-semibold mb-4">Order Items</h2>
                 <div className="space-y-4">
                   {order?.items?.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    <motion.div 
+                      key={index} 
+                      className="flex justify-between items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                        {item.discount > 0 && (
+                          <p className="text-sm text-red-500">{item.discount}% OFF</p>
+                        )}
                       </div>
-                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
+                      <p className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</p>
+                    </motion.div>
                   ))}
                 </div>
+              </div>
+
+              {/* Rating and Feedback Section */}
+              {order?.status === 'Delivered' && (
+                <div className="border-t mt-6 pt-6">
+                  <h2 className="text-lg font-semibold mb-4">Rate Your Experience</h2>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <RatingComponent orderId={orderId} />
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Restaurant */}
+              <div className="border-t mt-6 pt-6">  
+                <h2 className="text-lg font-semibold mb-4">Need Help?</h2>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
+                  onClick={() => window.open(`tel:${order?.restaurant?.phone || '+94760394961'}`)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  Contact Restaurant
+                </motion.button>
               </div>
             </div>
           </div>
         </motion.div>
       </div>
     </div>
+  );
+};
+
+// Rating Component
+const RatingComponent = ({ orderId }) => {
+  const [rating, setRating] = useState(0);
+  const [feedback, setFeedback] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`Submitting rating ${rating} for order ${orderId}`);
+      // Add a more informative log message
+      console.log("Rating data being sent:", { rating: parseInt(rating, 10), feedback });
+      
+      await orderService.updateOrderRating(orderId, { 
+        rating: parseInt(rating, 10), 
+        feedback 
+      });
+      
+      setSubmitted(true);
+      triggerConfetti();
+    } catch (error) {
+      console.error("Failed to submit rating:", error);
+      // Improve error message handling
+      let errorMessage;
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Failed to submit your rating. Please try again.";
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-4"
+      >
+        <div className="text-5xl mb-4">🎉</div>
+        <h3 className="text-xl font-semibold">Thanks for your feedback!</h3>
+        <p className="text-gray-600 mt-2">Your rating helps us improve our service.</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-4"
+    >
+      <div className="flex justify-center space-x-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <motion.button
+            key={star}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setRating(star)}
+            className={`text-3xl ${
+              rating >= star ? 'text-yellow-500' : 'text-gray-300'
+            }`}
+          >
+            ★
+          </motion.button>
+        ))}
+      </div>
+      <textarea
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+        rows="3"
+        placeholder="Share your experience with this order..."
+        value={feedback}
+        onChange={(e) => setFeedback(e.target.value)}
+      ></textarea>
+      {error && (
+        <div className="text-red-500 text-sm p-2 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="w-full bg-orange-500 text-white py-2 rounded-lg font-medium shadow-md disabled:opacity-50"
+        onClick={handleSubmit}
+        disabled={!rating || loading}
+      >
+        {loading ? 'Submitting...' : 'Submit Feedback'}
+      </motion.button>
+    </motion.div>
   );
 };
 
