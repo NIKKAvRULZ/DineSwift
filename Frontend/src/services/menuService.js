@@ -45,27 +45,31 @@ const menuService = {
   // Add a comment to a menu item
   addComment: async (restaurantId, menuItemId, comment) => {
     try {
+      console.log('Adding comment:', { restaurantId, menuItemId, comment });
       const response = await axios.post(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`,
         comment
       );
+      console.log('Comment added successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error adding comment:', error);
-      throw error;
+      throw error.response?.data || { message: 'Failed to add comment' };
     }
   },
 
   // Get comments for a menu item
   getComments: async (restaurantId, menuItemId) => {
     try {
+      console.log('Fetching comments:', { restaurantId, menuItemId });
       const response = await axios.get(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`
       );
+      console.log('Comments fetched successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching comments:', error);
-      throw error;
+      throw error.response?.data || { message: 'Failed to fetch comments' };
     }
   }
 };

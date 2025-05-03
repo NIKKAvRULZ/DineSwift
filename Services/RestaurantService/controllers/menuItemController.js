@@ -86,17 +86,14 @@ const addMenuItem = async (req, res) => {
 
         // Debug logging for image data
         console.log('Received image data:');
-        console.log('- image:', image);
         console.log('- images:', JSON.stringify(images));
         console.log('- images is array:', Array.isArray(images));
-        console.log('- images length:', images ? images.length : 0);
-        console.log('- raw body images:', JSON.stringify(req.body.images));
 
         const restaurant = await Restaurant.findById(req.params.restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
-        
+
         // Normalize images handling
         let imageArray = [];
         
@@ -105,36 +102,35 @@ const addMenuItem = async (req, res) => {
             imageArray = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
         }
         
-        // If no valid images in array but 'image' is provided, use that
+        // Add single image to array if provided and array is empty
         if (imageArray.length === 0 && image && typeof image === 'string' && image.trim() !== '') {
             imageArray = [image];
         }
-        
-        // Get primary image (first one or empty)
-        const primaryImage = imageArray.length > 0 ? imageArray[0] : '';
-        
+
+        // Ensure we have at least one image
+        if (imageArray.length === 0) {
+            return res.status(400).json({ message: 'At least one image is required' });
+        }
+
         // Limit to maximum 5 images
         if (imageArray.length > 5) {
             imageArray = imageArray.slice(0, 5);
         }
-        
-        console.log(`Creating menu item with ${imageArray.length} images:`, imageArray);
-        
+
         const menuItem = new MenuItem({
             name,
             description,
-            image: primaryImage, // Set primary image
-            images: imageArray,
+            image: imageArray[0], // Set primary image as first image
+            images: imageArray,  // Save all images
             category,
             price,
             isSpicy: isSpicy || false,
             discount: discount || 0,
-            rating: 0,  // Initialize with 0 rating
+            rating: 0,
             restaurantId: restaurant._id
         });
         
         await menuItem.save();
-        
         restaurant.menuItems.push(menuItem._id);
         await restaurant.save();
         
@@ -171,7 +167,7 @@ const updateMenuItem = async (req, res) => {
             return res.status(404).json({ message: 'Menu item not found' });
         }
 
-        // Normalize images handling (similar to addMenuItem)
+        // Normalize images handling
         let imageArray = [];
         
         // First, try to use the 'images' array if provided
@@ -191,11 +187,11 @@ const updateMenuItem = async (req, res) => {
                 imageArray = [menuItem.image];
             }
         }
-        
-        // Get primary image (first one or existing or empty)
-        const primaryImage = imageArray.length > 0 ? 
-            imageArray[0] : 
-            (menuItem.image || '');
+
+        // Ensure we have at least one image
+        if (imageArray.length === 0) {
+            return res.status(400).json({ message: 'At least one image is required' });
+        }
         
         // Limit to maximum 5 images
         if (imageArray.length > 5) {
@@ -207,8 +203,8 @@ const updateMenuItem = async (req, res) => {
         const updatedData = {
             name,
             description,
-            image: primaryImage,
-            images: imageArray,
+            image: imageArray[0], // Set primary image as first image
+            images: imageArray,  // Save all images
             category,
             price,
             isSpicy: isSpicy !== undefined ? isSpicy : menuItem.isSpicy || false,
@@ -340,28 +336,36 @@ const addComment = async (req, res) => {
         const menuItem = await MenuItem.findOne({ 
             _id: id,
             restaurantId: restaurantId
-        });
+        }).populate('restaurantId');
 
         if (!menuItem) {
             return res.status(404).json({ message: 'Menu item not found' });
         }
 
         // Add the new comment
-        menuItem.comments.push({
+        const newComment = {
             user: userId,
             text: text,
             timestamp: new Date()
-        });
+        };
 
+        menuItem.comments.push(newComment);
         await menuItem.save();
 
         res.status(200).json({
             message: 'Comment added successfully',
-            menuItem: menuItem
+            menuItem: {
+                ...menuItem.toObject(),
+                comments: menuItem.comments
+            }
         });
     } catch (error) {
         console.error('Error adding comment:', error);
-        res.status(500).json({ message: 'Error adding comment', error: error.message });
+        res.status(500).json({ 
+            message: 'Error adding comment', 
+            error: error.message,
+            details: error.stack
+        });
     }
 };
 
