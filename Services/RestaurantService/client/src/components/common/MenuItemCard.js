@@ -12,9 +12,12 @@ import {
     Grid,
     useTheme,
     Rating,
+    Paper,
+    TextField,
     List,
     ListItem,
     ListItemText,
+    Divider
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,6 +30,7 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import axios from 'axios';
 import Notification from './Notification';
 import CommentIcon from '@mui/icons-material/Comment';
+import SendIcon from '@mui/icons-material/Send';
 
 const apiUrl = 'http://localhost:5002';
 
@@ -42,18 +46,16 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
         severity: 'success'
     });
     const [comments, setComments] = useState([]);
-    const [showAllComments, setShowAllComments] = useState(false);
+    const [newComment, setNewComment] = useState('');
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     
     // Properly normalize images from different sources
     const getProcessedImages = () => {
         // First check for images array
         if (menuItem.images && Array.isArray(menuItem.images) && menuItem.images.length > 0) {
-            const validImages = menuItem.images.filter(img => img && typeof img === 'string' && img.trim() !== '');
-            if (validImages.length > 0) {
-                return validImages;
-            }
+            return menuItem.images.filter(img => Boolean(img));
         }
-        // Fallback to single image if no valid images in array
+        // Then fallback to single image if no array or empty array
         if (menuItem.image && typeof menuItem.image === 'string' && menuItem.image.trim() !== '') {
             return [menuItem.image];
         }
@@ -83,23 +85,6 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
             ratingsLength: menuItem.ratings?.length || 0
         });
     }, [menuItem]);
-
-    // Load comments when component mounts
-    useEffect(() => {
-        const loadComments = async () => {
-            try {
-                const response = await axios.get(
-                    `${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`
-                );
-                setComments(response.data.comments || []);
-            } catch (error) {
-                console.error('Error loading comments:', error);
-                showNotification('Error loading comments', 'error');
-            }
-        };
-
-        loadComments();
-    }, [menuItem._id, menuItem.restaurantId]);
 
     const handleNextImage = (e) => {
         e.stopPropagation(); // Prevent event bubbling
@@ -195,6 +180,30 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
         }
     };
 
+    const handleAddComment = async () => {
+        if (!newComment.trim()) return;
+
+        try {
+            setIsSubmittingComment(true);
+            const response = await axios.post(
+                `${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`,
+                {
+                    text: newComment.trim(),
+                    userId: 'admin' // Since this is the admin view
+                }
+            );
+
+            setComments(prev => [...prev, response.data.menuItem.comments[response.data.menuItem.comments.length - 1]]);
+            setNewComment('');
+            showNotification('Comment added successfully', 'success');
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            showNotification('Error adding comment', 'error');
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
     const showNotification = (message, severity = 'success') => {
         setNotification({
             open: true,
@@ -234,59 +243,19 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
 
                 {/* Image Section */}
                 <Box sx={{ position: 'relative', paddingTop: '75%', width: '100%', backgroundColor: 'rgba(0,0,0,0.05)' }}>
-                    {images.length > 0 && (
-                        <>
-                            <Box
-                                component="img"
-                                src={images[currentImageIndex]}
-                                alt={menuItem.name}
-                                sx={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover'
-                                }}
-                            />
-                            {images.length > 1 && (
-                                <>
-                                    <IconButton
-                                        onClick={handlePrevImage}
-                                        sx={{
-                                            position: 'absolute',
-                                            left: 8,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            backgroundColor: 'rgba(0,0,0,0.5)',
-                                            color: 'white',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(0,0,0,0.7)'
-                                            }
-                                        }}
-                                    >
-                                        <NavigateBeforeIcon />
-                                    </IconButton>
-                                    <IconButton
-                                        onClick={handleNextImage}
-                                        sx={{
-                                            position: 'absolute',
-                                            right: 8,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            backgroundColor: 'rgba(0,0,0,0.5)',
-                                            color: 'white',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(0,0,0,0.7)'
-                                            }
-                                        }}
-                                    >
-                                        <NavigateNextIcon />
-                                    </IconButton>
-                                </>
-                            )}
-                        </>
-                    )}
+                    <Box
+                        component="img"
+                        src={menuItem.image || menuItem.images?.[0]}
+                        alt={menuItem.name}
+                        sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                        }}
+                    />
                 </Box>
 
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -324,58 +293,6 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                             size="small"
                             variant="outlined"
                         />
-                    </Box>
-
-                    {/* Comments Section */}
-                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <CommentIcon fontSize="small" />
-                                Comments ({comments.length})
-                            </Typography>
-                            <Button
-                                size="small"
-                                onClick={() => setShowAllComments(prev => !prev)}
-                                sx={{ textTransform: 'none' }}
-                            >
-                                {showAllComments ? 'Show Less' : 'View All Comments'}
-                            </Button>
-                        </Box>
-
-                        <List
-                            sx={{
-                                maxHeight: showAllComments ? '400px' : '200px',
-                                overflowY: 'auto',
-                                transition: 'max-height 0.3s ease-in-out',
-                                bgcolor: 'background.paper',
-                                borderRadius: 1,
-                                '& .MuiListItem-root': {
-                                    bgcolor: 'grey.50',
-                                    mb: 1,
-                                    borderRadius: 1,
-                                }
-                            }}
-                        >
-                            {comments.length > 0 ? (
-                                comments.map((comment, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemText
-                                            primary={comment.text}
-                                            secondary={
-                                                <Typography variant="caption" component="div" sx={{ mt: 0.5 }}>
-                                                    {comment.user === 'anonymous' ? 'Anonymous User' : `User ${comment.user}`} •{' '}
-                                                    {new Date(comment.timestamp).toLocaleString()}
-                                                </Typography>
-                                            }
-                                        />
-                                    </ListItem>
-                                ))
-                            ) : (
-                                <Typography variant="body2" sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>
-                                    No comments yet
-                                </Typography>
-                            )}
-                        </List>
                     </Box>
 
                     {/* Action Buttons */}
