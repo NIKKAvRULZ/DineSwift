@@ -1,25 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ImageCarousel = ({ images, defaultImage }) => {
+const ImageCarousel = ({ images, defaultImage, autoplay = false }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const intervalRef = useRef(null);
 
-  // Auto-play functionality - only active when hovered
+  // Auto-play functionality
   useEffect(() => {
     // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
-    // Only start auto-play if we have multiple images and the item is hovered
-    if (isHovered && images && images.length > 1) {
+    // Start auto-play if we have multiple images and autoplay is enabled
+    if (images && images.length > 1 && (autoplay || isHovered)) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex((prevIndex) => 
           prevIndex === (images.length - 1) ? 0 : prevIndex + 1
         );
-      }, 2000); // Change image every 2 seconds when hovered
+      }, 2000); // Change image every 2 seconds
     }
 
     // Cleanup function
@@ -28,7 +28,7 @@ const ImageCarousel = ({ images, defaultImage }) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [images, isHovered]);
+  }, [images, isHovered, autoplay]);
 
   // Mouse enter/leave handlers
   const handleMouseEnter = () => {
@@ -137,4 +137,4 @@ const ImageCarousel = ({ images, defaultImage }) => {
   );
 };
 
-export default ImageCarousel; 
+export default ImageCarousel;

@@ -262,156 +262,68 @@ const rateMenuItem = async (req, res) => {
         const { restaurantId, id } = req.params;
         const { rating, userId = 'anonymous' } = req.body;
         
-        // Log parameters to help debug
-        console.log('Rating request received:', {
-            menuItemId: id,
-            restaurantId,
-            rating: typeof rating === 'number' ? rating : parseFloat(rating),
-            userId,
-            body: JSON.stringify(req.body)
-        });
-
-        // Validate rating - make sure it's a number between 1-5
+        // Validate rating
         const numericRating = typeof rating === 'number' ? rating : parseFloat(rating);
         if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
-            console.log('Invalid rating value:', rating, 'Type:', typeof rating);
             return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
         }
 
         // Find the menu item
         const menuItem = await MenuItem.findById(id);
         if (!menuItem) {
-            console.log('Menu item not found:', id);
             return res.status(404).json({ message: 'Menu item not found' });
         }
 
-        // Make sure restaurant IDs match
+        // Verify restaurant ID
         if (menuItem.restaurantId.toString() !== restaurantId) {
-            console.log('Restaurant ID mismatch:', {
-                expectedId: menuItem.restaurantId.toString(),
-                providedId: restaurantId
-            });
             return res.status(400).json({ message: 'Menu item does not belong to this restaurant' });
         }
 
-        console.log('Current menu item state before rating:', {
-            id: menuItem._id,
-            name: menuItem.name,
-            currentRating: menuItem.rating || 0,
-            ratingCount: menuItem.ratingCount || 0,
-            hasRatingsArray: !!menuItem.ratings,
-            ratingsCount: menuItem.ratings ? menuItem.ratings.length : 0
-        });
-
-        // Initialize ratings array if it doesn't exist
+        // Initialize ratings array if needed
         if (!menuItem.ratings) {
-            console.log('Initializing empty ratings array');
             menuItem.ratings = [];
         }
 
-        // Find existing rating by this user if userId exists
+        // Update or add rating
         let existingRatingIndex = -1;
         if (userId) {
-            existingRatingIndex = menuItem.ratings.findIndex(r => {
-                return r.user && r.user.toString && r.user.toString() === userId.toString();
-            });
+            existingRatingIndex = menuItem.ratings.findIndex(r => 
+                r.user && r.user.toString && r.user.toString() === userId.toString()
+            );
         }
 
-        let ratingUpdated = false;
         if (existingRatingIndex >= 0) {
-            // Update existing rating
-            console.log('Updating existing rating:', {
-                oldRating: menuItem.ratings[existingRatingIndex].value,
-                newRating: numericRating
-            });
             menuItem.ratings[existingRatingIndex].value = numericRating;
             menuItem.ratings[existingRatingIndex].timestamp = new Date();
-            ratingUpdated = true;
         } else {
-            // Add new rating
-            console.log('Adding new rating:', numericRating);
             menuItem.ratings.push({ 
                 user: userId, 
                 value: numericRating,
                 timestamp: new Date()
             });
         }
-        
 
-        // Calculate new average rating with safeguards
-        let totalRating = 0;
-        try {
-            totalRating = menuItem.ratings.reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
-        } catch (e) {
-            console.error('Error calculating total rating:', e);
-            totalRating = numericRating; // Fallback if reduce fails
-        }
-        
-        const newAverageRating = menuItem.ratings.length > 0 
-            ? totalRating / menuItem.ratings.length 
-            : 0;
-        
-        console.log('Rating calculation:', {
-            totalRating,
-            ratingCount: menuItem.ratings.length,
-            newAverageRating
-        });
+        // Calculate new average rating
+        const totalRating = menuItem.ratings.reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
+        menuItem.rating = parseFloat((totalRating / menuItem.ratings.length).toFixed(1));
+        menuItem.ratingCount = menuItem.ratings.length;
 
-        // Update menu item with safeguards
-        try {
-            menuItem.rating = parseFloat(newAverageRating.toFixed(1)); // Round to 1 decimal place
-            menuItem.ratingCount = menuItem.ratings.length;
+        // Save the updated menu item
+        await menuItem.save();
 
-            // Save changes
-            await menuItem.save();
-
-            console.log('Menu item updated successfully:', {
-                id: menuItem._id,
+        // Send success response with updated menu item
+        res.status(200).json({
+            message: 'Rating submitted successfully',
+            menuItem: {
+                _id: menuItem._id,
                 name: menuItem.name,
-                newRating: menuItem.rating,
-                newRatingCount: menuItem.ratingCount,
-                action: ratingUpdated ? 'updated' : 'added'
-            });
-
-            res.json({
-                message: ratingUpdated ? 'Rating updated successfully' : 'Rating added successfully',
-                menuItem: {
-                    _id: menuItem._id,
-                    name: menuItem.name,
-                    rating: menuItem.rating,
-                    ratingCount: menuItem.ratingCount
-                }
-            });
-        } catch (saveError) {
-            console.error('Error saving menuItem:', saveError);
-            
-            // Fallback: If save fails, try updating directly without ratings array
-            try {
-                await MenuItem.findByIdAndUpdate(id, {
-                    $set: {
-                        rating: parseFloat(newAverageRating.toFixed(1)),
-                        ratingCount: menuItem.ratings ? menuItem.ratings.length : 1
-                    }
-                });
-                
-                return res.json({
-                    message: 'Rating saved (fallback method)',
-                    menuItem: {
-                        _id: menuItem._id,
-                        name: menuItem.name,
-                        rating: parseFloat(newAverageRating.toFixed(1)),
-                        ratingCount: menuItem.ratings ? menuItem.ratings.length : 1
-                    }
-                });
-            } catch (fallbackError) {
-                console.error('Fallback update also failed:', fallbackError);
-                throw fallbackError; // Re-throw to be caught by outer catch
+                rating: menuItem.rating,
+                ratingCount: menuItem.ratingCount
             }
-        }
+        });
     } catch (error) {
         console.error('Error in rateMenuItem:', error);
-        console.error('Error stack:', error.stack);
-        res.status(500).json({ message: 'Error updating rating', error: error.message });
+        res.status(500).json({ message: 'Error submitting rating', error: error.message });
     }
 };
 

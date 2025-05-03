@@ -54,9 +54,14 @@ const RestaurantDetail = () => {
             setRestaurant(restaurantResponse.data);
             
             const menuResponse = await axios.get(`${apiUrl}/api/restaurants/${id}/menu-items`);
-            console.log('Fetched menu items:', menuResponse.data);
+            console.log('Fetched menu items with ratings:', menuResponse.data.map(item => ({
+                name: item.name,
+                rating: item.rating,
+                ratingCount: item.ratingCount,
+                hasRatings: Boolean(item.ratings),
+                ratingsCount: item.ratings?.length || 0
+            })));
             setMenuItems(menuResponse.data);
-            
             setLoading(false);
         } catch (error) {
             console.error('Error fetching restaurant details:', error);
@@ -266,4 +271,4 @@ const RestaurantDetail = () => {
     );
 };
 
-export default RestaurantDetail; 
+export default RestaurantDetail;

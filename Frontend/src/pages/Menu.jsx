@@ -385,6 +385,20 @@ const Menu = () => {
       };
       // Save to localStorage
       localStorage.setItem('favoriteItems', JSON.stringify(newFavorites));
+      
+      // Find the menu item to get its name
+      const menuItem = menuItems.find(item => (item._id || item.id) === itemId);
+      if (menuItem) {
+        // Show toast
+        setToast({
+          visible: true,
+          message: newFavorites[itemId]
+            ? `${menuItem.name} added to favorites`
+            : `${menuItem.name} removed from favorites`,
+          type: newFavorites[itemId] ? 'success' : 'error'
+        });
+      }
+      
       return newFavorites;
     });
   };
@@ -443,7 +457,7 @@ const Menu = () => {
     });
   };
 
-  // Error handler for API calls
+  // Handle rating item
   const handleRateItem = async (itemId, rating) => {
     try {
       // Always set temporary rating for immediate UI feedback
@@ -470,20 +484,12 @@ const Menu = () => {
               ...item, 
               rating: newRating,
               ratingCount: newRatingCount,
-              userRating: rating // Store the user's specific rating
+              userRating: rating
             };
           }
           return item;
         })
       );
-      
-      // Show success notification immediately for better UX
-      const itemName = menuItems.find(item => (item._id || item.id) === itemId)?.name;
-      setToast({
-        visible: true,
-        message: `You rated "${itemName}" ${rating} stars!`,
-        type: 'success'
-      });
       
       // If we're offline, save for later and don't attempt API call
       if (isOffline || !navigator.onLine) {
@@ -495,19 +501,12 @@ const Menu = () => {
           userId: API.getUserId(user),
           restaurantId: id
         });
-        
-        // Show appropriate offline message
-        setToast({
-          visible: true,
-          message: 'You are offline. Rating saved and will sync when online.',
-          type: 'warning'
-        });
         return;
       }
       
       // If we're online, try to submit to server
-      // Get token
       const token = localStorage.getItem('token');
+      
       // Get user ID
       const userId = API.getUserId(user);
       
@@ -546,28 +545,21 @@ const Menu = () => {
         // Handle error for rating submission
         console.log('Error submitting rating:', error);
         
-        // Generate error message based on error type
-        let errorMessage = 'Network issue - your rating will be saved when connection is restored';
-        
-        // Save the rating as pending for later sync
-        API.savePendingRating({
-          menuItemId: itemId,
-          rating,
-          userId,
-          restaurantId: id
-        });
-        
-        // Show toast with appropriate error message
-        setToast({
-          visible: true,
-          message: errorMessage,
-          type: 'warning'
-        });
-        
-        // Try to sync again after a delay
-        setTimeout(() => {
-          syncPendingRatings();
-        }, 15000); // Try again after 15 seconds
+        // If it's a network error, save for later sync
+        if (!error.response) {
+          // Save the rating as pending for later sync
+          API.savePendingRating({
+            menuItemId: itemId,
+            rating,
+            userId,
+            restaurantId: id
+          });
+          
+          // Try to sync again after a delay
+          setTimeout(() => {
+            syncPendingRatings();
+          }, 15000); // Try again after 15 seconds
+        }
       }
     } catch (error) {
       console.error('Error in rating flow:', error);
@@ -648,7 +640,7 @@ const Menu = () => {
   }
 
   return (
-    <div className="bg-fixed bg-cover bg-center min-h-screen" style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.85)), url('https://images.unsplash.com/photo-1615719413546-198b25453f85?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1936&q=80')` }}>
+    <div className="bg-fixed bg-cover bg-center min-h-screen" style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.85)), url('https://images.unsplash.com/photo-1615719413546-198b25453f85?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8MHx8&auto=format&fit=crop&w=1936&q=80')` }}>
       <motion.div
         initial="initial"
         animate="animate"

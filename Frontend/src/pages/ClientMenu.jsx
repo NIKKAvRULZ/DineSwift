@@ -21,7 +21,6 @@ const ClientMenu = () => {
   const [lastRatingUpdate, setLastRatingUpdate] = useState(null);
   const [userRatings, setUserRatings] = useState({}); // Track user's ratings
   const [isRating, setIsRating] = useState({}); // Track items being rated
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' }); // Toast notifications
   const [comments, setComments] = useState({});
   const [newComments, setNewComments] = useState({}); // Changed to object to store comments for each item
   const [isSubmittingComment, setIsSubmittingComment] = useState({}); // Changed to object to track submission state for each item
@@ -219,10 +218,9 @@ const ClientMenu = () => {
           return item;
         })
       );
-      
+
       // Submit to server using menuService
       const response = await menuService.submitRating(id, itemId, newRating);
-      
       console.log('Rating submitted successfully:', response);
       
       // Update with actual server data if available
@@ -242,25 +240,8 @@ const ClientMenu = () => {
         );
       }
       
-      // Show success toast
-      setToast({
-        visible: true,
-        message: `You rated "${item.name}" ${newRating} stars!`,
-        type: 'success'
-      });
-      
-      // Auto-hide toast after 3 seconds
-      setTimeout(() => {
-        setToast(prev => ({ ...prev, visible: false }));
-      }, 3000);
-      
     } catch (error) {
       console.error('Error submitting rating:', error);
-      setToast({
-        visible: true,
-        message: 'Error submitting rating. Please try again.',
-        type: 'error'
-      });
     } finally {
       // Clear rating status
       setIsRating(prev => ({ ...prev, [itemId]: false }));
@@ -339,26 +320,8 @@ const ClientMenu = () => {
 
       // Clear comment input for this item
       setNewComments(prev => ({ ...prev, [itemId]: '' }));
-
-      // Show success toast
-      setToast({
-        visible: true,
-        message: 'Comment added successfully!',
-        type: 'success'
-      });
-
-      // Auto-hide toast after 3 seconds
-      setTimeout(() => {
-        setToast(prev => ({ ...prev, visible: false }));
-      }, 3000);
-
     } catch (error) {
       console.error('Error adding comment:', error);
-      setToast({
-        visible: true,
-        message: 'Error adding comment. Please try again.',
-        type: 'error'
-      });
     } finally {
       setIsSubmittingComment(prev => ({ ...prev, [itemId]: false }));
     }
@@ -658,22 +621,8 @@ const ClientMenu = () => {
           </motion.div>
         )}
       </div>
-
-      {/* Toast Notification */}
-      {toast.visible && (
-        <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
-            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          } text-white transition-opacity duration-300 opacity-90 z-50`}
-        >
-          {toast.message}
-        </motion.div>
-      )}
     </motion.div>
   );
 };
 
-export default ClientMenu; 
+export default ClientMenu;

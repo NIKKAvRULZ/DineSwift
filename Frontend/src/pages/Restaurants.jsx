@@ -21,7 +21,7 @@ const Toast = ({ message, type, onClose }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 50 }}
       className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${
-        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        message.includes('Added') ? 'bg-green-500' : 'bg-red-500'
       } text-white`}
     >
       {message}
@@ -148,6 +148,15 @@ const Restaurants = ({ isClientView = false }) => {
       return matchesSearch && matchesCuisine;
     })
     .sort((a, b) => {
+      // First prioritize favorites
+      const savedFavorites = JSON.parse(localStorage.getItem('favoriteRestaurants') || '{}');
+      const aIsFavorite = savedFavorites[a._id];
+      const bIsFavorite = savedFavorites[b._id];
+      
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      
+      // Then apply the selected sort criteria
       if (sortBy === 'rating') return b.rating - a.rating;
       if (sortBy === 'deliveryTime') return a.deliveryTime - b.deliveryTime;
       if (sortBy === 'price') return a.minOrder - b.minOrder;
