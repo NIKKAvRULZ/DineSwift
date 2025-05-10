@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import orderService from '../api/orderService';
+import paymentService from '../api/paymentService';
 import { MapPin, ShoppingCart, CreditCard, Clock, Check, X } from 'lucide-react';
-import restaurantPlaceholder from '../assets/placeholder-restaurant.png';
+import restaurantPlaceholder from '../assets/placeholder-restaurant.png'; 
 
 const Checkout = () => {
   const location = useLocation();
@@ -20,6 +21,8 @@ const Checkout = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { items, total, restaurantDetails } = location.state || {};
+  console.log("user", user);
+  
 
   if (!items || !items.length) {
     navigate('/cart');
@@ -77,6 +80,75 @@ const Checkout = () => {
       setLoading(false);
     }
   };
+
+  const handlePlaceOrderWithCard = async () => {
+  if (!address) {
+    setError('Please provide a delivery address');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    // 1. Create the order first
+    const orderData = {
+      customerId: user.id,
+      restaurantId: items[0].restaurantId,
+      items: items.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      totalAmount: total,
+      status: 'Pending',
+      paymentMethod,
+      deliveryAddress: address
+    };
+
+    const orderResponse = await orderService.createOrder(orderData, user.token);
+    const createdOrder = orderResponse; // Adjust based on your API response
+
+    console.log('Order created:', createdOrder);
+    console.log('Order response:', orderResponse);
+
+    if (!createdOrder || !createdOrder._id) {
+      throw new Error('Order creation failed');
+    }
+
+    // 2. Now create the Stripe checkout session
+    const stripeData = {
+      orderId: createdOrder._id, // Assuming createdOrder._id is the order ID
+      customerId: user.id,
+      restaurantId: items[0].restaurantId,
+      items: items.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      totalAmount: total,
+      deliveryAddress: address
+    };
+
+    const stripeResponse = await paymentService.createStripeCheckoutSession(stripeData, user.token);
+
+    console.log('Stripe response:', stripeResponse);
+    
+
+    if (stripeResponse.success) {
+      // 3. Redirect to Stripe Checkout
+      window.location.href = stripeResponse.url;
+    } else {
+      throw new Error('Stripe checkout session creation failed');
+    }
+
+  } catch (error) {
+    console.error('Error placing order:', error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
@@ -219,13 +291,13 @@ const Checkout = () => {
                 </motion.p>
               )}
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handlePlaceOrder}
-                disabled={loading || !address}
-                className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
-              >
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={paymentMethod === 'card' ? handlePlaceOrderWithCard : handlePlaceOrder}
+  disabled={loading || !address}
+  className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
+>
                 {loading ? (
                   <motion.span
                     animate={{ rotate: 360 }}

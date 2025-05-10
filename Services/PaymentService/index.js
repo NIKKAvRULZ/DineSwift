@@ -1,51 +1,50 @@
-/*const express = require("express");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const connectDB = require("./config/db");
-const paymentRoutes = require("./routes/paymentRoutes");
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const paymentRoutes = require('./routes/paymentRoutes');
+const stripeRoutes = require('./routes/stripeRouter');
 
-dotenv.config();  // Load environment variables from .env
-
-const app = express();
-
-// Connect to MongoDB with error handling
-connectDB().catch((err) => {
-  console.error("MongoDB Connection Failed:", err);
-  process.exit(1); // Exit if DB connection fails
-});
-
-// Middleware
-app.use(cors());
-app.use(express.json());  // Parse incoming JSON requests
-
-// Routes
-app.use("/api/payments", paymentRoutes);
-
-const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => console.log(`✅ PaymentService running on port ${PORT}`));
-*/
-
-
-require("dotenv").config(); // Load environment variables
-const express = require("express");
-const cors = require("cors");
-const connectDB = require("./config/db"); // Import DB connection
-const paymentRoutes = require("./routes/paymentRoutes"); // Import routes
-
-const app = express();
-
-// Middleware
-app.use(express.json());
-app.use(cors());
-
-// Connect to MongoDB
+// Load environment variables
+dotenv.config();
+console.log('Environment check:');
+console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
+console.log('MONGO_URI exists:', !!process.env.MONGO_URI);
+// Connect to database
 connectDB();
 
-// Routes
-app.use("/api/payments", paymentRoutes);
+const app = express();
 
-// Start server
+// Middleware
+app.use(cors());
+
+// Handle Stripe webhook raw body
+app.use('/api/payment/stripe/webhook', express.raw({ type: 'application/json' }));
+
+// Regular body parser for other routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Set up routes
+app.use('/api/payment', paymentRoutes);
+app.use('/api/payment/stripe', stripeRoutes);
+
+// Root route
+app.get('/', (req, res) => {
+  res.send('Payment Service API is running!');
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Server Error'
+  });
+});
+
 const PORT = process.env.PORT || 5005;
+
 app.listen(PORT, () => {
-  console.log(`✅ Payment Service running on port ${PORT}`);
+  console.log(`Payment service running on port ${PORT}`);
 });

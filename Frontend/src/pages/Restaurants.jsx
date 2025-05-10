@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // import useLocation
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -21,7 +21,7 @@ const Toast = ({ message, type, onClose }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 50 }}
       className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${
-        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        message.includes('Added') ? 'bg-green-500' : 'bg-red-500'
       } text-white`}
     >
       {message}
@@ -30,8 +30,9 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 const Restaurants = ({ isClientView = false }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // get location
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,14 +64,38 @@ const Restaurants = ({ isClientView = false }) => {
     };
   }, []);
 
+  console.log("User in Restaurants:", user);
+
   useEffect(() => {
     // Only require authentication if not in client view mode
     if (!isClientView && !isAuthenticated) {
       navigate('/login', { state: { from: '/restaurants' } });
       return;
     }
+    
+    const queryParams = new URLSearchParams(location.search);
+    const sessionId = queryParams.get('session_id');
+    const sendSuccessEmail = async (email) => {
+      try {
+        await axios.post('http://localhost:5006/api/notifications/send', {
+          to: email,
+          subject: "DineSwift",
+          message: "Payment is successful..",
+          type: "email"
+        });
+        console.log('Success email sent!');
+      } catch (err) {
+        console.error('Failed to send success email:', err);
+      }
+    };
+    if (sessionId && user?.email) {
+      sendSuccessEmail(user.email);
+    }
+
     fetchRestaurants();
-  }, [isAuthenticated, navigate, isClientView]);
+
+  
+  }, [isClientView, isAuthenticated, navigate, location.search, user]);
 
   const fetchRestaurants = async () => {
     try {
@@ -123,11 +148,21 @@ const Restaurants = ({ isClientView = false }) => {
       return matchesSearch && matchesCuisine;
     })
     .sort((a, b) => {
+      // First prioritize favorites
+      const savedFavorites = JSON.parse(localStorage.getItem('favoriteRestaurants') || '{}');
+      const aIsFavorite = savedFavorites[a._id];
+      const bIsFavorite = savedFavorites[b._id];
+      
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      
+      // Then apply the selected sort criteria
       if (sortBy === 'rating') return b.rating - a.rating;
       if (sortBy === 'deliveryTime') return a.deliveryTime - b.deliveryTime;
       if (sortBy === 'price') return a.minOrder - b.minOrder;
       return 0;
     });
+
   const cuisines = ['all', ...new Set(restaurants.map(r => r.cuisine))];
 
   if (loading) return (

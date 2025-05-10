@@ -57,8 +57,6 @@ The user dashboard is clean and minimalist, focusing on the essential informatio
 Finding restaurants on DineSwift is intuitive and efficient. On the Browse page, users can:
 
 - View restaurants organized by categories like:
-  * Popular near you
-  * New additions
   * Special offers
   * Cuisine types (Italian, Asian, Mexican, etc.)
 
@@ -69,7 +67,7 @@ Each restaurant card displays essential information at a glance:
 - Rating indicator
 - Quick-access button to view the full menu
 
-The layout is responsive and adjusts seamlessly whether you're viewing on desktop, tablet, or mobile devices, ensuring a consistent experience across all platforms.
+The layout is responsive and adjusts seamlessly whether you're viewing on desktop, tablet, or mobile devices, ensuring a consistent experience across all platforms. 
 
 ## RESTAURANT DETAIL PAGE [7:00-9:00]
 
@@ -85,7 +83,7 @@ The header section includes:
 - Location details
 
 Below that, users can find:
-- Operating hours
+- opening hours
 - Contact information
 - Brief "About" section highlighting the restaurant's story and specialties
 
@@ -93,7 +91,7 @@ Menu items are clearly organized by categories, making it easy to browse through
 - Name and description
 - Price
 - Representative image when available
-- Special indicators for popular or signature dishes
+
 
 The layout is clean and focused, putting the most important information front and center for easy accessibility.
 
@@ -118,21 +116,6 @@ The menu interface allows for:
 
 This thoughtful organization helps diners make informed choices and discover new dishes that match their preferences.
 
-## RESERVATION SYSTEM [10:30-12:00]
-
-*[Demonstrate making a reservation]*
-
-Our basic reservation system allows users to book tables with just a few clicks:
-
-1. Select the desired restaurant
-2. Choose a date from the calendar view
-3. Select an available time slot
-4. Specify the number of guests
-5. Add any special requests or notes
-6. Submit the reservation
-7. Receive a confirmation message
-
-The system confirms availability in real-time and prevents overlapping bookings. Restaurant owners can view and manage these reservations through their dashboard, allowing them to prepare for upcoming guests.
 
 ## RATINGS & FEEDBACK [12:00-13:30]
 
@@ -142,9 +125,9 @@ Our rating system allows users to share their dining experiences:
 
 Users can:
 - Rate restaurants on a 5-star scale
-- Leave brief comments about their experience
-- Rate specific aspects like food, service, and ambiance
-- View ratings from other diners
+
+
+- View ratings from admins
 
 This feedback helps other users make informed decisions while providing valuable insights to restaurant owners who can view this feedback through their dashboard.
 

@@ -1,41 +1,64 @@
-/*const Joi = require('joi');
+const { check, validationResult } = require('express-validator');
 
-// Joi validation schema for Payment
-const paymentValidationSchema = Joi.object({
-  userId: Joi.string().required().messages({
-    'string.empty': 'User ID is required',
-    'any.required': 'User ID is required',
-  }),
-  orderId: Joi.string().required().messages({
-    'string.empty': 'Order ID is required',
-    'any.required': 'Order ID is required',
-  }),
-  amount: Joi.number().required().messages({
-    'number.base': 'Amount must be a number',
-    'any.required': 'Amount is required',
-  }),
-  method: Joi.string().valid('Credit Card', 'Debit Card', 'PayPal').required().messages({
-    'string.empty': 'Payment method is required',
-    'any.required': 'Payment method is required',
-    'any.only': 'Payment method must be one of Credit Card, Debit Card, or PayPal',
-  }),
-  status: Joi.string().valid('Pending', 'Completed', 'Failed', 'Refunded').default('Pending').messages({
-    'string.empty': 'Status is required',
-    'any.only': 'Invalid status. It must be one of Pending, Completed, Failed, or Refunded',
-  }),
-});
+exports.validatePaymentCreation = [
+  check('orderId')
+    .not().isEmpty()
+    .withMessage('Order ID is required'),
+  check('customerId')
+    .not().isEmpty()
+    .withMessage('Customer ID is required'),
+  check('restaurantId')
+    .not().isEmpty()
+    .withMessage('Restaurant ID is required'),
+  check('amount')
+    .not().isEmpty()
+    .withMessage('Amount is required')
+    .isNumeric()
+    .withMessage('Amount must be a number'),
+  check('paymentMethod')
+    .not().isEmpty()
+    .withMessage('Payment method is required')
+    .isIn(['card', 'cash'])
+    .withMessage('Payment method must be either card or cash'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];
 
-module.exports = paymentValidationSchema;
-*/
-
-
-const Joi = require("joi");
-
-const paymentValidationSchema = Joi.object({
-  userId: Joi.string().required(),
-  orderId: Joi.string().required(),
-  amount: Joi.number().positive().required(),
-  method: Joi.string().valid("card", "paypal", "other").required(),
-});
-
-module.exports = paymentValidationSchema;
+exports.validateCheckoutSession = [
+  check('orderId')
+    .not().isEmpty()
+    .withMessage('Order ID is required'),
+  check('customerId')
+    .not().isEmpty()
+    .withMessage('Customer ID is required'),
+  check('restaurantId')
+    .not().isEmpty()
+    .withMessage('Restaurant ID is required'),
+  check('items')
+    .isArray()
+    .withMessage('Items must be an array'),
+  check('items.*.name')
+    .not().isEmpty()
+    .withMessage('Item name is required'),
+  check('items.*.price')
+    .isNumeric()
+    .withMessage('Item price must be a number'),
+  check('items.*.quantity')
+    .isInt({ min: 1 })
+    .withMessage('Item quantity must be at least 1'),
+  check('totalAmount')
+    .isNumeric()
+    .withMessage('Total amount must be a number'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];

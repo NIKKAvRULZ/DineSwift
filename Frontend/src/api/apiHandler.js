@@ -113,13 +113,6 @@ export const submitRating = async ({ restaurantId, menuItemId, rating, userId, t
     throw new Error('Rating must be a number between 1 and 5');
   }
 
-  // First check server connectivity
-  const isServerReachable = await checkServerConnectivity();
-  if (!isServerReachable) {
-    console.log('Server is unreachable, saving rating for later sync');
-    throw new Error('SERVER_UNREACHABLE');
-  }
-
   // Set up retry mechanism
   const maxRetries = 2;
   let lastError = null;
@@ -129,24 +122,14 @@ export const submitRating = async ({ restaurantId, menuItemId, rating, userId, t
       // Add delay between retries (0 for first attempt)
       if (attempt > 0) {
         console.log(`Retry attempt ${attempt}/${maxRetries} for rating submission`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
-      
-      // Log before making request
-      console.log('Sending rating request with data:', {
-        url: `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/rate`,
-        data: {
-          rating: numericRating,
-          userId: userId || 'anonymous',
-          timestamp: new Date().toISOString()
-        }
-      });
       
       // Make API call
       const response = await axios.post(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/rate`,
         {
-          rating: numericRating, // Always send as number
+          rating: numericRating,
           userId: userId || 'anonymous',
           timestamp: new Date().toISOString()
         },
@@ -155,49 +138,24 @@ export const submitRating = async ({ restaurantId, menuItemId, rating, userId, t
             'Authorization': token ? `Bearer ${token}` : undefined,
             'Content-Type': 'application/json',
           },
-          timeout: TIMEOUT + (attempt * 1000) // Increase timeout for retries
+          timeout: 5000 + (attempt * 1000) // 5s timeout + 1s per retry
         }
       );
       
-      console.log('Rating success response:', response.data);
       return response.data;
     } catch (error) {
-      console.log(`Rating submission failed on attempt ${attempt + 1}/${maxRetries + 1}:`, error.message);
       lastError = error;
       
-      // If error is network-related, continue to retry
-      // But if it's a client or server error (4xx/5xx), don't retry
+      // If it's a server error (4xx/5xx), don't retry
       if (error.response) {
-        // Log complete error response for debugging
-        console.error('Server error response:', {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers
-        });
-        // Server responded with error status - don't retry
-        break;
+        throw error;
       }
       
       // For network errors, continue the retry loop unless it's the last attempt
       if (attempt === maxRetries) {
-        console.log('All retry attempts failed');
-        break;
+        throw new Error('Failed to connect to server. Please check your internet connection and try again.');
       }
     }
-  }
-  
-  // All attempts failed - enhance the error with specific type before throwing
-  if (!lastError.response) {
-    // Network error
-    lastError.type = 'NETWORK_ERROR';
-  } else if (lastError.response.status === 401 || lastError.response.status === 403) {
-    lastError.type = 'AUTH_ERROR';
-  } else if (lastError.response.status === 404) {
-    lastError.type = 'NOT_FOUND';
-  } else if (lastError.response.status >= 500) {
-    lastError.type = 'SERVER_ERROR';
-  } else {
-    lastError.type = 'UNKNOWN_ERROR';
   }
   
   throw lastError;
@@ -281,4 +239,4 @@ export default {
   getPendingRatings,
   removePendingRating,
   getUserId
-}; 
+};

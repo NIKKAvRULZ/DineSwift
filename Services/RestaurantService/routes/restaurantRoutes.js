@@ -54,10 +54,9 @@ router.get('/ping', (req, res) => {
 });
 
 // Restaurant routes
-router.get('/restaurants/cuisines', getCuisineTypes);
 router.get('/restaurants', getAllRestaurants);
+router.get('/cuisines', getCuisineTypes);
 router.post('/restaurants', addRestaurant);
-router.get('/restaurants/nearby', findNearbyRestaurants);
 router.get('/restaurants/:id', getRestaurant);
 router.put('/restaurants/:id', updateRestaurant);
 router.delete('/restaurants/:id', deleteRestaurant);
@@ -99,6 +98,8 @@ router.get('/restaurants/:restaurantId/menu-items', getRestaurantMenuItems);
 router.get('/menu-items/:id', getMenuItem);
 router.put('/menu-items/:id', updateMenuItem);
 router.delete('/menu-items/:id', deleteMenuItem);
+
+// Rating and comment routes
 router.post('/restaurants/:restaurantId/menu-items/:id/rate', rateMenuItem);
 router.post('/restaurants/:restaurantId/menu-items/:id/comments', addComment);
 router.get('/restaurants/:restaurantId/menu-items/:id/comments', getComments);

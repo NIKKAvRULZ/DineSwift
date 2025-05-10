@@ -28,14 +28,17 @@ const menuService = {
   // Submit a rating for a menu item
   submitRating: async (restaurantId, menuItemId, rating) => {
     try {
+      console.log('Submitting rating:', { restaurantId, menuItemId, rating });
       const response = await axios.post(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/rate`,
         { rating }
       );
+      
+      console.log('Rating submitted successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error submitting rating:', error);
-      throw error;
+      throw error.response?.data || { message: 'Failed to submit rating' };
     }
   },
 
@@ -67,4 +70,4 @@ const menuService = {
   }
 };
 
-export default menuService; 
+export default menuService;
