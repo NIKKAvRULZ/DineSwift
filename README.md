@@ -110,9 +110,10 @@ kubectl apply -f Kubernetes/
 - ✅ Phase 1: Repository Setup & Microservices Architecture  
 - ✅ Phase 2: Backend API Development  
 - ✅ Phase 3: Frontend UI Implementation  
-- ⏳ Phase 4: Payment & Notification Integration  
-- ⏳ Phase 5: Docker & Kubernetes Deployment  
-- ⏳ Phase 6: Testing & Documentation  
+- ✅ Phase 4: Payment Integration  
+- ✅ Phase 5: Docker Deployment
+- ⏳ Phase 6: Kubernetes Deployment 
+- ⏳ Phase 7: Testing & Documentation  
 
 ---
 
@@ -129,11 +130,6 @@ kubectl apply -f Kubernetes/
 
 For questions, suggestions, or collaborations, reach out at:  
 📧 **nithika151@gmail.com**
-
----
-
-## 🌍 Follow Our Journey
-Stay tuned as we build DineSwift into the future of food delivery! 🚀
 
 ---
 
