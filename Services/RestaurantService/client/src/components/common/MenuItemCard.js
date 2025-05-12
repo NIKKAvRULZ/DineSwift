@@ -241,21 +241,77 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                     </Box>
                 )}
 
-                {/* Image Section */}
-                <Box sx={{ position: 'relative', paddingTop: '75%', width: '100%', backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                {/* Image Section - Updated to show full image */}
+                <Box sx={{ 
+                    width: '100%', 
+                    height: '250px', 
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    overflow: 'hidden',
+                    position: 'relative'
+                }}>
+                    {/* Current image display */}
                     <Box
                         component="img"
-                        src={menuItem.image || menuItem.images?.[0]}
+                        src={images[currentImageIndex] || 'https://via.placeholder.com/300x200?text=No+Image'}
                         alt={menuItem.name}
                         sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            display: 'block'
+                        }}
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/300x200?text=Image+Error';
                         }}
                     />
+                    
+                    {/* Navigation arrows for multiple images */}
+                    {images.length > 1 && (
+                        <>
+                            <IconButton 
+                                onClick={handlePrevImage}
+                                sx={{ 
+                                    position: 'absolute', 
+                                    left: 8, 
+                                    backgroundColor: 'rgba(255,255,255,0.7)',
+                                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' }
+                                }}
+                                size="small"
+                            >
+                                <NavigateBeforeIcon />
+                            </IconButton>
+                            <IconButton 
+                                onClick={handleNextImage}
+                                sx={{ 
+                                    position: 'absolute', 
+                                    right: 8, 
+                                    backgroundColor: 'rgba(255,255,255,0.7)',
+                                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' }
+                                }}
+                                size="small"
+                            >
+                                <NavigateNextIcon />
+                            </IconButton>
+                            <Box sx={{ 
+                                position: 'absolute', 
+                                bottom: 8, 
+                                left: '50%', 
+                                transform: 'translateX(-50%)',
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                color: 'white',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: '0.75rem'
+                            }}>
+                                {currentImageIndex + 1} / {images.length}
+                            </Box>
+                        </>
+                    )}
                 </Box>
 
                 <CardContent sx={{ flexGrow: 1 }}>
