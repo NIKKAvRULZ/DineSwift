@@ -1,191 +1,143 @@
-# 🍽️ DineSwift - Cloud-Native Food Ordering & Delivery System  
 
-DineSwift is a **next-gen, cloud-native food ordering and delivery platform** inspired by **UberEats & PickMe Food**. Designed with a **scalable microservices architecture**, it offers a seamless experience for customers, restaurants, and delivery drivers. 🚀
+# 🍽️ DineSwift - Cloud-Native Food Ordering & Delivery System
 
----
-
-## 🚀 Features at a Glance  
-
-✅ **Intuitive Web Interface** – Easily browse restaurants, add items to cart, and place orders.  
-✅ **Restaurant Dashboard** – Manage menus, update orders, and track earnings.  
-✅ **Order Tracking** – Real-time status updates with GPS-enabled delivery tracking.  
-✅ **AI-Powered Auto Assignment** – Smart allocation of drivers to optimize deliveries.  
-✅ **Secure Payments** – Supports **PayHere, Dialog Genie, and Stripe** (Sandbox Mode).  
-✅ **Instant Notifications** – Get email & SMS updates for every order status change.  
+DineSwift is a next-gen, cloud-native food ordering and delivery platform inspired by UberEats & PickMe Food. Designed with a scalable microservices architecture, it offers a seamless experience for customers, restaurants, and delivery drivers. 🚀
 
 ---
 
-## 🏗️ Tech Stack  
+## 🚀 Features at a Glance
 
-### **Backend (Microservices)**  
+- ✅ **Intuitive Web Interface** – Easily browse restaurants, add items to cart, and place orders  
+- ✅ **Restaurant Dashboard** – Manage menus, update orders, and track earnings  
+- ✅ **Order Tracking** – Real-time status updates with GPS-enabled delivery tracking  
+- ✅ **AI-Powered Auto Assignment** – Smart allocation of drivers to optimize deliveries  
+- ✅ **Secure Payments** – Supports PayHere, Dialog Genie, and Stripe (Sandbox Mode)  
+- ✅ **Instant Notifications** – Get email & SMS updates for every order status change  
+
+---
+
+## 🏗️ Tech Stack
+
+### 🔙 Backend (Microservices)
 - 🟢 **Node.js (Express.js)** – API Development  
 - 🟢 **MongoDB** – NoSQL Database  
 - 🟢 **Kafka** – Asynchronous Messaging  
 - 🟢 **Docker & Kubernetes** – Containerized Services & Orchestration  
 
-### **Frontend**  
-- 🎨 **React.js** – Modern Web App UI  
-- 🔄 **Axios / Fetch API** – Efficient API Calls  
+### 🎨 Frontend
+- ⚛️ **React.js** – Modern Web App UI  
+- 💅 **Tailwind CSS** – Styling and Components  
+- 🔄 **Axios** – API Integration  
+- 🎬 **Framer Motion** – Smooth Animations  
 
-### **DevOps & Deployment**  
+### 🛠️ DevOps & Deployment
 - 🐳 **Docker** – Microservice Deployment  
 - ☸️ **Kubernetes** – Scalable Service Management  
-- 🛠️ **Postman** – API Testing & Debugging  
+- 🧪 **Postman** – API Testing & Debugging  
 
 ---
 
-## 📂 Project Structure  
+## 📂 Project Structure
 
 ```
-food-delivery-system/
-│── services/                    # All microservices
-│   │── user-service/             # User Authentication & Management Service
-│   │   │── models/               # Mongoose Models
-│   │   │── routes/               # Express Routes
-│   │   │── controllers/          # Business Logic
-│   │   │── config/               # Configurations (DB, JWT)
-│   │   │── index.js              # Main entry point
-│   │   │── Dockerfile            # Docker container setup
-│   │   │── .env                  # Environment variables
-│   │   └── package.json          # Node dependencies
-│   │── restaurant-service/       # Restaurant Management Service
-│   │   │── models/
-│   │   │── routes/
-│   │   │── controllers/
-│   │   │── config/
-│   │   │── index.js
-│   │   │── Dockerfile
-│   │   └── .env
-│   │── order-service/            # Order Placement & Management Service
-│   │   │── models/
-│   │   │── routes/
-│   │   │── controllers/
-│   │   │── config/
-│   │   │── index.js
-│   │   │── Dockerfile
-│   │   └── .env
-│   │── delivery-service/         # Delivery Tracking & Management Service
-│   │   │── models/
-│   │   │── routes/
-│   │   │── controllers/
-│   │   │── config/
-│   │   │── index.js
-│   │   │── Dockerfile
-│   │   └── .env
-│   │── payment-service/          # Payment Processing Service
-│   │   │── models/
-│   │   │── routes/
-│   │   │── controllers/
-│   │   │── config/
-│   │   │── index.js
-│   │   │── Dockerfile
-│   │   └── .env
-│   │── notification-service/     # Email/SMS Notifications Service
-│   │   │── models/
-│   │   │── routes/
-│   │   │── controllers/
-│   │   │── config/
-│   │   │── index.js
-│   │   │── Dockerfile
-│   │   └── .env
+DineSwift/
+├── Frontend/                  # React.js Frontend
+│   ├── src/
+│   │   ├── components/        # Reusable UI Components
+│   │   ├── pages/             # Page Components
+│   │   ├── context/           # React Context Providers
+│   │   ├── hooks/             # Custom React Hooks
+│   │   └── api/               # API Integration
+│   └── public/                # Static Assets
 │
-│── api-gateway/                  # API Gateway (Single Entry Point)
-│   │── index.js                   # Gateway Logic
-│   │── .env                        # Gateway Config
-│   │── Dockerfile                   # Gateway Docker Setup
-│   └── package.json                 # Dependencies
+├── Services/                  # Backend Microservices
+│   ├── ApiGateway/            # API Gateway Service
+│   ├── UserService/           # User Management
+│   ├── RestaurantService/     # Restaurant Management
+│   ├── OrderService/          # Order Processing
+│   ├── PaymentService/        # Payment Processing
+│   ├── DeliveryService/       # Delivery Management
+│   └── NotificationService/   # Email/SMS Notifications
 │
-│── frontend/                      # React.js Frontend
-│   │── src/
-│   │   │── components/             # UI Components
-│   │   │── pages/                  # React Pages
-│   │   │── api/                    # API Calls to Gateway
-│   │   └── App.js                  # Main React App
-│   │── public/
-│   │── package.json
-│   │── Dockerfile
-│   └── .env
-│
-│── database/                      # Database Configurations (MongoDB)
-│   │── mongo-init.js               # DB Initialization Script
-│   └── docker-compose.yml          # MongoDB Service in Docker
-│
-│── docker/                        # Docker-Compose Configurations
-│   │── docker-compose.yml
-│   │── .env
-│
-│── kubernetes/                    # Kubernetes Deployment Configs
-│   │── user-service.yaml
-│   │── restaurant-service.yaml
-│   │── order-service.yaml
-│   │── delivery-service.yaml
-│   │── payment-service.yaml
-│   │── notification-service.yaml
-│   │── api-gateway.yaml
-│   └── mongo-deployment.yaml
-│
-│── README.md                      # Project Documentation
-│── .gitignore                      # Ignore files
-└── package.json                    # Root package file (if using monorepo)
-
-
+├── Kubernetes/                # K8s Deployment Configs
+└── Docker/                    # Docker Configurations
 ```
 
 ---
 
-## 🔧 Quick Setup  
+## 🔧 Quick Setup
 
-### 1️⃣ Clone the Repository  
+### ✅ Prerequisites
+- Node.js (v16+)
+- Docker
+- Kubernetes CLI (`kubectl`)
+- MongoDB
+
+### 1️⃣ Clone the Repository
 ```bash
- git clone https://github.com/NIKKAvRULZ/DineSwift.git
- cd DineSwift
+git clone https://github.com/NIKKAvRULZ/DineSwift.git
+cd DineSwift
 ```
 
-### 2️⃣ Install Dependencies (Backend)  
+### 2️⃣ Frontend Setup
 ```bash
- 
+cd Frontend
+npm install
+npm run dev
 ```
 
-### 3️⃣ Start the Backend Services  
+### 3️⃣ Backend Services Setup
+For each microservice in `Services/`:
 ```bash
- npm start
+cd Services/<ServiceName>
+npm install
+npm start
 ```
 
-### 4️⃣ Run the Frontend (React)  
+### 4️⃣ Docker Deployment
 ```bash
- 
+docker-compose up -d
 ```
 
-### 5️⃣ Deploy Using Docker & Kubernetes  
+### 5️⃣ Kubernetes Deployment
 ```bash
- 
+kubectl apply -f Kubernetes/
 ```
 
 ---
 
-## 📌 Development Roadmap  
+## 📌 Development Roadmap
 
-✅ **Phase 1:** Repository Setup & Microservices Architecture  
-⏳ **Phase 2:** Backend API Development  
-⏳ **Phase 3:** Frontend UI Implementation  
-⏳ **Phase 4:** Payment & Notification Integration  
-⏳ **Phase 5:** Docker & Kubernetes Deployment  
-⏳ **Phase 6:** Testing & Documentation  
-
----
-
-## 👥 Meet the Team  
-
-🚀 **Nithika Perera** – Project Lead  
-💡 **Nadeema Jayasingha**   
-🔧 **Shanuka Induran**  
-📊 **Karindra Gimhan** 
+- ✅ Phase 1: Repository Setup & Microservices Architecture  
+- ✅ Phase 2: Backend API Development  
+- ✅ Phase 3: Frontend UI Implementation  
+- ⏳ Phase 4: Payment & Notification Integration  
+- ⏳ Phase 5: Docker & Kubernetes Deployment  
+- ⏳ Phase 6: Testing & Documentation  
 
 ---
 
-## 📞 Contact Us  
+## 👥 Meet the Team
 
-📧 For questions, suggestions, or collaborations, reach out at **nithika151@gmail.com**.  
+- 🚀 **Nithika Perera** – Project Lead  
+- 💡 **Nadeema Jayasingha**  
+- 🔧 **Shanuka Induran**  
+- 📊 **Karindra Gimhan**  
 
-🌍 Follow our journey as we build **DineSwift** into the future of food delivery! 🚀
+---
 
+## 📞 Contact Us
+
+For questions, suggestions, or collaborations, reach out at:  
+📧 **nithika151@gmail.com**
+
+---
+
+## 🌍 Follow Our Journey
+Stay tuned as we build DineSwift into the future of food delivery! 🚀
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
