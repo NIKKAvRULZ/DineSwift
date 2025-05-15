@@ -110,7 +110,7 @@ const Profile = () => {
                       {order.status}
                     </span>
                   </div>
-                  <p className="mt-2 text-gray-900">${order.total}</p>
+                  <p className="mt-2 text-gray-900">Rs {order.total}</p>
                 </motion.div>
               ))}
             </div>

@@ -20,7 +20,8 @@ export default {
         overlay: false, // Disable error overlay if needed
       },
     },    
-    plugins: [],
+    plugins: [
+      require('tailwind-scrollbar'), // Add this plugin
+    ],
   };
-  
-  
+

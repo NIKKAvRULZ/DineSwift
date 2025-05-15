@@ -1,17 +1,21 @@
 import express from 'express';
-import {
-    createOrder,
-    getOrders,
-    getOrderById,
-    updateOrder,
+import { 
+    createOrder, 
+    getOrders, 
+    getOrderById, 
+    updateOrder, 
     deleteOrder,
-    updateRating
+    cancelOrder, 
+    updateRating 
 } from '../controllers/orderController.js';
 
 const router = express.Router();
 
 // Create a new order
 router.post("/", createOrder);
+
+// Cancel order route - must come before generic routes
+router.post('/:id/cancel', cancelOrder);
 
 // Get all orders
 router.get("/", getOrders);

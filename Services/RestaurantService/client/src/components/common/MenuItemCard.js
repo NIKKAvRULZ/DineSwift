@@ -12,12 +12,9 @@ import {
     Grid,
     useTheme,
     Rating,
-    Paper,
-    TextField,
     List,
     ListItem,
     ListItemText,
-    Divider
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -30,7 +27,6 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import axios from 'axios';
 import Notification from './Notification';
 import CommentIcon from '@mui/icons-material/Comment';
-import SendIcon from '@mui/icons-material/Send';
 
 const apiUrl = 'http://localhost:5002';
 
@@ -46,16 +42,18 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
         severity: 'success'
     });
     const [comments, setComments] = useState([]);
-    const [newComment, setNewComment] = useState('');
-    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [showAllComments, setShowAllComments] = useState(false);
     
     // Properly normalize images from different sources
     const getProcessedImages = () => {
         // First check for images array
         if (menuItem.images && Array.isArray(menuItem.images) && menuItem.images.length > 0) {
-            return menuItem.images.filter(img => Boolean(img));
+            const validImages = menuItem.images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+            if (validImages.length > 0) {
+                return validImages;
+            }
         }
-        // Then fallback to single image if no array or empty array
+        // Fallback to single image if no valid images in array
         if (menuItem.image && typeof menuItem.image === 'string' && menuItem.image.trim() !== '') {
             return [menuItem.image];
         }
@@ -74,6 +72,34 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
     useEffect(() => {
         console.log(`Menu item "${menuItem.name}" has ${images.length} images:`, images);
     }, [menuItem.name, images]);
+
+    // Add logging for rating data when component mounts or menuItem changes
+    useEffect(() => {
+        console.log('MenuItemCard rating data:', {
+            itemName: menuItem.name,
+            rating: menuItem.rating,
+            ratingCount: menuItem.ratingCount,
+            hasRatings: Boolean(menuItem.ratings),
+            ratingsLength: menuItem.ratings?.length || 0
+        });
+    }, [menuItem]);
+
+    // Load comments when component mounts
+    useEffect(() => {
+        const loadComments = async () => {
+            try {
+                const response = await axios.get(
+                    `${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`
+                );
+                setComments(response.data.comments || []);
+            } catch (error) {
+                console.error('Error loading comments:', error);
+                showNotification('Error loading comments', 'error');
+            }
+        };
+
+        loadComments();
+    }, [menuItem._id, menuItem.restaurantId]);
 
     const handleNextImage = (e) => {
         e.stopPropagation(); // Prevent event bubbling
@@ -169,30 +195,6 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
         }
     };
 
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
-
-        try {
-            setIsSubmittingComment(true);
-            const response = await axios.post(
-                `${apiUrl}/api/restaurants/${menuItem.restaurantId}/menu-items/${menuItem._id}/comments`,
-                {
-                    text: newComment.trim(),
-                    userId: 'admin' // Since this is the admin view
-                }
-            );
-
-            setComments(prev => [...prev, response.data.menuItem.comments[response.data.menuItem.comments.length - 1]]);
-            setNewComment('');
-            showNotification('Comment added successfully', 'success');
-        } catch (error) {
-            console.error('Error adding comment:', error);
-            showNotification('Error adding comment', 'error');
-        } finally {
-            setIsSubmittingComment(false);
-        }
-    };
-
     const showNotification = (message, severity = 'success') => {
         setNotification({
             open: true,
@@ -210,51 +212,33 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
 
     return (
         <>
-            <Card
-                elevation={3}
-                sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                }}
-            >
+            <Card elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                {/* Discount Badge */}
                 {menuItem.discount > 0 && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            backgroundColor: '#ff3d00',
-                            color: 'white',
-                            padding: '6px 12px',
-                            borderBottomLeftRadius: '8px',
-                            fontWeight: 'bold',
-                            zIndex: 100,
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                            fontSize: '0.875rem',
-                            transform: 'translateY(0)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
+                    <Box sx={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        backgroundColor: '#ff3d00',
+                        color: 'white',
+                        padding: '6px 12px',
+                        borderBottomLeftRadius: '8px',
+                        fontWeight: 'bold',
+                        zIndex: 100,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        fontSize: '0.875rem'
+                    }}>
                         {`${menuItem.discount}% OFF`}
                     </Box>
                 )}
-                
-                {/* Image Slideshow */}
-                <Box sx={{
-                    position: 'relative',
-                    paddingTop: '75%', // 4:3 aspect ratio
-                    width: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.05)'
-                }}>
-                    {images.length > 0 ? (
+
+                {/* Image Section */}
+                <Box sx={{ position: 'relative', paddingTop: '75%', width: '100%', backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                    {images.length > 0 && (
                         <>
-                            <CardMedia
+                            <Box
                                 component="img"
-                                image={images[currentImageIndex]}
+                                src={images[currentImageIndex]}
                                 alt={menuItem.name}
                                 sx={{
                                     position: 'absolute',
@@ -262,17 +246,9 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-                                    objectFit: 'cover',
-                                    borderTopLeftRadius: theme.shape.borderRadius,
-                                    borderTopRightRadius: theme.shape.borderRadius
-                                }}
-                                onError={(e) => {
-                                    console.error('Image failed to load:', images[currentImageIndex]);
-                                    e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+                                    objectFit: 'cover'
                                 }}
                             />
-                            
-                            {/* Navigation arrows - only show when multiple images */}
                             {images.length > 1 && (
                                 <>
                                     <IconButton
@@ -282,13 +258,12 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                                             left: 8,
                                             top: '50%',
                                             transform: 'translateY(-50%)',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            backgroundColor: 'rgba(0,0,0,0.5)',
+                                            color: 'white',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                            },
-                                            zIndex: 2
+                                                backgroundColor: 'rgba(0,0,0,0.7)'
+                                            }
                                         }}
-                                        size="small"
                                     >
                                         <NavigateBeforeIcon />
                                     </IconButton>
@@ -299,247 +274,135 @@ const MenuItemCard = ({ menuItem, onDelete, onRatingChange }) => {
                                             right: 8,
                                             top: '50%',
                                             transform: 'translateY(-50%)',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                            backgroundColor: 'rgba(0,0,0,0.5)',
+                                            color: 'white',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                            },
-                                            zIndex: 2
+                                                backgroundColor: 'rgba(0,0,0,0.7)'
+                                            }
                                         }}
-                                        size="small"
                                     >
                                         <NavigateNextIcon />
                                     </IconButton>
-                                    
-                                    {/* Dots indicator for images */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            bottom: 8,
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            display: 'flex',
-                                            gap: 1,
-                                            zIndex: 2
-                                        }}
-                                    >
-                                        {images.map((_, index) => (
-                                            <Box
-                                                key={index}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setCurrentImageIndex(index);
-                                                }}
-                                                sx={{
-                                                    width: 8,
-                                                    height: 8,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: index === currentImageIndex 
-                                                        ? theme.palette.primary.main 
-                                                        : 'rgba(255, 255, 255, 0.7)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s',
-                                                    '&:hover': {
-                                                        transform: 'scale(1.2)',
-                                                    },
-                                                }}
-                                            />
-                                        ))}
-                                    </Box>
                                 </>
                             )}
-                            
-                            {/* Image counter */}
-                            {images.length > 1 && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 8,
-                                        right: 8,
-                                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                        color: 'white',
-                                        borderRadius: '4px',
-                                        padding: '2px 6px',
-                                        fontSize: '0.75rem',
-                                        zIndex: 2
-                                    }}
-                                >
-                                    {currentImageIndex + 1} / {images.length}
-                                </Box>
-                            )}
                         </>
-                    ) : (
-                        <Box sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'text.secondary',
-                            borderTopLeftRadius: theme.shape.borderRadius,
-                            borderTopRightRadius: theme.shape.borderRadius
-                        }}>
-                            <Typography variant="body2">No image available</Typography>
-                        </Box>
                     )}
                 </Box>
-                
-                <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography
-                        variant="h6"
-                        component="h2"
-                        gutterBottom
-                        sx={{
-                            fontWeight: 600,
-                            mb: 1,
-                            color: theme.palette.text.primary
-                        }}
-                    >
-                        {menuItem.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography
-                            variant="h6"
-                            color="primary"
-                            sx={{ fontWeight: 600 }}
-                        >
-                            {convertToLKR(menuItem.price)}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {/* Rating Section */}
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Rating
-                                    value={menuItem.rating}
-                                    precision={0.5}
-                                    size="small"
-                                    onChange={handleRatingChange}
-                                    disabled={isRating}
-                                    emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
-                                />
-                                <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                    ({menuItem.rating ? menuItem.rating.toFixed(1) : '0.0'})
-                                    {menuItem.ratingCount > 0 && 
-                                        <span> · {menuItem.ratingCount} {menuItem.ratingCount === 1 ? 'rating' : 'ratings'}</span>
-                                    }
-                                </Typography>
-                            </Box>
 
-                            {/* Comment Count Section */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <CommentIcon 
-                                    fontSize="small" 
-                                    color="action"
-                                    sx={{ 
-                                        cursor: 'pointer',
-                                        '&:hover': { color: 'primary.main' }
-                                    }}
-                                />
-                                <Typography variant="body2" color="text.secondary">
-                                    {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
-                                </Typography>
-                            </Box>
+                <CardContent sx={{ flexGrow: 1 }}>
+                    {/* Title and Rating Section */}
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" gutterBottom>
+                            {menuItem.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Rating
+                                value={menuItem.rating || 0}
+                                precision={0.5}
+                                readOnly
+                                size="small"
+                            />
+                            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                                {menuItem.rating ? menuItem.rating.toFixed(1) : 'No ratings'} 
+                                {menuItem.ratingCount > 0 && ` (${menuItem.ratingCount} ${menuItem.ratingCount === 1 ? 'review' : 'reviews'})`}
+                            </Typography>
                         </Box>
                     </Box>
-                    <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        paragraph
-                        sx={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            minHeight: '40px'
-                        }}
-                    >
+
+                    {/* Details Section */}
+                    <Typography variant="body2" color="text.secondary" paragraph>
                         {menuItem.description}
                     </Typography>
-                    <Box sx={{ mt: 2 }}>
-                        <Chip 
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" color="primary">
+                            Rs. {menuItem.price}
+                        </Typography>
+                        <Chip
                             icon={<FastfoodIcon />}
                             label={menuItem.category}
                             size="small"
                             variant="outlined"
-                            sx={{ borderRadius: '6px' }}
                         />
                     </Box>
 
                     {/* Comments Section */}
-                    <Box sx={{ mt: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Comments ({comments.length})
-                        </Typography>
-                        <List sx={{ maxHeight: 200, overflow: 'auto' }}>
-                            {comments.map((comment, index) => (
-                                <React.Fragment key={index}>
-                                    <ListItem>
+                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CommentIcon fontSize="small" />
+                                Comments ({comments.length})
+                            </Typography>
+                            <Button
+                                size="small"
+                                onClick={() => setShowAllComments(prev => !prev)}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                {showAllComments ? 'Show Less' : 'View All Comments'}
+                            </Button>
+                        </Box>
+
+                        <List
+                            sx={{
+                                maxHeight: showAllComments ? '400px' : '200px',
+                                overflowY: 'auto',
+                                transition: 'max-height 0.3s ease-in-out',
+                                bgcolor: 'background.paper',
+                                borderRadius: 1,
+                                '& .MuiListItem-root': {
+                                    bgcolor: 'grey.50',
+                                    mb: 1,
+                                    borderRadius: 1,
+                                }
+                            }}
+                        >
+                            {comments.length > 0 ? (
+                                comments.map((comment, index) => (
+                                    <ListItem key={index}>
                                         <ListItemText
                                             primary={comment.text}
                                             secondary={
-                                                <>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {new Date(comment.timestamp).toLocaleString()}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                                        User: {comment.user}
-                                                    </Typography>
-                                                </>
+                                                <Typography variant="caption" component="div" sx={{ mt: 0.5 }}>
+                                                    {comment.user === 'anonymous' ? 'Anonymous User' : `User ${comment.user}`} •{' '}
+                                                    {new Date(comment.timestamp).toLocaleString()}
+                                                </Typography>
                                             }
                                         />
                                     </ListItem>
-                                    {index < comments.length - 1 && <Divider />}
-                                </React.Fragment>
-                            ))}
-                            {comments.length === 0 && (
-                                <ListItem>
-                                    <ListItemText
-                                        primary="No comments yet"
-                                        sx={{ color: 'text.secondary', fontStyle: 'italic' }}
-                                    />
-                                </ListItem>
+                                ))
+                            ) : (
+                                <Typography variant="body2" sx={{ textAlign: 'center', py: 2, color: 'text.secondary' }}>
+                                    No comments yet
+                                </Typography>
                             )}
                         </List>
                     </Box>
+
+                    {/* Action Buttons */}
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => navigate(`/edit-menu-item/${menuItem._id}`)}
+                            startIcon={<EditIcon />}
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="error"
+                            onClick={() => onDelete(menuItem)}
+                            startIcon={<DeleteIcon />}
+                        >
+                            Delete
+                        </Button>
+                    </Box>
                 </CardContent>
-                <Box sx={{ p: 2, pt: 0, mt: 'auto' }}>
-                    <Grid container spacing={1}>
-                        <Grid item xs={6}>
-                            <Button
-                                fullWidth
-                                size="small"
-                                variant="outlined"
-                                color="info"
-                                startIcon={<EditIcon />}
-                                onClick={() => navigate(`/edit-menu-item/${menuItem._id}`)}
-                                sx={{
-                                    borderRadius: 1,
-                                    textTransform: 'none'
-                                }}
-                            >
-                                Edit
-                            </Button>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Button
-                                fullWidth
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={() => onDelete(menuItem)}
-                                sx={{
-                                    borderRadius: 1,
-                                    textTransform: 'none'
-                                }}
-                            >
-                                Delete
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Box>
             </Card>
+            
+            {/* Notification Component */}
             <Notification
                 open={notification.open}
                 message={notification.message}

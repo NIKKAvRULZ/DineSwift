@@ -2,110 +2,150 @@ import Order from '../models/Order.js';
 
 // Create a new order
 export const createOrder = async (req, res) => {
-    try {
-        const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
-        console.log("Incoming order payload:", req.body);
+  try {
+    const { 
+      customerId, 
+      restaurantId, 
+      items, 
+      totalAmount, 
+      status, 
+      paymentMethod, 
+      deliveryAddress,
+      phoneNumber,  // Ensure this is included
+      deliveryNotes,
+      customerDetails
+    } = req.body;
 
-        // Validate required fields
-        if (!customerId || !restaurantId || !items || !totalAmount || !paymentMethod || !deliveryAddress) {
-            return res.status(400).json({ 
-                error: 'Missing required fields',
-                required: ['customerId', 'restaurantId', 'items', 'totalAmount', 'paymentMethod', 'deliveryAddress']
-            });
-        }
-
-        // Validate items array
-        if (!Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ error: 'Items must be a non-empty array' });
-        }
-
-        const newOrder = new Order({
-            customerId,
-            restaurantId,
-            items,
-            totalAmount,
-            paymentMethod,    
-            deliveryAddress,  
-            status: status || 'Pending', // <-- use status from body if given, else 'Pending'
-          });
-          
-
-        const savedOrder = await newOrder.save();
-        res.status(201).json(savedOrder);
-    } catch (error) {
-        console.error("Error creating order:", error);
-        res.status(500).json({ 
-            error: 'Failed to create order',
-            details: error.message 
-        });
+    // Validate phone number
+    if (!phoneNumber || !/^\+?[1-9]\d{9,14}$/.test(phoneNumber)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Valid phone number is required' 
+      });
     }
+
+    const order = new Order({
+      customerId,
+      restaurantId,
+      items,
+      totalAmount,
+      status,
+      paymentMethod,
+      deliveryAddress,
+      phoneNumber,      // Make sure it's included here
+      deliveryNotes,
+      customerDetails
+    });
+
+    const savedOrder = await order.save();
+    res.status(201).json(savedOrder);
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error creating order' 
+    });
+  }
 };
 
 // Get all orders
 export const getOrders = async (req, res) => {
-    try {
-        const orders = await Order.find().sort({ createdAt: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get order by ID
 export const getOrderById = async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id);
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-        res.json(order);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Update order
 export const updateOrder = async (req, res) => {
-    try {
-        const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
-        const order = await Order.findById(req.params.id);
-        
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-
-        order.customerId = customerId;
-        order.restaurantId = restaurantId;
-        order.items = items;
-        order.totalAmount = totalAmount;
-        order.status = status;
-        
-        // Check if these fields are in the request body before updating
-        if (paymentMethod) order.paymentMethod = paymentMethod;       
-        if (deliveryAddress) order.deliveryAddress = deliveryAddress;
-        
-        // Save the updated order
-        const updatedOrder = await order.save();
-           
-        res.json(updatedOrder);
-    } catch (error) {
-        console.error("Error updating order:", error);
-        res.status(500).json({ error: error.message });
+  try {
+    const { customerId, restaurantId, items, totalAmount, status, paymentMethod, deliveryAddress } = req.body;
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
+
+    order.customerId = customerId;
+    order.restaurantId = restaurantId;
+    order.items = items;
+    order.totalAmount = totalAmount;
+    order.status = status;
+    
+    // Check if these fields are in the request body before updating
+    if (paymentMethod) order.paymentMethod = paymentMethod;       
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    
+    // Save the updated order
+    const updatedOrder = await order.save();
+       
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Delete order
 export const deleteOrder = async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id);
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-        await order.deleteOne();
-        res.json({ message: "Order deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
+    await order.deleteOne();
+    res.json({ message: "Order deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    console.log('Attempting to cancel order:', orderId);
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { status: 'Cancelled' },
+      { 
+        new: true,
+        runValidators: false 
+      }
+    );
+
+    if (!order) {
+      console.log('Order not found:', orderId);
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    console.log('Order cancelled successfully:', orderId);
+    res.json({
+      message: 'Order cancelled successfully',
+      order
+    });
+  } catch (error) {
+    console.error('Cancel order error:', error);
+    res.status(500).json({
+      message: 'Failed to cancel order',
+      error: error.message
+    });
+  }
 };
 
 // Update the updateRating method with better debugging and error handling

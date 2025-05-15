@@ -100,7 +100,7 @@ const Cart = () => {
                     Items: {items.reduce((sum, item) => sum + item.quantity, 0)}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Subtotal: ${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                    Subtotal: Rs {items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
                   </div>
                 </div>
 
@@ -123,7 +123,7 @@ const Cart = () => {
                         />
                         <div>
                           <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-gray-600">${item.price.toFixed(2)} each</p>
+                          <p className="text-gray-600">Rs {item.price.toFixed(2)} each</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
@@ -168,13 +168,13 @@ const Cart = () => {
               {Object.entries(groupedItems).map(([restaurantId, items]) => (
                 <div key={restaurantId} className="flex justify-between text-sm text-gray-600">
                   <span>{items[0].restaurantName} Subtotal:</span>
-                  <span>${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                  <span>Rs {items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>
             <div className="flex justify-between items-center mb-4">
               <span className="text-xl font-semibold">Total:</span>
-              <span className="text-2xl font-bold">${getTotal().toFixed(2)}</span>
+              <span className="text-2xl font-bold">Rs {getTotal().toFixed(2)}</span>
             </div>
 
             <div className="flex space-x-4">

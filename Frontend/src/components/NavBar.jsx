@@ -1,12 +1,17 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaShoppingCart, FaUserCircle, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
-import { useState, useEffect, useRef } from 'react';
+import { FaShoppingCart, FaMotorcycle, FaClipboardList, FaTasks, FaUserCircle, FaSearch, FaBars, FaTimes, FaUtensils, FaUser, FaSignOutAlt  } from 'react-icons/fa';
+import axios from 'axios';
+
 
 const Navbar = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [driverStatus, setDriverStatus] = useState('offline');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,6 +71,37 @@ const Navbar = () => {
     }
   };
 
+  const isDeliveryDriver = user?.role === 'delivery';
+
+  useEffect(() => {
+    if (isDeliveryDriver) {
+      fetchDriverStatus();
+    }
+  }, [isDeliveryDriver]);
+
+  const fetchDriverStatus = async () => {
+    try {
+      const response = await axios.get('http://localhost:5004/api/delivery/driver-status', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setDriverStatus(response.data.status);
+    } catch (err) {
+      console.error('Error fetching driver status:', err);
+    }
+  };
+
+  const toggleDriverStatus = async () => {
+    try {
+      const newStatus = driverStatus === 'online' ? 'offline' : 'online';
+      await axios.put('http://localhost:5004/api/delivery/driver-status', 
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }}
+      );
+      setDriverStatus(newStatus);
+    } catch (err) {
+      console.error('Error updating driver status:', err);
+    }
+  }
   const dropdownVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.95 },
     visible: { 
@@ -118,124 +154,149 @@ const Navbar = () => {
             whileTap={{ scale: 0.98 }}
           >
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                DineSwift
-              </span>
+              {isDeliveryDriver ? (
+                <>
+                  <FaMotorcycle className="text-[#ed2200] text-2xl mr-2" />
+                  <span className="font-semibold text-gray-900">DineSwift Delivery</span>
+                </>
+              ) : (
+                <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  DineSwift
+                </span>
+              )}
             </Link>
           </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className=" md:flex items-center space-x-2">
             {isAuthenticated ? (
-              <>
-                {/* Search Bar */}
-                <AnimatePresence>
-                  {isSearchVisible ? (
-                    <motion.form 
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: "200px", opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      className="relative" 
-                      onSubmit={handleSearch}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Search restaurants..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 rounded-full border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                      />
-                      <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        type="button"
-                        onClick={() => setIsSearchVisible(false)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
-                      >
-                        <FaTimes />
-                      </motion.button>
-                    </motion.form>
-                  ) : (
-                    <motion.button
-                      whileHover={linkHover.hover}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsSearchVisible(true)}
-                      className="text-gray-700 hover:text-orange-500 p-2 rounded-full hover:bg-orange-50"
-                    >
-                      <FaSearch size={18} />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
+              isDeliveryDriver ? (
+                <>
+                <Link
+                  to="/delivery"
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
+                    location.pathname === '/delivery'
+                      ? 'text-[#ed2200] bg-red-50'
+                      : 'text-gray-700 hover:text-[#ed2200]'
+                  }`}
+                >
+                  <FaClipboardList className="mr-2" />
+                  My Deliveries
+                </Link>
                 
-                <motion.div variants={linkHover} whileHover="hover">
-                  <Link
-                    to="/restaurants"
-                    className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300"
-                  >
-                    Restaurants
-                  </Link>
-                </motion.div>
-                <motion.div variants={linkHover} whileHover="hover">
-                  <Link
-                    to="/orders"
-                    className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300"
-                  >
-                    Orders
-                  </Link>
-                </motion.div>
 
-                {/* Cart with Badge */}
-                <motion.div variants={linkHover} whileHover="hover">
-                  <Link
-                    to="/cart"
-                    className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
-                  >
-                    <FaShoppingCart className="mr-2" />
-                    Cart
-                    
-                  </Link>
-                </motion.div>
+                <button
+                  onClick={toggleDriverStatus}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    driverStatus === 'online'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {driverStatus === 'online' ? '🟢 Online' : '⚫ Offline'}
+                </button>
 
-                {/* User Profile Dropdown */}
-                <div ref={dropdownRef} className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="ml-2 flex items-center px-3 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center text-gray-700 hover:text-[#ed2200] focus:outline-none"
                   >
-                    <FaUserCircle className="mr-2 text-orange-500" size={20} />
-                    <span className="font-medium">Profile</span>
-                  </motion.button>
+                    <FaUserCircle className="text-2xl" />
+                  </button>
 
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        variants={dropdownVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-10 border border-orange-100"
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <Link 
-                          to="/profile" 
-                          className="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          My Profile
-                        </Link>
-                        <div className="border-t border-gray-100 my-1"></div>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-all duration-200"
-                        >
-                          Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        Sign out
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
+              ):(
+<>
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/restaurants"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaUtensils className="mr-2 text-orange-500" />
+                  Restaurants
+                </Link>
+              </motion.div>
+
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/orders"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaClipboardList className="mr-2 text-orange-500" />
+                  Orders
+                </Link>
+              </motion.div>
+
+              {/* Cart with Badge */}
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/cart"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaShoppingCart className="mr-2 text-orange-500" />
+                  Cart
+                </Link>
+              </motion.div>
+
+              {/* User Profile Dropdown */}
+              <div ref={dropdownRef} className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="ml-2 flex items-center px-3 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
+                >
+                  <FaUserCircle className="mr-2 text-orange-500" size={30} />
+                </motion.button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      variants={dropdownVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 z-10 border border-orange-100"
+                    >
+                      {/* Profile Link */}
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <FaUser className="text-orange-500" />
+                        My Profile
+                      </Link>
+
+                      <div className="border-t border-gray-100 my-2"></div>
+
+                      {/* Logout */}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-all duration-200"
+                      >
+                        <FaSignOutAlt className="text-red-500" />
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </>
+              )
             ) : (
+              // Non-authenticated Navigation
               <>
                 <motion.div variants={linkHover} whileHover="hover">
                   <Link
@@ -245,6 +306,7 @@ const Navbar = () => {
                     Restaurants
                   </Link>
                 </motion.div>
+
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/login"
@@ -253,6 +315,7 @@ const Navbar = () => {
                     Login
                   </Link>
                 </motion.div>
+
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/signup"
@@ -393,5 +456,6 @@ const Navbar = () => {
     </motion.nav>
   );
 };
+
 
 export default Navbar;

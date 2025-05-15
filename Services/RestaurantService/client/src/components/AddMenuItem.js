@@ -18,11 +18,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemSecondaryAction
+    IconButton
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
@@ -287,76 +283,108 @@ const AddMenuItem = () => {
                                 
                                 {/* Preview of all images added */}
                                 {formData.images.length > 0 && (
-                                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                                        {formData.images.map((img, index) => (
-                                            <Box 
-                                                key={index}
-                                                sx={{ 
-                                                    position: 'relative',
-                                                    width: 100,
-                                                    height: 100,
-                                                    borderRadius: 1,
-                                                    overflow: 'hidden'
-                                                }}
-                                            >
-                                                <img 
-                                                    src={img} 
-                                                    alt={`Preview ${index}`}
-                                                    style={{ 
-                                                        width: '100%', 
-                                                        height: '100%', 
-                                                        objectFit: 'cover' 
-                                                    }}
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'https://via.placeholder.com/100?text=Error';
-                                                    }}
-                                                />
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleRemoveImage(index)}
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        right: 0,
-                                                        bgcolor: 'rgba(0,0,0,0.5)',
-                                                        color: 'white',
-                                                        p: 0.5,
-                                                        '&:hover': {
-                                                            bgcolor: 'rgba(0,0,0,0.7)',
-                                                        }
-                                                    }}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                        ))}
+                                    <Box sx={{ mb: 2 }}>
+                                        <Grid container spacing={2}>
+                                            {formData.images.map((img, index) => (
+                                                <Grid item xs={12} sm={6} md={4} key={index}>
+                                                    <Paper 
+                                                        elevation={2}
+                                                        sx={{ 
+                                                            position: 'relative',
+                                                            borderRadius: 2,
+                                                            overflow: 'hidden'
+                                                        }}
+                                                    >
+                                                        <Box
+                                                            sx={{
+                                                                position: 'relative',
+                                                                paddingTop: '75%', // 4:3 aspect ratio
+                                                                width: '100%'
+                                                            }}
+                                                        >
+                                                            <img 
+                                                                src={img} 
+                                                                alt={`Preview ${index + 1}`}
+                                                                style={{ 
+                                                                    position: 'absolute',
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    objectFit: 'cover'
+                                                                }}
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = 'https://via.placeholder.com/300x225?text=Error';
+                                                                }}
+                                                            />
+                                                            <Box
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    right: 0,
+                                                                    p: 1,
+                                                                    background: 'rgba(0,0,0,0.5)',
+                                                                    color: 'white',
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center'
+                                                                }}
+                                                            >
+                                                                <Typography variant="caption">
+                                                                    {index === 0 ? "Primary Image" : `Image ${index + 1}`}
+                                                                </Typography>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleRemoveImage(index)}
+                                                                    sx={{
+                                                                        color: 'white',
+                                                                        p: 0.5,
+                                                                        '&:hover': {
+                                                                            bgcolor: 'rgba(255,255,255,0.2)',
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Box>
+                                                        </Box>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
+                                            {/* Placeholder for remaining image slots */}
+                                            {[...Array(MAX_IMAGES - formData.images.length)].map((_, index) => (
+                                                <Grid item xs={12} sm={6} md={4} key={`placeholder-${index}`}>
+                                                    <Paper 
+                                                        sx={{ 
+                                                            position: 'relative',
+                                                            borderRadius: 2,
+                                                            bgcolor: 'rgba(0,0,0,0.05)',
+                                                            paddingTop: '75%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
+                                                                position: 'absolute',
+                                                                top: '50%',
+                                                                left: '50%',
+                                                                transform: 'translate(-50%, -50%)',
+                                                                color: 'text.secondary'
+                                                            }}
+                                                        >
+                                                            Image Slot {formData.images.length + index + 1}
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
                                     </Box>
                                 )}
-                                
-                                <List>
-                                    {formData.images.map((image, index) => (
-                                        <ListItem key={index}>
-                                            <ListItemText 
-                                                primary={image}
-                                                secondary={index === 0 ? "Primary image" : `Image ${index + 1}`}
-                                                sx={{
-                                                    wordBreak: 'break-all',
-                                                    pr: 2
-                                                }}
-                                            />
-                                            <ListItemSecondaryAction>
-                                                <IconButton 
-                                                    edge="end" 
-                                                    onClick={() => handleRemoveImage(index)}
-                                                    disabled={loading}
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
-                                    ))}
-                                </List>
                             </Box>
                         </Grid>
                         <Grid item xs={12} md={6}>
