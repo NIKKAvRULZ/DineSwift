@@ -115,7 +115,10 @@ const Orders = () => {
         return ['Pending', 'Accepted', 'Preparing', 'On the Way'].includes(order.status);
       }
       if (filter === 'completed') {
-        return ['Delivered', 'Cancelled'].includes(order.status);
+        return order.status === 'Delivered';
+      }
+      if (filter === 'cancelled') {
+        return order.status === 'Cancelled';
       }
       return true;
     });
@@ -455,7 +458,7 @@ const Orders = () => {
         >
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="w-full md:w-auto flex flex-wrap gap-3">
-              {['all', 'active', 'completed'].map((filterType) => (
+              {['all', 'active', 'completed', 'cancelled'].map((filterType) => (
                 <motion.button
                   key={filterType}
                   whileHover={{ scale: 1.05 }}
@@ -488,7 +491,15 @@ const Orders = () => {
                       <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Completed
+                      Delivered
+                    </span>
+                  )}
+                  {filterType === 'cancelled' && (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Cancelled
                     </span>
                   )}
                 </motion.button>
@@ -609,7 +620,7 @@ const Orders = () => {
                   <div className="flex items-center">
                     <div className="mr-6">
                       <p className="text-xs text-gray-500 mb-1">Total Amount</p>
-                      <p className="text-lg font-bold text-gray-900">${order.totalAmount.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-gray-900">Rs {order.totalAmount.toFixed(2)}</p>
                     </div>
                     
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
@@ -890,11 +901,11 @@ const Orders = () => {
                       </div>
                       <div className="flex justify-between text-gray-600 mb-3">
                         <span>Phone</span>
-                        <span>{selectedOrder.phone || 'N/A'}</span>
+                        <span>{selectedOrder.phoneNumber || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Delivery Notes</span>
-                        <span className="text-right">{selectedOrder.deliveryInstructions || 'None'}</span>
+                        <span className="text-right">{selectedOrder.deliveryNotes || 'None'}</span>
                       </div>
                     </motion.div>
                   </motion.div>
@@ -946,7 +957,7 @@ const Orders = () => {
                               <p className="mt-1 text-sm text-gray-500">{item.description || ''}</p>
                             </div>
                           </div>
-                          <p className="text-gray-900 font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="text-gray-900 font-medium">Rs {(item.price * item.quantity).toFixed(2)}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -959,11 +970,11 @@ const Orders = () => {
                     >
                       <div className="flex justify-between text-gray-600 mb-2">
                         <span>Subtotal</span>
-                        <span>${(selectedOrder.totalAmount - (selectedOrder.deliveryFee || 0)).toFixed(2)}</span>
+                        <span>Rs {(selectedOrder.totalAmount - (selectedOrder.deliveryFee || 0)).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600 mb-3">
                         <span>Delivery Fee</span>
-                        <span>${(selectedOrder.deliveryFee || 0).toFixed(2)}</span>
+                        <span>Rs {(selectedOrder.deliveryFee || 0).toFixed(2)}</span>
                       </div>
                       <motion.div 
                         className="flex justify-between font-bold text-gray-900 text-xl border-t border-orange-200 pt-3"
@@ -972,7 +983,7 @@ const Orders = () => {
                         transition={{ delay: 1.2, type: "spring" }}
                       >
                         <span>Total</span>
-                        <span className="text-orange-600">${selectedOrder.totalAmount.toFixed(2)}</span>
+                        <span className="text-orange-600">Rs {selectedOrder.totalAmount.toFixed(2)}</span>
                       </motion.div>
                     </motion.div>
                   </motion.div>

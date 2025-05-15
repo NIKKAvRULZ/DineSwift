@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import emailjs from '@emailjs/browser';
 
 const Contact = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [status, setStatus] = useState('');
+
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -38,6 +46,42 @@ const Contact = () => {
         type: "spring",
         stiffness: 300
       }
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('sending');
+
+    try {
+      const result = await emailjs.send(
+        'service_r5dsjaj', // Your EmailJS service ID
+        'template_st7mk5k', // Your EmailJS template ID
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+          to_name: 'DineSwift Team', // Your name or company name
+          to_email: 'nithika151@gmail.com', // Your email address
+          subject: 'New Contact Form Submission',
+        },
+        'MI5ujjU1KKUhAM82z' // Your EmailJS public key
+      );
+
+      if (result.status === 200) {
+        setStatus('success');
+        setFormData({ name: '', email: '', message: '' });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setStatus('error');
     }
   };
 
@@ -85,6 +129,7 @@ const Contact = () => {
           </motion.h1>
 
           <motion.form 
+            onSubmit={handleSubmit}
             variants={formVariants}
             initial="hidden"
             animate="visible"
@@ -96,24 +141,36 @@ const Contact = () => {
                 <label className="block text-lg font-medium text-gray-700 mb-2">Name</label>
                 <input 
                   type="text" 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   placeholder="Your name"
+                  required
                 />
               </motion.div>
               <motion.div whileHover="focus" variants={inputVariants}>
                 <label className="block text-lg font-medium text-gray-700 mb-2">Email</label>
                 <input 
-                  type="email" 
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   placeholder="your@email.com"
+                  required
                 />
               </motion.div>
               <motion.div whileHover="focus" variants={inputVariants}>
                 <label className="block text-lg font-medium text-gray-700 mb-2">Message</label>
                 <textarea 
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   rows="4"
                   placeholder="Your message"
+                  required
                 ></textarea>
               </motion.div>
               <motion.button 
@@ -121,9 +178,17 @@ const Contact = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="w-full px-6 py-3 rounded-full text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl"
+                disabled={status === 'sending'}
               >
-                Send Message
+                {status === 'sending' ? 'Sending...' : 'Send Message'}
               </motion.button>
+
+              {status === 'success' && (
+                <div className="text-green-600 font-medium">Message sent successfully!</div>
+              )}
+              {status === 'error' && (
+                <div className="text-red-600 font-medium">Failed to send message. Please try again.</div>
+              )}
             </div>
           </motion.form>
         </motion.div>

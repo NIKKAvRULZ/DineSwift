@@ -1,1 +1,37 @@
 @import "tailwindcss";
+
+/* Add these custom styles */
+.nav-link {
+  @apply px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 
+         transition-all duration-300 flex items-center font-medium;
+}
+
+.nav-link-cart {
+  @apply px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 
+         transition-all duration-300 flex items-center font-medium relative;
+}
+
+.nav-link-icon {
+  @apply p-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 
+         transition-all duration-300 relative;
+}
+
+.profile-button {
+  @apply flex items-center px-4 py-2 rounded-full text-gray-700 hover:bg-orange-50 
+         transition-all duration-300 font-medium border border-transparent 
+         hover:border-orange-200;
+}
+
+.profile-dropdown {
+  @apply absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-10 
+         border border-orange-100 backdrop-blur-lg bg-white/90;
+}
+
+.dropdown-item {
+  @apply flex items-center px-4 py-2 text-gray-700 hover:bg-orange-50 
+         hover:text-orange-600 transition-all duration-200;
+}
+
+.notification-badge {
+  @apply absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full;
+}

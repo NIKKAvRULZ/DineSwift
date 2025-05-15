@@ -33,6 +33,26 @@ const orderService = {
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Failed to fetch order');
     }
+  },
+
+  cancelOrder: async (orderId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post(
+            `${BASE_URL}/orders/${orderId}/cancel`,
+            {},
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Cancel order error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to cancel order');
+    }
   }
 };
 
