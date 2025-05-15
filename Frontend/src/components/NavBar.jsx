@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaShoppingCart, FaMotorcycle, FaClipboardList, FaTasks, FaUserCircle, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
+import { FaShoppingCart, FaMotorcycle, FaClipboardList, FaTasks, FaUserCircle, FaSearch, FaBars, FaTimes, FaUtensils, FaUser, FaSignOutAlt  } from 'react-icons/fa';
 import axios from 'axios';
 
 
@@ -184,17 +184,6 @@ const Navbar = () => {
                   My Deliveries
                 </Link>
                 
-                <Link
-                  to="/delivery/available"
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-                    location.pathname === '/delivery/available'
-                      ? 'text-[#ed2200] bg-red-50'
-                      : 'text-gray-700 hover:text-[#ed2200]'
-                  }`}
-                >
-                  <FaTasks className="mr-2" />
-                  Available Orders
-                </Link>
 
                 <button
                   onClick={toggleDriverStatus}
@@ -229,98 +218,82 @@ const Navbar = () => {
               </>
               ):(
 <>
-                {/* Search Bar */}
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/restaurants"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaUtensils className="mr-2 text-orange-500" />
+                  Restaurants
+                </Link>
+              </motion.div>
+
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/orders"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaClipboardList className="mr-2 text-orange-500" />
+                  Orders
+                </Link>
+              </motion.div>
+
+              {/* Cart with Badge */}
+              <motion.div variants={linkHover} whileHover="hover">
+                <Link
+                  to="/cart"
+                  className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
+                >
+                  <FaShoppingCart className="mr-2 text-orange-500" />
+                  Cart
+                </Link>
+              </motion.div>
+
+              {/* User Profile Dropdown */}
+              <div ref={dropdownRef} className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="ml-2 flex items-center px-3 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
+                >
+                  <FaUserCircle className="mr-2 text-orange-500" size={30} />
+                </motion.button>
+
                 <AnimatePresence>
-                  {isSearchVisible ? (
-                    <motion.form 
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: "200px", opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      className="relative" 
-                      onSubmit={handleSearch}
+                  {isDropdownOpen && (
+                    <motion.div
+                      variants={dropdownVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 z-10 border border-orange-100"
                     >
-                      <input
-                        type="text"
-                        placeholder="Search restaurants..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 rounded-full border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                      />
-                      <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        type="button"
-                        onClick={() => setIsSearchVisible(false)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
+                      {/* Profile Link */}
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
+                        onClick={() => setIsDropdownOpen(false)}
                       >
-                        <FaTimes />
-                      </motion.button>
-                    </motion.form>
-                  ) : (
-                    <motion.button
-                      whileHover={linkHover.hover}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsSearchVisible(true)}
-                      className="text-gray-700 hover:text-orange-500 p-2 rounded-full hover:bg-orange-50"
-                    >
-                      <FaSearch size={18} />
-                    </motion.button>
+                        <FaUser className="text-orange-500" />
+                        My Profile
+                      </Link>
+
+                      <div className="border-t border-gray-100 my-2"></div>
+
+                      {/* Logout */}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-all duration-200"
+                      >
+                        <FaSignOutAlt className="text-red-500" />
+                        Logout
+                      </button>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-                
-              
-
-                {/* Cart with Badge */}
-                <motion.div variants={linkHover} whileHover="hover">
-                  <Link
-                    to="/cart"
-                    className="px-4 py-2 rounded-full text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 flex items-center relative"
-                  >
-                    <FaShoppingCart className="mr-2" />
-                    Cart
-                    
-                  </Link>
-                </motion.div>
-
-                {/* User Profile Dropdown */}
-                <div ref={dropdownRef} className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="ml-2 flex items-center px-3 py-2 rounded-full text-gray-700 hover:bg-orange-50 transition-all duration-300"
-                  >
-                    <FaUserCircle className="mr-2 text-orange-500" size={20} />
-                    <span className="font-medium">Profile</span>
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        variants={dropdownVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-10 border border-orange-100"
-                      >
-                        <Link 
-                          to="/profile" 
-                          className="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          My Profile
-                        </Link>
-                        <div className="border-t border-gray-100 my-1"></div>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-all duration-200"
-                        >
-                          Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </>
+              </div>
+            </>
               )
             ) : (
               // Non-authenticated Navigation
@@ -333,6 +306,7 @@ const Navbar = () => {
                     Restaurants
                   </Link>
                 </motion.div>
+
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/login"
@@ -341,6 +315,7 @@ const Navbar = () => {
                     Login
                   </Link>
                 </motion.div>
+
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/signup"

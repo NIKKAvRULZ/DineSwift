@@ -32,6 +32,26 @@ const orderSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+    phoneNumber: {
+        type: String,
+        required: [true, 'Phone number is required'],
+        validate: {
+            validator: function(v) {
+                return /^\+?[1-9]\d{9,14}$/.test(v);
+            },
+            message: props => `${props.value} is not a valid phone number!`
+        }
+    },
+    deliveryNotes: {
+        type: String,
+        required: false
+    },
+    customerDetails: {
+        name: String,
+        email: String,
+        phone: String,
+        address: String
+    },
     createdAt: { 
         type: Date, 
         default: Date.now 
