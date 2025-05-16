@@ -9,7 +9,6 @@ import defaultItemImage from '../assets/placeholder-menu.png'
 import defaultResImage from '../assets/placeholder-restaurant.png' 
 import ImageCarousel from '../components/ImageCarousel';
 import API from '../api/apiHandler'; // Import the new API handler
-import menuService from '../services/menuService'; // Import menuService
 
 // Toast component
 const Toast = ({ message, type, onClose }) => {
@@ -99,11 +98,6 @@ const Menu = () => {
   const [animateCards, setAnimateCards] = useState(false);
   // Add hover state for menu items
   const [hoveredItem, setHoveredItem] = useState(null);
-  // Add state for comments and comment UI
-  const [showComments, setShowComments] = useState({});
-  const [comments, setComments] = useState({});
-  const [newComments, setNewComments] = useState({});
-  const [isSubmittingComment, setIsSubmittingComment] = useState({});
 
   const pageAnimation = {
     initial: { opacity: 0 },
@@ -359,28 +353,6 @@ const Menu = () => {
     fetchRestaurantAndMenu();
   }, [id]); // Add id as dependency to refetch when restaurant ID changes
 
-  // Load comments for a menu item
-  const loadComments = useCallback(async (itemId) => {
-    try {
-      const response = await menuService.getComments(id, itemId);
-      setComments(prev => ({
-        ...prev,
-        [itemId]: response.comments
-      }));
-    } catch (error) {
-      console.error('Error loading comments:', error);
-    }
-  }, [id]);
-
-  // Load comments when component mounts
-  useEffect(() => {
-    if (menuItems.length > 0) {
-      menuItems.forEach(item => {
-        loadComments(item._id || item.id);
-      });
-    }
-  }, [menuItems, loadComments]);
-
   // Toggle favorite status for a restaurant
   const toggleFavoriteRestaurant = (restaurantId) => {
     setFavoriteRestaurants(prev => {
@@ -602,51 +574,6 @@ const Menu = () => {
       }, 1000);
     }
   };
-
-  // Handle adding a comment
-  const handleAddComment = useCallback(async (itemId) => {
-    const commentText = newComments[itemId]?.trim();
-    if (!commentText) return;
-
-    try {
-      setIsSubmittingComment(prev => ({ ...prev, [itemId]: true }));
-      const userId = localStorage.getItem('userId') || 'anonymous';
-      
-      const response = await menuService.addComment(restaurant._id || id, itemId, {
-        text: commentText,
-        userId
-      });
-
-      if (response && response.menuItem && response.menuItem.comments) {
-        // Update comments in state with the new complete comments array
-        setComments(prev => ({
-          ...prev,
-          [itemId]: response.menuItem.comments
-        }));
-
-        // Clear comment input
-        setNewComments(prev => ({ ...prev, [itemId]: '' }));
-        
-        // Show success toast
-        setToast({
-          visible: true,
-          message: 'Comment added successfully',
-          type: 'success'
-        });
-      } else {
-        throw new Error('Invalid response format from server');
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      setToast({
-        visible: true,
-        message: error.message || 'Failed to add comment',
-        type: 'error'
-      });
-    } finally {
-      setIsSubmittingComment(prev => ({ ...prev, [itemId]: false }));
-    }
-  }, [id, restaurant]);
 
   // Set animate cards true after initial load
   useEffect(() => {
@@ -1003,7 +930,7 @@ const Menu = () => {
                 onMouseLeave={() => setHoveredItem(null)}
                 layout
               >
-                <div className="relative aspect-w-16 aspect-h-12 overflow-hidden">
+                <div className="relative h-64 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-30 group-hover:opacity-60 transition-opacity duration-300 z-10"></div>
                   
                   <motion.div 
@@ -1013,7 +940,7 @@ const Menu = () => {
                         : { scale: 1 }
                     }
                     transition={{ duration: 0.5 }}
-                    className="w-full h-full flex items-center justify-center bg-gray-100"
+                    className="h-full"
                   >
                     <ImageCarousel 
                       images={item.images || [item.image]} 
@@ -1106,26 +1033,9 @@ const Menu = () => {
                   </div>
                   
                   <div className="flex items-center justify-between mb-3 mt-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
-                        {item.name}
-                      </h3>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowComments(prev => ({ ...prev, [item._id || item.id]: !prev[item._id || item.id] }));
-                        }}
-                        className="flex items-center gap-2 px-3 py-1 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all duration-300"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span className="text-sm font-medium">
-                          {comments[item._id || item.id]?.length || 0} Comments
-                        </span>
-                      </button>
-                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
+                      {item.name}
+                    </h3>
                     <AnimatePresence>
                       {item.isSpicy && (
                         <motion.span 
@@ -1139,90 +1049,76 @@ const Menu = () => {
                       )}
                     </AnimatePresence>
                   </div>
-
-                  <AnimatePresence>
-                    {showComments[item._id || item.id] && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mb-4 bg-gray-50 rounded-lg p-4"
-                      >
-                        {/* Comments List */}
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-semibold text-gray-700">Comments</h3>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowComments(prev => ({
-                                  ...prev,
-                                  [item._id || item.id]: {
-                                    ...prev[item._id || item.id],
-                                    expanded: !prev[item._id || item.id]?.expanded
-                                  }
-                                }));
-                              }}
-                              className="text-sm text-orange-500 hover:text-orange-600"
-                            >
-                              {showComments[item._id || item.id]?.expanded ? 'Show Less' : 'View All Comments'}
-                            </button>
-                          </div>
-                          
-                          <div className={`space-y-2 overflow-y-auto transition-all duration-300 ${
-                            showComments[item._id || item.id]?.expanded ? 'max-h-96' : 'max-h-40'
-                          }`}>
-                            {comments[item._id || item.id]?.map((comment, index) => (
-                              <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-                                <p className="text-gray-700">{comment.text}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {comment.user === 'anonymous' ? 'Anonymous User' : `User ${comment.user}`} • 
-                                  {new Date(comment.timestamp).toLocaleDateString()}
-                                </p>
-                              </div>
-                            ))}
-                            {(!comments[item._id || item.id] || comments[item._id || item.id].length === 0) && (
-                              <p className="text-gray-500 text-center py-2">No comments yet</p>
-                            )}
-                          </div>
-
-                          {/* Comment Input */}
-                          <div className="flex gap-2 mt-4">
-                            <input
-                              type="text"
-                              value={newComments[item._id || item.id] || ''}
-                              onChange={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setNewComments(prev => ({
-                                  ...prev,
-                                  [item._id || item.id]: e.target.value
-                                }));
-                              }}
-                              placeholder="Write a comment..."
-                              className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAddComment(item._id || item.id);
-                              }}
-                              disabled={isSubmittingComment[item._id || item.id] || !newComments[item._id || item.id]?.trim()}
-                              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {isSubmittingComment[item._id || item.id] ? 'Posting...' : 'Post'}
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
+                  
                   <p className="text-gray-600 mb-4 line-clamp-2 min-h-[48px]">
                     {item.description}
                   </p>
+                  
+                  {/* Interactive Rating System with improved visuals */}
+                  <div className="flex items-center mb-4 bg-orange-50 p-3 rounded-xl shadow-inner">
+                    <div className="flex items-center space-x-1">
+                      {[...Array(5)].map((_, i) => {
+                        const starValue = i + 1;
+                        const itemId = item._id || item.id;
+                        
+                        // Use user's specific rating if available
+                        const userRating = userRatings[itemId] || item.userRating;
+                        
+                        // For display, prioritize: temp rating > user rating > actual rating
+                        const displayRating = tempRatings[itemId] || userRating || item.rating || 0;
+                        
+                        // Determine star appearance: filled, half-filled, or empty
+                        let starType;
+                        if (starValue <= Math.floor(displayRating)) {
+                          starType = 'filled';
+                        } else if (starValue <= displayRating + 0.5 && displayRating % 1 !== 0) {
+                          starType = 'half';
+                        } else {
+                          starType = 'empty';
+                        }
+                        
+                        // Determine if this star rating is being saved now
+                        const isSubmitting = tempRatings[itemId] === starValue;
+                        
+                        return (
+                          <motion.button
+                            key={i}
+                            type="button"
+                            onClick={() => handleRateItem(itemId, starValue)}
+                            className={`text-2xl focus:outline-none transform transition-all duration-150 ${
+                              isSubmitting ? 'animate-pulse scale-110' : ''
+                            }`}
+                            title={`Rate ${starValue} stars`}
+                            aria-label={`Rate ${starValue} stars`}
+                            disabled={isSubmitting}
+                            whileHover={{ scale: 1.2, rotate: 5 }}
+                            whileTap={{ scale: 0.8 }}
+                          >
+                            {starType === 'filled' ? (
+                              <span className={`${isSubmitting ? 'text-green-500' : 'text-yellow-400'} filter drop-shadow-md hover:text-yellow-500 cursor-pointer`}>★</span>
+                            ) : starType === 'half' ? (
+                              <span className="text-yellow-400 hover:text-yellow-500 cursor-pointer relative filter drop-shadow-md">
+                                <span className="absolute text-yellow-400" style={{ width: '50%', overflow: 'hidden' }}>★</span>
+                                <span className="text-gray-300">★</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-300 hover:text-yellow-300 cursor-pointer filter drop-shadow-sm">★</span>
+                            )}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                    <span className="ml-2 text-sm text-gray-600 flex-1 truncate">
+                      {Object.keys(tempRatings).includes(item._id || item.id) 
+                        ? 'Saving rating...' 
+                        : userRatings[item._id || item.id] || item.userRating
+                          ? `Your rating: ${userRatings[item._id || item.id] || item.userRating}`
+                          : item.rating
+                            ? `${item.rating.toFixed(1)} (${item.ratingCount || 0})`
+                            : 'Click to rate'
+                      }
+                    </span>
+                  </div>
                   
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                     <div className="flex flex-col">

@@ -4,22 +4,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ImageCarousel = ({ images, defaultImage, autoplay = false }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [showGallery, setShowGallery] = useState(false);
   const intervalRef = useRef(null);
 
+  // Auto-play functionality
   useEffect(() => {
+    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
+    // Start auto-play if we have multiple images and autoplay is enabled
     if (images && images.length > 1 && (autoplay || isHovered)) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex((prevIndex) => 
           prevIndex === (images.length - 1) ? 0 : prevIndex + 1
         );
-      }, 2000);
+      }, 2000); // Change image every 2 seconds
     }
 
+    // Cleanup function
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -27,15 +30,16 @@ const ImageCarousel = ({ images, defaultImage, autoplay = false }) => {
     };
   }, [images, isHovered, autoplay]);
 
+  // Mouse enter/leave handlers
   const handleMouseEnter = () => {
     setIsHovered(true);
   };
   
   const handleMouseLeave = () => {
     setIsHovered(false);
-    setShowGallery(false);
   };
 
+  // Manual navigation
   const goToNext = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === (images?.length - 1 || 0) ? 0 : prevIndex + 1
@@ -66,51 +70,28 @@ const ImageCarousel = ({ images, defaultImage, autoplay = false }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Main Image */}
       <AnimatePresence mode="wait">
-        <motion.div
+        <motion.img
           key={currentIndex}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full h-full flex items-center justify-center"
-        >
-          <img
-            src={images[currentIndex] || defaultImage}
-            alt={`Image ${currentIndex + 1}`}
-            className="w-full h-full object-contain"
-            onClick={() => setShowGallery(true)}
-          />
-        </motion.div>
+          src={images[currentIndex] || defaultImage}
+          alt={`Image ${currentIndex + 1}`}
+          className="w-full h-full object-contain bg-gray-50 p-2"
+        />
       </AnimatePresence>
 
-      {/* Thumbnail Gallery */}
-      {isHovered && images.length > 1 && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -bottom-1 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent"
-        >
-          <div className="flex justify-center gap-2 overflow-x-auto py-1">
-            {images.map((img, idx) => (
-              <motion.div
-                key={idx}
-                className={`relative w-12 h-12 flex-shrink-0 cursor-pointer border-2 ${
-                  idx === currentIndex ? 'border-orange-500' : 'border-transparent'
-                }`}
-                whileHover={{ scale: 1.1 }}
-                onClick={() => setCurrentIndex(idx)}
-              >
-                <img
-                  src={img}
-                  alt={`Thumbnail ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+      {/* Auto-play indicator */}
+      {images.length > 1 && isHovered && (
+        <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Auto
+        </div>
       )}
 
       {/* Navigation Arrows */}
@@ -137,35 +118,20 @@ const ImageCarousel = ({ images, defaultImage, autoplay = false }) => {
         </>
       )}
 
-      {/* Full Gallery Modal */}
-      {showGallery && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
-          onClick={() => setShowGallery(false)}
-        >
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {images.map((img, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="aspect-w-4 aspect-h-3"
-                >
-                  <img
-                    src={img}
-                    alt={`Gallery image ${idx + 1}`}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+      {/* Image Indicators */}
+      {images.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentIndex ? 'bg-orange-500' : 'bg-gray-300'
+              }`}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

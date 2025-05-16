@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Make sure this matches the backend API URL
 const API_BASE_URL = 'http://localhost:5002/api';
 
 const menuService = {
@@ -29,15 +30,28 @@ const menuService = {
   submitRating: async (restaurantId, menuItemId, rating) => {
     try {
       console.log('Submitting rating:', { restaurantId, menuItemId, rating });
-      const response = await axios.post(
-        `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/rate`,
-        { rating }
-      );
+      
+      // Ensure all parameters are valid before making the request
+      if (!restaurantId || !menuItemId || !rating) {
+        console.error('Missing required parameters for rating:', { restaurantId, menuItemId, rating });
+        throw new Error('Missing required parameters for rating');
+      }
+      
+      // Log the full URL being called for debugging
+      const url = `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/rate`;
+      console.log('Submitting rating to URL:', url);
+      
+      const response = await axios.post(url, { rating });
       
       console.log('Rating submitted successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error submitting rating:', error);
+      // Provide more detailed error information
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
       throw error.response?.data || { message: 'Failed to submit rating' };
     }
   },
@@ -45,31 +59,27 @@ const menuService = {
   // Add a comment to a menu item
   addComment: async (restaurantId, menuItemId, comment) => {
     try {
-      console.log('Adding comment:', { restaurantId, menuItemId, comment });
       const response = await axios.post(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`,
         comment
       );
-      console.log('Comment added successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error adding comment:', error);
-      throw error.response?.data || { message: 'Failed to add comment' };
+      throw error;
     }
   },
 
   // Get comments for a menu item
   getComments: async (restaurantId, menuItemId) => {
     try {
-      console.log('Fetching comments:', { restaurantId, menuItemId });
       const response = await axios.get(
         `${API_BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}/comments`
       );
-      console.log('Comments fetched successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching comments:', error);
-      throw error.response?.data || { message: 'Failed to fetch comments' };
+      throw error;
     }
   }
 };

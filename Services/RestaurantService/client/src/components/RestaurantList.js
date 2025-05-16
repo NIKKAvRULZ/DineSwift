@@ -85,7 +85,9 @@ const RestaurantList = () => {
 
     const fetchCuisines = async () => {
         try {
-            const response = await axios.get(`${apiUrl}/api/restaurants/cuisines`);
+            // Updated URL to match the backend route definition
+            const response = await axios.get(`${apiUrl}/api/cuisines`);
+            console.log('Fetched cuisines:', response.data);
             setCuisines(response.data);
         } catch (error) {
             console.error('Error fetching cuisines:', error);
@@ -119,21 +121,16 @@ const RestaurantList = () => {
             console.log('Fetching restaurants with URL:', url);
             const response = await axios.get(url);
             
-            // Case-sensitive filter validation on client side to double-check
+            // Trust the server-side filtering and use the response directly
             let filteredRestaurants = response.data;
-            if (selectedCuisine) {
-                // Apply strict filtering to ensure exact cuisine match
-                filteredRestaurants = response.data.filter(r => 
-                    r.cuisine && r.cuisine.trim() === selectedCuisine.trim()
-                );
-                console.log(`Client-side filter: Found ${filteredRestaurants.length} restaurants with cuisine "${selectedCuisine}"`);
-                
-                // Only show notification if we got results from API but filtered them out
-                if (filteredRestaurants.length === 0 && response.data.length > 0) {
-                    showNotification(`No restaurants found with cuisine: ${selectedCuisine}`, 'info');
-                }
+        
+            // Log the results for debugging
+            console.log(`Server returned ${filteredRestaurants.length} restaurants`);
+        
+            if (selectedCuisine && filteredRestaurants.length === 0) {
+                console.log(`No restaurants found with cuisine: ${selectedCuisine}`);
+                showNotification(`No restaurants found with cuisine: ${selectedCuisine}`, 'info');
             }
-            
             setRestaurants(filteredRestaurants);
             setLoading(false);
         } catch (error) {

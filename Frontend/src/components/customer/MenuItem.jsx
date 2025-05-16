@@ -1,19 +1,28 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import menuService from '../../services/menuService';
 import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import API from '../../api/apiHandler';
+import { useAuth } from '../../context/AuthContext';
 
 const MenuItem = ({ item }) => {
   const { addToCart } = useCart();
   const { id: restaurantId } = useParams();
+  const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [currentRating, setCurrentRating] = useState(item.rating || 0);
 
   // Load comments when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     loadComments();
+    setCurrentRating(item.rating || 0);
   }, [item._id]);
 
   const loadComments = async () => {
@@ -22,6 +31,55 @@ const MenuItem = ({ item }) => {
       setComments(response.comments);
     } catch (error) {
       console.error('Error loading comments:', error);
+    }
+  };
+
+  const handleRating = async (rating) => {
+    try {
+      setIsSubmittingRating(true);
+      setUserRating(rating);
+      
+      // Get user ID from API handler
+      const userId = API.getUserId(user);
+      const token = localStorage.getItem('token');
+      
+      // Optimistically update UI
+      const newRatingCount = (item.ratingCount || 0) + 1;
+      const newRatingSum = (item.rating || 0) * (item.ratingCount || 0) + Number(rating);
+      const newRating = newRatingSum / newRatingCount;
+      setCurrentRating(newRating);
+      
+      // Submit rating using API handler
+      const response = await API.submitRating({
+        restaurantId,
+        menuItemId: item._id,
+        rating,
+        userId,
+        token
+      });
+      
+      // Update with server response
+      if (response && response.menuItem) {
+        setCurrentRating(response.menuItem.rating);
+      }
+      
+      toast.success('Rating submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      toast.error('Failed to submit rating. Please try again.');
+      
+      // If it's a network error, save for later sync
+      if (!error.response) {
+        API.savePendingRating({
+          menuItemId: item._id,
+          rating,
+          userId: API.getUserId(user),
+          restaurantId
+        });
+        toast.info('Rating saved locally and will sync when connection is restored');
+      }
+    } finally {
+      setIsSubmittingRating(false);
     }
   };
 
@@ -48,12 +106,43 @@ const MenuItem = ({ item }) => {
     }
   };
 
+  // Helper function to get the best available image URL
+  const getImageUrl = (item) => {
+    // Check if item has images array with at least one valid image
+    if (item.images && Array.isArray(item.images) && item.images.length > 0 && item.images[0]) {
+      return item.images[0];
+    }
+    // Check if item has a single image
+    if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
+      return item.image;
+    }
+    // Check for imageUrl (legacy field)
+    if (item.imageUrl && typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '') {
+      return item.imageUrl;
+    }
+    // Return a default image if none of the above are available
+    return 'https://via.placeholder.com/300x200?text=No+Image';
+  };
+
+  // Log image data for debugging
+  console.log('MenuItem image data:', {
+    itemId: item._id,
+    image: item.image,
+    images: item.images,
+    imageUrl: item.imageUrl,
+    selectedImage: getImageUrl(item)
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <img 
-        src={item.imageUrl} 
+        src={getImageUrl(item)} 
         alt={item.name}
         className="w-full h-60 object-contain bg-gray-50 p-2"
+        onError={(e) => {
+          e.target.onerror = null; 
+          e.target.src = 'https://via.placeholder.com/300x200?text=Image+Error';
+        }}
       />
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
@@ -63,11 +152,22 @@ const MenuItem = ({ item }) => {
           {/* Rating Stars */}
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
-              <span key={i} className="text-yellow-400">★</span>
+              <span 
+                key={i} 
+                className={`text-2xl cursor-pointer ${i < (hoverRating || userRating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                onClick={() => handleRating(i + 1)}
+                onMouseEnter={() => setHoverRating(i + 1)}
+                onMouseLeave={() => setHoverRating(0)}
+              >
+                ★
+              </span>
             ))}
             <span className="ml-1 text-sm text-gray-500">
-              ({item.rating || 0})
+              ({currentRating.toFixed(1)})
             </span>
+            {isSubmittingRating && (
+              <span className="ml-2 text-xs text-gray-500">Submitting...</span>
+            )}
           </div>
           {/* Comment Icon and Count */}
           <button

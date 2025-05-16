@@ -62,21 +62,7 @@ const Navbar = () => {
                         >
                             Restaurant Manager
                         </Typography>
-                        {isHome && (
-                            <Button
-                                variant="contained"
-                                component={Link}
-                                to="/add-restaurant"
-                                sx={{
-                                    borderRadius: '50px',
-                                    px: 3,
-                                    textTransform: 'none',
-                                    fontWeight: 600
-                                }}
-                            >
-                                Add Restaurant
-                            </Button>
-                        )}
+                        {/* Add Restaurant button removed */}
                     </Toolbar>
                 </Container>
             </AppBar>
