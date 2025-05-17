@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dineswift-config
+  namespace: dineswift
+data:
+  NODE_ENV: "production"
+  API_GATEWAY_URL: "http://api-gateway:5000"
+  USER_SERVICE_URL: "http://user-service:5001"
+  RESTAURANT_SERVICE_URL: "http://restaurant-service:5002"
+  ORDER_SERVICE_URL: "http://order-service:5003"
+  DELIVERY_SERVICE_URL: "http://delivery-service:5004"
+  PAYMENT_SERVICE_URL: "http://payment-service:5005"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:5006"

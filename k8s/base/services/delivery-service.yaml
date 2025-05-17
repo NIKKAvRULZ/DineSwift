@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delivery-service
+  namespace: dineswift
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: delivery-service
+  template:
+    metadata:
+      labels:
+        app: delivery-service
+    spec:
+      containers:
+      - name: delivery-service
+        image: dineswift/delivery-service:latest
+        ports:
+        - containerPort: 5004
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: dineswift-secrets
+              key: MONGO_URI
+        - name: PORT
+          value: "5004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: delivery-service
+  namespace: dineswift
+spec:
+  selector:
+    app: delivery-service
+  ports:
+  - port: 5004
+    targetPort: 5004
+  type: ClusterIP

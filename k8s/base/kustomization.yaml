@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dineswift
+
+resources:
+- namespace.yaml
+- configmap.yaml
+- secrets.yaml
+- services/api-gateway.yaml
+- services/user-service.yaml
+- services/restaurant-service.yaml
+- services/order-service.yaml
+- services/delivery-service.yaml
+- services/payment-service.yaml
+- services/notification-service.yaml
+- ingress/ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: dineswift
