@@ -18,6 +18,13 @@ spec:
         image: dineswift/user-service:latest
         ports:
         - containerPort: 5001
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
         env:
         - name: MONGO_URI
           valueFrom:
