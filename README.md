@@ -1,5 +1,8 @@
 # 🍽️ DineSwift - Cloud-Native Food Ordering & Delivery System
 
+![Banner](Frontend/src/assets/projects.png)
+
+
 DineSwift is a next-gen, cloud-native food ordering and delivery platform inspired by UberEats & PickMe Food. Designed with a scalable microservices architecture, it offers a seamless experience for customers, restaurants, and delivery drivers. 🚀
 
 ---
